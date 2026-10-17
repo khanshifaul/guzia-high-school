@@ -66,6 +66,30 @@ export class AuthenticationService {
     if (!user) {
       throw new UnauthorizedException();
     }
+
+    // Role-specific linked ids the portal pages need (specs/06): a student's
+    // own Student row, a teacher's Teacher row, a parent's children.
+    if (user.role === 'STUDENT') {
+      const student = await this.prisma.student.findUnique({
+        where: { userId },
+        select: { id: true, classId: true },
+      });
+      return { ...user, studentId: student?.id ?? null, classId: student?.classId ?? null };
+    }
+    if (user.role === 'TEACHER') {
+      const teacher = await this.prisma.teacher.findUnique({
+        where: { userId },
+        select: { id: true },
+      });
+      return { ...user, teacherId: teacher?.id ?? null };
+    }
+    if (user.role === 'PARENT') {
+      const children = await this.prisma.student.findMany({
+        where: { parent: { userId } },
+        select: { id: true },
+      });
+      return { ...user, childIds: children.map((c) => c.id) };
+    }
     return user;
   }
 }
