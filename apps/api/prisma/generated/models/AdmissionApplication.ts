@@ -26,6 +26,7 @@ export type AggregateAdmissionApplication = {
 
 export type AdmissionApplicationMinAggregateOutputType = {
   id: string | null
+  userId: string | null
   status: $Enums.AdmissionStatus | null
   reviewedById: string | null
   reviewNote: string | null
@@ -35,6 +36,7 @@ export type AdmissionApplicationMinAggregateOutputType = {
 
 export type AdmissionApplicationMaxAggregateOutputType = {
   id: string | null
+  userId: string | null
   status: $Enums.AdmissionStatus | null
   reviewedById: string | null
   reviewNote: string | null
@@ -44,6 +46,7 @@ export type AdmissionApplicationMaxAggregateOutputType = {
 
 export type AdmissionApplicationCountAggregateOutputType = {
   id: number
+  userId: number
   formData: number
   status: number
   reviewedById: number
@@ -56,6 +59,7 @@ export type AdmissionApplicationCountAggregateOutputType = {
 
 export type AdmissionApplicationMinAggregateInputType = {
   id?: true
+  userId?: true
   status?: true
   reviewedById?: true
   reviewNote?: true
@@ -65,6 +69,7 @@ export type AdmissionApplicationMinAggregateInputType = {
 
 export type AdmissionApplicationMaxAggregateInputType = {
   id?: true
+  userId?: true
   status?: true
   reviewedById?: true
   reviewNote?: true
@@ -74,6 +79,7 @@ export type AdmissionApplicationMaxAggregateInputType = {
 
 export type AdmissionApplicationCountAggregateInputType = {
   id?: true
+  userId?: true
   formData?: true
   status?: true
   reviewedById?: true
@@ -157,6 +163,7 @@ export type AdmissionApplicationGroupByArgs<ExtArgs extends runtime.Types.Extens
 
 export type AdmissionApplicationGroupByOutputType = {
   id: string
+  userId: string | null
   formData: runtime.JsonValue
   status: $Enums.AdmissionStatus
   reviewedById: string | null
@@ -188,6 +195,7 @@ export type AdmissionApplicationWhereInput = {
   OR?: Prisma.AdmissionApplicationWhereInput[]
   NOT?: Prisma.AdmissionApplicationWhereInput | Prisma.AdmissionApplicationWhereInput[]
   id?: Prisma.StringFilter<"AdmissionApplication"> | string
+  userId?: Prisma.StringNullableFilter<"AdmissionApplication"> | string | null
   formData?: Prisma.JsonFilter<"AdmissionApplication">
   status?: Prisma.EnumAdmissionStatusFilter<"AdmissionApplication"> | $Enums.AdmissionStatus
   reviewedById?: Prisma.StringNullableFilter<"AdmissionApplication"> | string | null
@@ -198,6 +206,7 @@ export type AdmissionApplicationWhereInput = {
 
 export type AdmissionApplicationOrderByWithRelationInput = {
   id?: Prisma.SortOrder
+  userId?: Prisma.SortOrderInput | Prisma.SortOrder
   formData?: Prisma.SortOrder
   status?: Prisma.SortOrder
   reviewedById?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -211,6 +220,7 @@ export type AdmissionApplicationWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.AdmissionApplicationWhereInput | Prisma.AdmissionApplicationWhereInput[]
   OR?: Prisma.AdmissionApplicationWhereInput[]
   NOT?: Prisma.AdmissionApplicationWhereInput | Prisma.AdmissionApplicationWhereInput[]
+  userId?: Prisma.StringNullableFilter<"AdmissionApplication"> | string | null
   formData?: Prisma.JsonFilter<"AdmissionApplication">
   status?: Prisma.EnumAdmissionStatusFilter<"AdmissionApplication"> | $Enums.AdmissionStatus
   reviewedById?: Prisma.StringNullableFilter<"AdmissionApplication"> | string | null
@@ -221,6 +231,7 @@ export type AdmissionApplicationWhereUniqueInput = Prisma.AtLeast<{
 
 export type AdmissionApplicationOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
+  userId?: Prisma.SortOrderInput | Prisma.SortOrder
   formData?: Prisma.SortOrder
   status?: Prisma.SortOrder
   reviewedById?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -237,6 +248,7 @@ export type AdmissionApplicationScalarWhereWithAggregatesInput = {
   OR?: Prisma.AdmissionApplicationScalarWhereWithAggregatesInput[]
   NOT?: Prisma.AdmissionApplicationScalarWhereWithAggregatesInput | Prisma.AdmissionApplicationScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"AdmissionApplication"> | string
+  userId?: Prisma.StringNullableWithAggregatesFilter<"AdmissionApplication"> | string | null
   formData?: Prisma.JsonWithAggregatesFilter<"AdmissionApplication">
   status?: Prisma.EnumAdmissionStatusWithAggregatesFilter<"AdmissionApplication"> | $Enums.AdmissionStatus
   reviewedById?: Prisma.StringNullableWithAggregatesFilter<"AdmissionApplication"> | string | null
@@ -247,6 +259,7 @@ export type AdmissionApplicationScalarWhereWithAggregatesInput = {
 
 export type AdmissionApplicationCreateInput = {
   id?: string
+  userId?: string | null
   formData: Prisma.JsonNullValueInput | runtime.InputJsonValue
   status?: $Enums.AdmissionStatus
   reviewedById?: string | null
@@ -257,6 +270,7 @@ export type AdmissionApplicationCreateInput = {
 
 export type AdmissionApplicationUncheckedCreateInput = {
   id?: string
+  userId?: string | null
   formData: Prisma.JsonNullValueInput | runtime.InputJsonValue
   status?: $Enums.AdmissionStatus
   reviewedById?: string | null
@@ -267,6 +281,7 @@ export type AdmissionApplicationUncheckedCreateInput = {
 
 export type AdmissionApplicationUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   formData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.EnumAdmissionStatusFieldUpdateOperationsInput | $Enums.AdmissionStatus
   reviewedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -277,6 +292,7 @@ export type AdmissionApplicationUpdateInput = {
 
 export type AdmissionApplicationUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   formData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.EnumAdmissionStatusFieldUpdateOperationsInput | $Enums.AdmissionStatus
   reviewedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -287,6 +303,7 @@ export type AdmissionApplicationUncheckedUpdateInput = {
 
 export type AdmissionApplicationCreateManyInput = {
   id?: string
+  userId?: string | null
   formData: Prisma.JsonNullValueInput | runtime.InputJsonValue
   status?: $Enums.AdmissionStatus
   reviewedById?: string | null
@@ -297,6 +314,7 @@ export type AdmissionApplicationCreateManyInput = {
 
 export type AdmissionApplicationUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   formData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.EnumAdmissionStatusFieldUpdateOperationsInput | $Enums.AdmissionStatus
   reviewedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -307,6 +325,7 @@ export type AdmissionApplicationUpdateManyMutationInput = {
 
 export type AdmissionApplicationUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   formData?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.EnumAdmissionStatusFieldUpdateOperationsInput | $Enums.AdmissionStatus
   reviewedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -317,6 +336,7 @@ export type AdmissionApplicationUncheckedUpdateManyInput = {
 
 export type AdmissionApplicationCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   formData?: Prisma.SortOrder
   status?: Prisma.SortOrder
   reviewedById?: Prisma.SortOrder
@@ -327,6 +347,7 @@ export type AdmissionApplicationCountOrderByAggregateInput = {
 
 export type AdmissionApplicationMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   reviewedById?: Prisma.SortOrder
   reviewNote?: Prisma.SortOrder
@@ -336,6 +357,7 @@ export type AdmissionApplicationMaxOrderByAggregateInput = {
 
 export type AdmissionApplicationMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   reviewedById?: Prisma.SortOrder
   reviewNote?: Prisma.SortOrder
@@ -351,6 +373,7 @@ export type EnumAdmissionStatusFieldUpdateOperationsInput = {
 
 export type AdmissionApplicationSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  userId?: boolean
   formData?: boolean
   status?: boolean
   reviewedById?: boolean
@@ -361,6 +384,7 @@ export type AdmissionApplicationSelect<ExtArgs extends runtime.Types.Extensions.
 
 export type AdmissionApplicationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  userId?: boolean
   formData?: boolean
   status?: boolean
   reviewedById?: boolean
@@ -371,6 +395,7 @@ export type AdmissionApplicationSelectCreateManyAndReturn<ExtArgs extends runtim
 
 export type AdmissionApplicationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
+  userId?: boolean
   formData?: boolean
   status?: boolean
   reviewedById?: boolean
@@ -381,6 +406,7 @@ export type AdmissionApplicationSelectUpdateManyAndReturn<ExtArgs extends runtim
 
 export type AdmissionApplicationSelectScalar = {
   id?: boolean
+  userId?: boolean
   formData?: boolean
   status?: boolean
   reviewedById?: boolean
@@ -389,13 +415,14 @@ export type AdmissionApplicationSelectScalar = {
   reviewedAt?: boolean
 }
 
-export type AdmissionApplicationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "formData" | "status" | "reviewedById" | "reviewNote" | "submittedAt" | "reviewedAt", ExtArgs["result"]["admissionApplication"]>
+export type AdmissionApplicationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "formData" | "status" | "reviewedById" | "reviewNote" | "submittedAt" | "reviewedAt", ExtArgs["result"]["admissionApplication"]>
 
 export type $AdmissionApplicationPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "AdmissionApplication"
   objects: {}
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
+    userId: string | null
     formData: runtime.JsonValue
     status: $Enums.AdmissionStatus
     reviewedById: string | null
@@ -826,6 +853,7 @@ export interface Prisma__AdmissionApplicationClient<T, Null = never, ExtArgs ext
  */
 export interface AdmissionApplicationFieldRefs {
   readonly id: Prisma.FieldRef<"AdmissionApplication", 'String'>
+  readonly userId: Prisma.FieldRef<"AdmissionApplication", 'String'>
   readonly formData: Prisma.FieldRef<"AdmissionApplication", 'Json'>
   readonly status: Prisma.FieldRef<"AdmissionApplication", 'AdmissionStatus'>
   readonly reviewedById: Prisma.FieldRef<"AdmissionApplication", 'String'>

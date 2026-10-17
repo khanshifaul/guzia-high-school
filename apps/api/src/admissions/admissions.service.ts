@@ -1,25 +1,93 @@
-// src/admissions/admissions.service.ts — the admission workflow: public
-// submit → admin review → on APPROVE, transactionally create the enrolled
-// student + their login (specs/06 rule #4).
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+// src/admissions/admissions.service.ts — the admission workflow (specs/06
+// rule #4, extended): public submit creates a pending portal account +
+// generates credentials (emailed via Resend), admin review → on APPROVE the
+// pending user is activated and the enrolled Student is created atomically.
+import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
+import { randomBytes } from 'node:crypto';
 import { DatabaseService } from '../database/database.service';
+import { EmailService } from '../email/email.service';
 import { SubmitApplicationDto } from './dto/submit-application.dto';
 import { AdmissionDecision, ReviewApplicationDto } from './dto/review-application.dto';
 
 @Injectable()
 export class AdmissionsService {
-    constructor(private readonly prisma: DatabaseService) {}
+    private readonly logger = new Logger(AdmissionsService.name);
 
-    /** Public: anyone can submit an application. */
+    constructor(
+        private readonly prisma: DatabaseService,
+        private readonly email: EmailService,
+        private readonly config: ConfigService,
+    ) {}
+
+    /**
+     * Public submit: validate → create a pending portal account (role STUDENT,
+     * status BLOCKED until approved) → create the application → email the
+     * credentials. Returns the printable-form id + credentials (also shown
+     * on-screen so the applicant can save/print even without email).
+     */
     async submit(dto: SubmitApplicationDto) {
+        const email = dto.email.trim();
+        const existing = await this.prisma.user.findUnique({ where: { email } });
+        if (existing) {
+            throw new ConflictException(
+                'An account with this email already exists. Contact the school office.',
+            );
+        }
+
+        // Strong one-time portal password (shown/emailed once).
+        const password = this.generatePassword();
+        const passwordHash = await bcrypt.hash(password, 10);
+
+        // Username for the portal is the applicant's email (auth is email-based).
+        const username = email;
+
+        const user = await this.prisma.user.create({
+            data: {
+                email,
+                passwordHash,
+                fullName: dto.studentName,
+                role: 'STUDENT',
+                status: 'BLOCKED', // activated on admin approval
+            },
+        });
+
         const application = await this.prisma.admissionApplication.create({
             data: {
                 formData: { ...dto },
                 status: 'SUBMITTED',
+                userId: user.id,
             },
         });
-        return { id: application.id, status: application.status };
+
+        // Fire-and-forget the email; never fail the application over it.
+        void this.email
+            .sendAdmissionCredentials({
+                to: email,
+                studentName: dto.studentName,
+                applicationId: application.id,
+                username,
+                password,
+                classWanted: dto.classWanted,
+            })
+            .then((sent) => {
+                if (!sent) {
+                    this.logger.warn(
+                        `Credentials email not sent for ${email} (RESEND not configured?) — shown on-screen only.`,
+                    );
+                }
+            });
+
+        return {
+            id: application.id,
+            status: application.status,
+            username,
+            password,
+            studentName: dto.studentName,
+            classWanted: dto.classWanted,
+            emailSent: this.email.enabled,
+        };
     }
 
     /** Admin: review queue (optionally filter by status). */
@@ -38,8 +106,9 @@ export class AdmissionsService {
     }
 
     /**
-     * Admin reviews an application. APPROVE runs a transaction that creates the
-     * enrolled student and their login; REJECT only flips status. Re-review → 409.
+     * Admin reviews an application. APPROVE activates the pending portal
+     * account and creates the enrolled Student atomically; REJECT revokes the
+     * pending account and flips status. Re-review → 409.
      */
     async review(id: string, dto: ReviewApplicationDto, reviewerId: string) {
         const application = await this.prisma.admissionApplication.findUnique({
@@ -51,19 +120,30 @@ export class AdmissionsService {
         }
 
         if (dto.decision === AdmissionDecision.REJECTED) {
-            await this.prisma.admissionApplication.update({
-                where: { id },
-                data: {
-                    status: 'REJECTED',
-                    reviewedById: reviewerId,
-                    reviewNote: dto.note,
-                    reviewedAt: new Date(),
-                },
-            });
+            await this.prisma.$transaction([
+                this.prisma.admissionApplication.update({
+                    where: { id },
+                    data: {
+                        status: 'REJECTED',
+                        reviewedById: reviewerId,
+                        reviewNote: dto.note,
+                        reviewedAt: new Date(),
+                    },
+                }),
+                // Revoke the pending portal account on rejection.
+                ...(application.userId
+                    ? [
+                          this.prisma.user.update({
+                              where: { id: application.userId },
+                              data: { status: 'BLOCKED' },
+                          }),
+                      ]
+                    : []),
+            ]);
             return { status: 'REJECTED' as const };
         }
 
-        // APPROVE: create login + enrolled student atomically.
+        // APPROVE: activate pending user + create enrolled student atomically.
         const formData = application.formData as Record<string, unknown>;
         const classWanted = String(formData.classWanted ?? '');
         const cls = await this.prisma.class.findUnique({ where: { name: classWanted } });
@@ -74,33 +154,58 @@ export class AdmissionsService {
             orderBy: { name: 'asc' },
         });
 
-        const email = String(formData.email ?? '');
-        const existing = await this.prisma.user.findUnique({ where: { email } });
-        if (existing) throw new ConflictException('A user with this email already exists');
-
         const studentCount = await this.prisma.student.count({ where: { classId: cls.id } });
         const rollNo = studentCount + 1;
         const seq = (await this.prisma.student.count()) + 1;
         const admissionNo = `GHS-${new Date().getFullYear()}-${String(seq).padStart(3, '0')}`;
+        const fullName = String(formData.studentName ?? 'New Student');
 
-        // Deterministic demo password, shown once to the admin (documented in README).
-        const generatedPassword = `ghs${admissionNo.slice(-4)}!`;
-        const passwordHash = await bcrypt.hash(generatedPassword, 10);
+        if (application.userId) {
+            // Activate the pending account created at submit time.
+            await this.prisma.$transaction([
+                this.prisma.user.update({
+                    where: { id: application.userId },
+                    data: { status: 'ACTIVE', fullName },
+                }),
+                this.prisma.student.create({
+                    data: {
+                        userId: application.userId,
+                        admissionNo,
+                        fullName,
+                        classId: cls.id,
+                        sectionId: section?.id,
+                        rollNo,
+                    },
+                }),
+                this.prisma.admissionApplication.update({
+                    where: { id },
+                    data: {
+                        status: 'APPROVED',
+                        reviewedById: reviewerId,
+                        reviewNote: dto.note,
+                        reviewedAt: new Date(),
+                    },
+                }),
+            ]);
+            return { status: 'APPROVED' as const, admissionNo, rollNo };
+        }
+
+        // Legacy path (no pending user): create login + student together.
+        const email = String(formData.email ?? '');
+        const dup = await this.prisma.user.findUnique({ where: { email } });
+        if (dup) throw new ConflictException('A user with this email already exists');
+        const password = this.generatePassword();
+        const passwordHash = await bcrypt.hash(password, 10);
 
         await this.prisma.$transaction(async (tx) => {
             const user = await tx.user.create({
-                data: {
-                    email,
-                    passwordHash,
-                    fullName: String(formData.studentName ?? 'New Student'),
-                    role: 'STUDENT',
-                },
+                data: { email, passwordHash, fullName, role: 'STUDENT' },
             });
             await tx.student.create({
                 data: {
                     userId: user.id,
                     admissionNo,
-                    fullName: String(formData.studentName ?? 'New Student'),
+                    fullName,
                     classId: cls.id,
                     sectionId: section?.id,
                     rollNo,
@@ -117,12 +222,12 @@ export class AdmissionsService {
             });
         });
 
-        return {
-            status: 'APPROVED' as const,
-            admissionNo,
-            rollNo,
-            email,
-            generatedPassword,
-        };
+        return { status: 'APPROVED' as const, admissionNo, rollNo, email, generatedPassword: password };
+    }
+
+    /** URL-safe strong password, e.g. "kT7-pQm2-Xr9". */
+    private generatePassword(): string {
+        const raw = randomBytes(9).toString('base64url').replace(/[-_]/g, '');
+        return `${raw.slice(0, 4)}-${raw.slice(4, 8)}-${raw.slice(8, 12)}`;
     }
 }

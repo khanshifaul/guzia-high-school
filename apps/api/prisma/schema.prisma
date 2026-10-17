@@ -339,6 +339,9 @@ model Notice {
 
 model AdmissionApplication {
   id           String          @id @default(cuid())
+  // Pending portal account created at submit time (status BLOCKED until the
+  // admin approves); activated + linked to the enrolled Student on APPROVE.
+  userId       String?
   formData     Json
   status       AdmissionStatus @default(SUBMITTED)
   reviewedById String?
@@ -460,7 +463,8 @@ model SiteSetting {
   established   String   @default("1958")
   tagline       String   @default("Empowering students for academic excellence and lifelong success since 1958.")
   taglineBn     String   @default("১৯৫৮ সাল থেকে শিক্ষার্থীদের একাডেমিক উৎকর্ষ ও জীবনব্যাপী সাফল্যের জন্য ক্ষমতায়ন।")
-  developedBy   String   @default("Guzia School Portal")
+  developedBy   String   @default("Shifaul Islam")
+  developedByUrl String  @default("https://shifaul.dev")
   facebookUrl   String   @default("")
   twitterUrl    String   @default("")
   instagramUrl  String   @default("")

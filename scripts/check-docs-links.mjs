@@ -1,6 +1,6 @@
 // scripts/check-docs-links.mjs — verify internal markdown links resolve.
 // Scans README.md + specs/*.md for relative links and reports broken ones.
-import { readdirSync, readFileSync, existsSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 
 const root = resolve(dirname(new URL(import.meta.url).pathname), "..");

@@ -2868,6 +2868,7 @@ export type NoticeScalarFieldEnum = (typeof NoticeScalarFieldEnum)[keyof typeof 
 
 export const AdmissionApplicationScalarFieldEnum = {
   id: 'id',
+  userId: 'userId',
   formData: 'formData',
   status: 'status',
   reviewedById: 'reviewedById',
@@ -3000,6 +3001,7 @@ export const SiteSettingScalarFieldEnum = {
   tagline: 'tagline',
   taglineBn: 'taglineBn',
   developedBy: 'developedBy',
+  developedByUrl: 'developedByUrl',
   facebookUrl: 'facebookUrl',
   twitterUrl: 'twitterUrl',
   instagramUrl: 'instagramUrl',

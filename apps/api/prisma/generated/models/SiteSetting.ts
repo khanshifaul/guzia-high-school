@@ -39,6 +39,7 @@ export type SiteSettingMinAggregateOutputType = {
   tagline: string | null
   taglineBn: string | null
   developedBy: string | null
+  developedByUrl: string | null
   facebookUrl: string | null
   twitterUrl: string | null
   instagramUrl: string | null
@@ -63,6 +64,7 @@ export type SiteSettingMaxAggregateOutputType = {
   tagline: string | null
   taglineBn: string | null
   developedBy: string | null
+  developedByUrl: string | null
   facebookUrl: string | null
   twitterUrl: string | null
   instagramUrl: string | null
@@ -87,6 +89,7 @@ export type SiteSettingCountAggregateOutputType = {
   tagline: number
   taglineBn: number
   developedBy: number
+  developedByUrl: number
   facebookUrl: number
   twitterUrl: number
   instagramUrl: number
@@ -114,6 +117,7 @@ export type SiteSettingMinAggregateInputType = {
   tagline?: true
   taglineBn?: true
   developedBy?: true
+  developedByUrl?: true
   facebookUrl?: true
   twitterUrl?: true
   instagramUrl?: true
@@ -138,6 +142,7 @@ export type SiteSettingMaxAggregateInputType = {
   tagline?: true
   taglineBn?: true
   developedBy?: true
+  developedByUrl?: true
   facebookUrl?: true
   twitterUrl?: true
   instagramUrl?: true
@@ -162,6 +167,7 @@ export type SiteSettingCountAggregateInputType = {
   tagline?: true
   taglineBn?: true
   developedBy?: true
+  developedByUrl?: true
   facebookUrl?: true
   twitterUrl?: true
   instagramUrl?: true
@@ -260,6 +266,7 @@ export type SiteSettingGroupByOutputType = {
   tagline: string
   taglineBn: string
   developedBy: string
+  developedByUrl: string
   facebookUrl: string
   twitterUrl: string
   instagramUrl: string
@@ -306,6 +313,7 @@ export type SiteSettingWhereInput = {
   tagline?: Prisma.StringFilter<"SiteSetting"> | string
   taglineBn?: Prisma.StringFilter<"SiteSetting"> | string
   developedBy?: Prisma.StringFilter<"SiteSetting"> | string
+  developedByUrl?: Prisma.StringFilter<"SiteSetting"> | string
   facebookUrl?: Prisma.StringFilter<"SiteSetting"> | string
   twitterUrl?: Prisma.StringFilter<"SiteSetting"> | string
   instagramUrl?: Prisma.StringFilter<"SiteSetting"> | string
@@ -331,6 +339,7 @@ export type SiteSettingOrderByWithRelationInput = {
   tagline?: Prisma.SortOrder
   taglineBn?: Prisma.SortOrder
   developedBy?: Prisma.SortOrder
+  developedByUrl?: Prisma.SortOrder
   facebookUrl?: Prisma.SortOrder
   twitterUrl?: Prisma.SortOrder
   instagramUrl?: Prisma.SortOrder
@@ -359,6 +368,7 @@ export type SiteSettingWhereUniqueInput = Prisma.AtLeast<{
   tagline?: Prisma.StringFilter<"SiteSetting"> | string
   taglineBn?: Prisma.StringFilter<"SiteSetting"> | string
   developedBy?: Prisma.StringFilter<"SiteSetting"> | string
+  developedByUrl?: Prisma.StringFilter<"SiteSetting"> | string
   facebookUrl?: Prisma.StringFilter<"SiteSetting"> | string
   twitterUrl?: Prisma.StringFilter<"SiteSetting"> | string
   instagramUrl?: Prisma.StringFilter<"SiteSetting"> | string
@@ -384,6 +394,7 @@ export type SiteSettingOrderByWithAggregationInput = {
   tagline?: Prisma.SortOrder
   taglineBn?: Prisma.SortOrder
   developedBy?: Prisma.SortOrder
+  developedByUrl?: Prisma.SortOrder
   facebookUrl?: Prisma.SortOrder
   twitterUrl?: Prisma.SortOrder
   instagramUrl?: Prisma.SortOrder
@@ -415,6 +426,7 @@ export type SiteSettingScalarWhereWithAggregatesInput = {
   tagline?: Prisma.StringWithAggregatesFilter<"SiteSetting"> | string
   taglineBn?: Prisma.StringWithAggregatesFilter<"SiteSetting"> | string
   developedBy?: Prisma.StringWithAggregatesFilter<"SiteSetting"> | string
+  developedByUrl?: Prisma.StringWithAggregatesFilter<"SiteSetting"> | string
   facebookUrl?: Prisma.StringWithAggregatesFilter<"SiteSetting"> | string
   twitterUrl?: Prisma.StringWithAggregatesFilter<"SiteSetting"> | string
   instagramUrl?: Prisma.StringWithAggregatesFilter<"SiteSetting"> | string
@@ -440,6 +452,7 @@ export type SiteSettingCreateInput = {
   tagline?: string
   taglineBn?: string
   developedBy?: string
+  developedByUrl?: string
   facebookUrl?: string
   twitterUrl?: string
   instagramUrl?: string
@@ -465,6 +478,7 @@ export type SiteSettingUncheckedCreateInput = {
   tagline?: string
   taglineBn?: string
   developedBy?: string
+  developedByUrl?: string
   facebookUrl?: string
   twitterUrl?: string
   instagramUrl?: string
@@ -490,6 +504,7 @@ export type SiteSettingUpdateInput = {
   tagline?: Prisma.StringFieldUpdateOperationsInput | string
   taglineBn?: Prisma.StringFieldUpdateOperationsInput | string
   developedBy?: Prisma.StringFieldUpdateOperationsInput | string
+  developedByUrl?: Prisma.StringFieldUpdateOperationsInput | string
   facebookUrl?: Prisma.StringFieldUpdateOperationsInput | string
   twitterUrl?: Prisma.StringFieldUpdateOperationsInput | string
   instagramUrl?: Prisma.StringFieldUpdateOperationsInput | string
@@ -515,6 +530,7 @@ export type SiteSettingUncheckedUpdateInput = {
   tagline?: Prisma.StringFieldUpdateOperationsInput | string
   taglineBn?: Prisma.StringFieldUpdateOperationsInput | string
   developedBy?: Prisma.StringFieldUpdateOperationsInput | string
+  developedByUrl?: Prisma.StringFieldUpdateOperationsInput | string
   facebookUrl?: Prisma.StringFieldUpdateOperationsInput | string
   twitterUrl?: Prisma.StringFieldUpdateOperationsInput | string
   instagramUrl?: Prisma.StringFieldUpdateOperationsInput | string
@@ -540,6 +556,7 @@ export type SiteSettingCreateManyInput = {
   tagline?: string
   taglineBn?: string
   developedBy?: string
+  developedByUrl?: string
   facebookUrl?: string
   twitterUrl?: string
   instagramUrl?: string
@@ -565,6 +582,7 @@ export type SiteSettingUpdateManyMutationInput = {
   tagline?: Prisma.StringFieldUpdateOperationsInput | string
   taglineBn?: Prisma.StringFieldUpdateOperationsInput | string
   developedBy?: Prisma.StringFieldUpdateOperationsInput | string
+  developedByUrl?: Prisma.StringFieldUpdateOperationsInput | string
   facebookUrl?: Prisma.StringFieldUpdateOperationsInput | string
   twitterUrl?: Prisma.StringFieldUpdateOperationsInput | string
   instagramUrl?: Prisma.StringFieldUpdateOperationsInput | string
@@ -590,6 +608,7 @@ export type SiteSettingUncheckedUpdateManyInput = {
   tagline?: Prisma.StringFieldUpdateOperationsInput | string
   taglineBn?: Prisma.StringFieldUpdateOperationsInput | string
   developedBy?: Prisma.StringFieldUpdateOperationsInput | string
+  developedByUrl?: Prisma.StringFieldUpdateOperationsInput | string
   facebookUrl?: Prisma.StringFieldUpdateOperationsInput | string
   twitterUrl?: Prisma.StringFieldUpdateOperationsInput | string
   instagramUrl?: Prisma.StringFieldUpdateOperationsInput | string
@@ -615,6 +634,7 @@ export type SiteSettingCountOrderByAggregateInput = {
   tagline?: Prisma.SortOrder
   taglineBn?: Prisma.SortOrder
   developedBy?: Prisma.SortOrder
+  developedByUrl?: Prisma.SortOrder
   facebookUrl?: Prisma.SortOrder
   twitterUrl?: Prisma.SortOrder
   instagramUrl?: Prisma.SortOrder
@@ -640,6 +660,7 @@ export type SiteSettingMaxOrderByAggregateInput = {
   tagline?: Prisma.SortOrder
   taglineBn?: Prisma.SortOrder
   developedBy?: Prisma.SortOrder
+  developedByUrl?: Prisma.SortOrder
   facebookUrl?: Prisma.SortOrder
   twitterUrl?: Prisma.SortOrder
   instagramUrl?: Prisma.SortOrder
@@ -664,6 +685,7 @@ export type SiteSettingMinOrderByAggregateInput = {
   tagline?: Prisma.SortOrder
   taglineBn?: Prisma.SortOrder
   developedBy?: Prisma.SortOrder
+  developedByUrl?: Prisma.SortOrder
   facebookUrl?: Prisma.SortOrder
   twitterUrl?: Prisma.SortOrder
   instagramUrl?: Prisma.SortOrder
@@ -690,6 +712,7 @@ export type SiteSettingSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   tagline?: boolean
   taglineBn?: boolean
   developedBy?: boolean
+  developedByUrl?: boolean
   facebookUrl?: boolean
   twitterUrl?: boolean
   instagramUrl?: boolean
@@ -715,6 +738,7 @@ export type SiteSettingSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   tagline?: boolean
   taglineBn?: boolean
   developedBy?: boolean
+  developedByUrl?: boolean
   facebookUrl?: boolean
   twitterUrl?: boolean
   instagramUrl?: boolean
@@ -740,6 +764,7 @@ export type SiteSettingSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   tagline?: boolean
   taglineBn?: boolean
   developedBy?: boolean
+  developedByUrl?: boolean
   facebookUrl?: boolean
   twitterUrl?: boolean
   instagramUrl?: boolean
@@ -765,6 +790,7 @@ export type SiteSettingSelectScalar = {
   tagline?: boolean
   taglineBn?: boolean
   developedBy?: boolean
+  developedByUrl?: boolean
   facebookUrl?: boolean
   twitterUrl?: boolean
   instagramUrl?: boolean
@@ -775,7 +801,7 @@ export type SiteSettingSelectScalar = {
   updatedAt?: boolean
 }
 
-export type SiteSettingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "schoolName" | "schoolNameBn" | "phone" | "hotline" | "email" | "eiin" | "board" | "address" | "addressBn" | "established" | "tagline" | "taglineBn" | "developedBy" | "facebookUrl" | "twitterUrl" | "instagramUrl" | "youtubeUrl" | "linkedinUrl" | "websiteUrl" | "importantLinks" | "updatedAt", ExtArgs["result"]["siteSetting"]>
+export type SiteSettingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "schoolName" | "schoolNameBn" | "phone" | "hotline" | "email" | "eiin" | "board" | "address" | "addressBn" | "established" | "tagline" | "taglineBn" | "developedBy" | "developedByUrl" | "facebookUrl" | "twitterUrl" | "instagramUrl" | "youtubeUrl" | "linkedinUrl" | "websiteUrl" | "importantLinks" | "updatedAt", ExtArgs["result"]["siteSetting"]>
 
 export type $SiteSettingPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "SiteSetting"
@@ -795,6 +821,7 @@ export type $SiteSettingPayload<ExtArgs extends runtime.Types.Extensions.Interna
     tagline: string
     taglineBn: string
     developedBy: string
+    developedByUrl: string
     facebookUrl: string
     twitterUrl: string
     instagramUrl: string
@@ -1240,6 +1267,7 @@ export interface SiteSettingFieldRefs {
   readonly tagline: Prisma.FieldRef<"SiteSetting", 'String'>
   readonly taglineBn: Prisma.FieldRef<"SiteSetting", 'String'>
   readonly developedBy: Prisma.FieldRef<"SiteSetting", 'String'>
+  readonly developedByUrl: Prisma.FieldRef<"SiteSetting", 'String'>
   readonly facebookUrl: Prisma.FieldRef<"SiteSetting", 'String'>
   readonly twitterUrl: Prisma.FieldRef<"SiteSetting", 'String'>
   readonly instagramUrl: Prisma.FieldRef<"SiteSetting", 'String'>
