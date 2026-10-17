@@ -14,7 +14,7 @@ import {
     FaGraduationCap, FaChalkboardUser, FaBookOpen, FaFlask, FaTrophy, FaUsers,
     FaUserGraduate, FaSchool, FaAward, FaCalendarCheck, FaMicroscope, FaLaptopCode,
     FaDumbbell, FaMusic, FaBook, FaQuoteLeft, FaStar, FaPersonRunning, FaUtensils,
-    FaBus, FaArrowRight, FaHeart,
+    FaBus, FaArrowRight, FaHeart, FaUserCheck, FaMoneyBillWave,
 } from "react-icons/fa6";
 import { Navbar } from "@/components/public/navbar";
 import { Footer } from "@/components/public/footer";
@@ -176,6 +176,46 @@ export default function HomePage() {
                                     </motion.div>
                                 ))}
                             </div>
+                        </Reveal>
+                    </div>
+                </section>
+
+                {/* PRINCIPAL'S MESSAGE */}
+                <section className="py-20 md:py-28">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <Reveal>
+                            <motion.div variants={fadeInUp} className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+                                <motion.div variants={fadeIn} className="md:col-span-1">
+                                    <div className="relative aspect-[4/5] rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-border/60 flex flex-col items-center justify-center overflow-hidden">
+                                        <FaGraduationCap className="size-16 text-primary/40" />
+                                        <span className="mt-3 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Principal</span>
+                                    </div>
+                                </motion.div>
+                                <motion.div variants={fadeIn} className="md:col-span-2">
+                                    <p className="text-[10px] font-black text-primary uppercase tracking-[0.25em] mb-3">Principal&apos;s Message</p>
+                                    <h2 className="text-[clamp(1.5rem,4vw,2.25rem)] font-black tracking-tight text-foreground mb-4">
+                                        Nurturing Minds, <span className="text-primary">Forming Hearts</span>
+                                    </h2>
+                                    <p className="text-muted-foreground leading-relaxed mb-4">
+                                        Welcome to Guzia High School. Since 1958 we have been committed to academic
+                                        excellence and the formation of character. Our dedicated faculty mentor every
+                                        student — not just to succeed in examinations, but to grow into responsible,
+                                        compassionate citizens who will serve their community and country.
+                                    </p>
+                                    <p className="text-muted-foreground leading-relaxed mb-5">
+                                        We pair a rigorous curriculum with sports, culture, and science, so every child
+                                        discovers their strength. I invite you to join our community of learners and
+                                        leaders.
+                                    </p>
+                                    <div className="flex items-center gap-3 pt-4 border-t border-border/40">
+                                        <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black">DA</div>
+                                        <div>
+                                            <p className="font-bold text-sm text-foreground">Dr. Anwar Hossain</p>
+                                            <p className="text-[11px] text-muted-foreground">Principal, Guzia High School</p>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            </motion.div>
                         </Reveal>
                     </div>
                 </section>
@@ -367,6 +407,40 @@ export default function HomePage() {
                                                 <p className="text-white text-xs font-bold">{g.label}</p>
                                             </div>
                                         </div>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
+                        </Reveal>
+                    </div>
+                </section>
+
+                {/* ONLINE SERVICES */}
+                <section className="py-20 md:py-28 bg-muted/30 border-y border-border/60" id="notices">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <Reveal>
+                            <motion.div variants={stagger} className="text-center mb-12">
+                                <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-2">Online Services</motion.h2>
+                                <motion.p variants={fadeIn} className="text-muted-foreground">Access the portal for admissions, attendance, results, fees, and AI assistance.</motion.p>
+                            </motion.div>
+                            <motion.div variants={stagger} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                                {[
+                                    { icon: FaUserCheck, title: "Online Admission", desc: "Apply and track admission online.", href: "/login" },
+                                    { icon: FaCalendarCheck, title: "Attendance", desc: "Daily attendance for students & parents.", href: "/login" },
+                                    { icon: FaGraduationCap, title: "Results & GPA", desc: "Published results with canonical GPA.", href: "/login" },
+                                    { icon: FaMoneyBillWave, title: "Fee Payment", desc: "View dues and payment history.", href: "/login" },
+                                ].map((s) => (
+                                    <motion.div key={s.title} variants={fadeInUp}>
+                                        <Link href={s.href}>
+                                            <Card className="h-full border-border/60 hover:border-primary/30 transition-colors group cursor-pointer">
+                                                <CardContent className="p-6 text-center">
+                                                    <div className="inline-flex items-center justify-center size-12 rounded-xl bg-primary/10 mb-4 group-hover:bg-primary/20 transition-colors">
+                                                        <s.icon className="size-6 text-primary" />
+                                                    </div>
+                                                    <h3 className="font-bold text-foreground mb-1">{s.title}</h3>
+                                                    <p className="text-xs text-muted-foreground">{s.desc}</p>
+                                                </CardContent>
+                                            </Card>
+                                        </Link>
                                     </motion.div>
                                 ))}
                             </motion.div>
