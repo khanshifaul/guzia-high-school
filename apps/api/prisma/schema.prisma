@@ -439,9 +439,35 @@ model SourceDocument {
 }
 
 model SourceChunk {
-  id         String         @id @default(cuid())
+  id         String @id @default(cuid())
   documentId String
   document   SourceDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
   page       Int?
   content    String
+}
+
+model SiteSetting {
+  id            String   @id @default("singleton")
+  schoolName    String   @default("Guzia High School")
+  schoolNameBn  String   @default("গুজিয়া উচ্চ বিদ্যালয়")
+  phone         String   @default("+880 1711-000000")
+  hotline       String   @default("")
+  email         String   @default("info@guziahs.edu")
+  eiin          String   @default("123456")
+  board         String   @default("Rajshahi Education Board")
+  address       String   @default("Guzia, Bangladesh")
+  addressBn     String   @default("গুজিয়া, বাংলাদেশ")
+  established   String   @default("1958")
+  tagline       String   @default("Empowering students for academic excellence and lifelong success since 1958.")
+  taglineBn     String   @default("১৯৫৮ সাল থেকে শিক্ষার্থীদের একাডেমিক উৎকর্ষ ও জীবনব্যাপী সাফল্যের জন্য ক্ষমতায়ন।")
+  developedBy   String   @default("Guzia School Portal")
+  facebookUrl   String   @default("")
+  twitterUrl    String   @default("")
+  instagramUrl  String   @default("")
+  youtubeUrl    String   @default("")
+  linkedinUrl   String   @default("")
+  websiteUrl    String   @default("")
+  // [{ label, labelBn, href }] — rendered in the footer Important Links bar.
+  importantLinks Json     @default("[]")
+  updatedAt     DateTime @updatedAt
 }

@@ -157,3 +157,8 @@ export type SourceDocument = Prisma.SourceDocumentModel
  * 
  */
 export type SourceChunk = Prisma.SourceChunkModel
+/**
+ * Model SiteSetting
+ * 
+ */
+export type SiteSetting = Prisma.SiteSettingModel

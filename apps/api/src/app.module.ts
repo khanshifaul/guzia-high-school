@@ -18,6 +18,7 @@ import { AdmissionsModule } from './admissions/admissions.module';
 import { NoticesModule } from './notices/notices.module';
 import { AiModule } from './ai/ai.module';
 import { UploadModule } from './upload/upload.module';
+import { SiteSettingsModule } from './site-settings/site-settings.module';
 import { AccessTokenGuard } from './common/guards/access-token.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { HealthController } from './health.controller';
@@ -43,6 +44,7 @@ import { HealthController } from './health.controller';
     NoticesModule,
     AiModule,
     UploadModule,
+    SiteSettingsModule,
   ],
   controllers: [HealthController],
   providers: [

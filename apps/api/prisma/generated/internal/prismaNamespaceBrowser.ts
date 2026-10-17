@@ -78,7 +78,8 @@ export const ModelName = {
   QuestionPaper: 'QuestionPaper',
   Question: 'Question',
   SourceDocument: 'SourceDocument',
-  SourceChunk: 'SourceChunk'
+  SourceChunk: 'SourceChunk',
+  SiteSetting: 'SiteSetting'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -450,6 +451,34 @@ export const SourceChunkScalarFieldEnum = {
 } as const
 
 export type SourceChunkScalarFieldEnum = (typeof SourceChunkScalarFieldEnum)[keyof typeof SourceChunkScalarFieldEnum]
+
+
+export const SiteSettingScalarFieldEnum = {
+  id: 'id',
+  schoolName: 'schoolName',
+  schoolNameBn: 'schoolNameBn',
+  phone: 'phone',
+  hotline: 'hotline',
+  email: 'email',
+  eiin: 'eiin',
+  board: 'board',
+  address: 'address',
+  addressBn: 'addressBn',
+  established: 'established',
+  tagline: 'tagline',
+  taglineBn: 'taglineBn',
+  developedBy: 'developedBy',
+  facebookUrl: 'facebookUrl',
+  twitterUrl: 'twitterUrl',
+  instagramUrl: 'instagramUrl',
+  youtubeUrl: 'youtubeUrl',
+  linkedinUrl: 'linkedinUrl',
+  websiteUrl: 'websiteUrl',
+  importantLinks: 'importantLinks',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SiteSettingScalarFieldEnum = (typeof SiteSettingScalarFieldEnum)[keyof typeof SiteSettingScalarFieldEnum]
 
 
 export const SortOrder = {
