@@ -4,7 +4,7 @@
 
 import * as React from "react";
 import { motion } from "motion/react";
-import { FaChalkboardUser, FaPlus, FaSpinner } from "react-icons/fa6";
+import { FaChalkboardUser, FaPlus, FaSpinner, FaPen, FaBan } from "react-icons/fa6";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,9 @@ export default function AdminTeachersPage() {
     const [form, setForm] = React.useState({ fullName: "", email: "", password: "password123", phone: "" });
     const [busy, setBusy] = React.useState(false);
     const [feedback, setFeedback] = React.useState<{ kind: "ok" | "err"; msg: string } | null>(null);
+    const [editTeacher, setEditTeacher] = React.useState<Teacher | null>(null);
+    const [editForm, setEditForm] = React.useState({ fullName: "", phone: "" });
+    const [busyId, setBusyId] = React.useState<string | null>(null);
 
     const load = React.useCallback(() => {
         api<{ data: Teacher[] }>("/teachers")
@@ -55,6 +58,39 @@ export default function AdminTeachersPage() {
         } catch (err) {
             setFeedback({ kind: "err", msg: err instanceof RequestError ? err.messages.join("; ") : "Create failed" });
         } finally { setBusy(false); }
+    }
+
+    function openEdit(t: Teacher) {
+        setEditTeacher(t);
+        setEditForm({ fullName: t.user.fullName, phone: t.phone ?? "" });
+    }
+
+    async function saveEdit() {
+        if (!editTeacher) return;
+        setBusyId(editTeacher.id); setFeedback(null);
+        try {
+            await api(`/teachers/${editTeacher.id}`, {
+                method: "PATCH",
+                body: { fullName: editForm.fullName, phone: editForm.phone || undefined },
+            });
+            setFeedback({ kind: "ok", msg: "Teacher updated" });
+            setEditTeacher(null);
+            load();
+        } catch (err) {
+            setFeedback({ kind: "err", msg: err instanceof RequestError ? err.messages.join("; ") : "Update failed" });
+        } finally { setBusyId(null); }
+    }
+
+    async function block(t: Teacher) {
+        if (!confirm(`Block ${t.user.fullName}? Their login will be disabled.`)) return;
+        setBusyId(t.id); setFeedback(null);
+        try {
+            await api(`/teachers/${t.id}`, { method: "DELETE" });
+            setFeedback({ kind: "ok", msg: `${t.user.fullName} blocked` });
+            load();
+        } catch (err) {
+            setFeedback({ kind: "err", msg: err instanceof RequestError ? err.messages.join("; ") : "Block failed" });
+        } finally { setBusyId(null); }
     }
 
     if (loading) return <div className="space-y-6"><PageHeader title="Teachers" icon={FaChalkboardUser} /><Skeleton className="h-32" /></div>;
@@ -116,12 +152,41 @@ export default function AdminTeachersPage() {
                                             ))
                                         )}
                                     </div>
+                                    <div className="flex gap-2 mt-4 pt-3 border-t border-border/60">
+                                        <Button size="sm" variant="outline" onClick={() => openEdit(t)} disabled={busyId === t.id}
+                                            className="flex-1 font-black text-[10px] uppercase tracking-wider">
+                                            <FaPen size={10} /> Edit
+                                        </Button>
+                                        <Button size="sm" variant="outline" onClick={() => block(t)} disabled={busyId === t.id}
+                                            className="text-destructive border-destructive/20 hover:bg-destructive/10 font-black text-[10px] uppercase tracking-wider">
+                                            {busyId === t.id ? <FaSpinner className="animate-spin" size={10} /> : <FaBan size={10} />} Block
+                                        </Button>
+                                    </div>
                                 </CardContent>
                             </Card>
                         </motion.div>
                     ))}
                 </div>
             )}
+
+            <Dialog open={!!editTeacher} onOpenChange={(o) => !o && setEditTeacher(null)}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader><DialogTitle className="font-black uppercase tracking-tight">Edit Teacher</DialogTitle></DialogHeader>
+                    <div className="space-y-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Full name</label>
+                            <Input value={editForm.fullName} onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })} className="h-11" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Phone</label>
+                            <Input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} className="h-11" placeholder="Optional" />
+                        </div>
+                        <Button onClick={saveEdit} disabled={busyId === editTeacher?.id || !editForm.fullName} className="w-full h-11 font-black text-xs uppercase tracking-wider">
+                            {busyId === editTeacher?.id ? <><FaSpinner className="animate-spin" size={12} /> Saving…</> : "Save Changes"}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

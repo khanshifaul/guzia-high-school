@@ -1,9 +1,9 @@
 // src/teachers/teachers.controller.ts — teacher endpoints (admin-only writes).
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../common/decorators/roles.decorator';
 import { TeachersService } from './teachers.service';
-import { CreateTeacherDto } from './dto';
+import { CreateTeacherDto, UpdateTeacherDto } from './dto';
 
 @ApiTags('Teachers')
 @Controller('teachers')
@@ -27,6 +27,12 @@ export class TeachersController {
     @ApiOperation({ summary: 'Create a teacher (and login user)' })
     create(@Body() dto: CreateTeacherDto) {
         return this.service.create(dto);
+    }
+
+    @Roles('ADMIN')
+    @Patch(':id')
+    update(@Param('id') id: string, @Body() dto: UpdateTeacherDto) {
+        return this.service.update(id, dto);
     }
 
     @Roles('ADMIN')

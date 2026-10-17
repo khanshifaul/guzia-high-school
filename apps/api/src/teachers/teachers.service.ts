@@ -2,7 +2,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { DatabaseService } from '../database/database.service';
-import { CreateTeacherDto } from './dto';
+import { CreateTeacherDto, UpdateTeacherDto } from './dto';
 
 @Injectable()
 export class TeachersService {
@@ -55,6 +55,26 @@ export class TeachersService {
                 phone: dto.phone,
             },
             include: { user: { select: { email: true, fullName: true } } },
+        });
+    }
+
+    /** Update a teacher's profile (name/phone) and their linked user's name. */
+    async update(id: string, dto: UpdateTeacherDto) {
+        const teacher = await this.prisma.teacher.findUnique({ where: { id } });
+        if (!teacher) throw new NotFoundException('Teacher not found');
+
+        return this.prisma.$transaction(async (tx) => {
+            if (dto.fullName) {
+                await tx.user.update({
+                    where: { id: teacher.userId },
+                    data: { fullName: dto.fullName },
+                });
+            }
+            return tx.teacher.update({
+                where: { id },
+                data: { ...(dto.phone !== undefined ? { phone: dto.phone } : {}) },
+                include: { user: { select: { id: true, email: true, fullName: true, status: true } } },
+            });
         });
     }
 
