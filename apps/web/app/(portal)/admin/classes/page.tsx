@@ -5,11 +5,19 @@
 
 import * as React from "react";
 import { motion } from "motion/react";
-import { FaLayerGroup } from "react-icons/fa6";
+import { FaLayerGroup, FaPlus, FaSpinner } from "react-icons/fa6";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import {
     Select,
     SelectContent,
@@ -27,16 +35,30 @@ interface SchoolClass {
     subjects: ClassSubject[];
 }
 interface Teacher { id: string; user: { fullName: string } }
+interface SubjectOption { id: string; name: string; code: string }
 
 export default function AdminClassesPage() {
     const [classes, setClasses] = React.useState<SchoolClass[]>([]);
     const [teachers, setTeachers] = React.useState<Teacher[]>([]);
+    const [subjects, setSubjects] = React.useState<SubjectOption[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [feedback, setFeedback] = React.useState<{ kind: "ok" | "err"; msg: string } | null>(null);
+    const [busy, setBusy] = React.useState(false);
+
+    // Dialog states: "class" | "subject" | { kind: "section"|"attach", classId }
+    const [dialog, setDialog] = React.useState<"class" | "subject" | { kind: "section" | "attach"; classId: string } | null>(null);
+    const [className, setClassName] = React.useState("");
+    const [sectionName, setSectionName] = React.useState("");
+    const [subjectName, setSubjectName] = React.useState("");
+    const [subjectCode, setSubjectCode] = React.useState("");
+    const [attachSubjectId, setAttachSubjectId] = React.useState("");
 
     const load = React.useCallback(() => {
         api<{ classes: SchoolClass[] }>("/classes")
-            .then((p) => setClasses(p.classes))
+            .then((p) => {
+                setClasses(p.classes);
+                setSubjects(p.schoolSubjects ?? []);
+            })
             .catch(() => setClasses([]))
             .finally(() => setLoading(false));
     }, []);
@@ -45,7 +67,7 @@ export default function AdminClassesPage() {
         load();
         api<{ data: Teacher[] }>("/teachers")
             .then((p) => setTeachers(p.data))
-            .catch(() => setTeachers([]));
+            .catch(() => setTeachers(() => []));
     }, [load]);
 
     async function assign(classSubjectId: string, teacherId: string) {
@@ -59,11 +81,48 @@ export default function AdminClassesPage() {
         }
     }
 
+    async function submitDialog() {
+        setBusy(true); setFeedback(null);
+        try {
+            if (dialog === "class") {
+                await api("/classes", { method: "POST", body: { name: className } });
+                setFeedback({ kind: "ok", msg: `Class "${className}" created` });
+                setClassName("");
+            } else if (dialog === "subject") {
+                await api("/classes/subjects", { method: "POST", body: { name: subjectName, code: subjectCode.toUpperCase() } });
+                setFeedback({ kind: "ok", msg: `Subject "${subjectName}" created` });
+                setSubjectName(""); setSubjectCode("");
+            } else if (dialog && typeof dialog === "object" && dialog.kind === "section") {
+                await api(`/classes/${dialog.classId}/sections`, { method: "POST", body: { name: sectionName } });
+                setFeedback({ kind: "ok", msg: `Section "${sectionName}" added` });
+                setSectionName("");
+            } else if (dialog && typeof dialog === "object" && dialog.kind === "attach") {
+                await api(`/classes/${dialog.classId}/subjects/${attachSubjectId}`, { method: "POST" });
+                setFeedback({ kind: "ok", msg: "Subject attached to class" });
+                setAttachSubjectId("");
+            }
+            setDialog(null);
+            load();
+        } catch (err) {
+            setFeedback({ kind: "err", msg: err instanceof RequestError ? err.messages.join("; ") : "Action failed" });
+        } finally { setBusy(false); }
+    }
+
     if (loading) return <div className="space-y-6"><PageHeader title="Classes" icon={FaLayerGroup} /><Skeleton className="h-32" /></div>;
 
     return (
         <div className="space-y-6">
-            <PageHeader title="Classes & Subjects" subtitle="Academic structure and teacher assignments" icon={FaLayerGroup} />
+            <PageHeader title="Classes & Subjects" subtitle="Academic structure and teacher assignments" icon={FaLayerGroup}
+                actions={
+                    <>
+                        <Button onClick={() => setDialog("subject")} className="font-black text-xs uppercase tracking-wider">
+                            <FaPlus size={12} /> New Subject
+                        </Button>
+                        <Button onClick={() => setDialog("class")} className="font-black text-xs uppercase tracking-wider">
+                            <FaPlus size={12} /> New Class
+                        </Button>
+                    </>
+                } />
 
             {feedback ? (
                 <div className={`p-4 text-xs font-bold text-center uppercase tracking-wide rounded-xl shadow-sm border ${feedback.kind === "ok" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-destructive/10 text-destructive border-destructive/20"}`}>
@@ -79,9 +138,17 @@ export default function AdminClassesPage() {
                         <Card className="border-border/60 shadow-sm">
                             <CardHeader className="border-b border-border/60 pb-4 flex flex-row items-center justify-between">
                                 <CardTitle className="text-lg font-black uppercase tracking-tight">{cls.name}</CardTitle>
-                                <div className="flex gap-2">
+                                <div className="flex items-center gap-2">
                                     <Badge className="bg-primary/10 text-primary border-primary/20">{cls._count.students} students</Badge>
                                     <Badge variant="outline">{cls.sections.length} sections</Badge>
+                                    <Button size="sm" variant="outline" onClick={() => { setSectionName(""); setDialog({ kind: "section", classId: cls.id }); }}
+                                        className="font-black text-[10px] uppercase tracking-wider">
+                                        <FaPlus size={10} /> Section
+                                    </Button>
+                                    <Button size="sm" variant="outline" onClick={() => { setAttachSubjectId(""); setDialog({ kind: "attach", classId: cls.id }); }}
+                                        className="font-black text-[10px] uppercase tracking-wider">
+                                        <FaPlus size={10} /> Subject
+                                    </Button>
                                 </div>
                             </CardHeader>
                             <CardContent className="p-6 space-y-4">
@@ -117,6 +184,42 @@ export default function AdminClassesPage() {
                     </motion.div>
                 ))
             )}
+
+            <Dialog open={!!dialog} onOpenChange={(o) => !o && setDialog(null)}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="font-black uppercase tracking-tight">
+                            {dialog === "class" ? "New Class" : dialog === "subject" ? "New Subject" : dialog?.kind === "section" ? "Add Section" : "Attach Subject"}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        {dialog === "class" && (
+                            <Input placeholder="Class name (e.g. Class 11)" value={className} onChange={(e) => setClassName(e.target.value)} className="h-11" />
+                        )}
+                        {dialog === "subject" && (
+                            <>
+                                <Input placeholder="Subject name (e.g. Higher Math)" value={subjectName} onChange={(e) => setSubjectName(e.target.value)} className="h-11" />
+                                <Input placeholder="Code (e.g. HMath)" value={subjectCode} onChange={(e) => setSubjectCode(e.target.value)} className="h-11" />
+                            </>
+                        )}
+                        {dialog && typeof dialog === "object" && dialog.kind === "section" && (
+                            <Input placeholder="Section name (e.g. A)" value={sectionName} onChange={(e) => setSectionName(e.target.value)} className="h-11" />
+                        )}
+                        {dialog && typeof dialog === "object" && dialog.kind === "attach" && (
+                            <Select value={attachSubjectId || undefined} onValueChange={setAttachSubjectId}>
+                                <SelectTrigger className="h-11"><SelectValue placeholder="Choose a subject" /></SelectTrigger>
+                                <SelectContent>
+                                    {subjects.map((s) => (<SelectItem key={s.id} value={s.id}>{s.name} ({s.code})</SelectItem>))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                        <Button onClick={submitDialog} disabled={busy}
+                            className="w-full h-11 font-black text-xs uppercase tracking-wider">
+                            {busy ? <><FaSpinner className="animate-spin" size={12} /> Saving…</> : "Save"}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
