@@ -10,9 +10,34 @@ import {
     Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { IsIn, IsString, Length } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { User } from '../../common/decorators/user.decorator';
 import { SourcesService } from './sources.service';
+
+class IngestSourceDto {
+    @ApiProperty({ example: 'ch3-algebra.txt' })
+    @IsString()
+    @Length(1, 200)
+    filename: string;
+
+    @ApiProperty({ enum: ['PDF', 'IMAGE'] })
+    @IsIn(['PDF', 'IMAGE'])
+    kind: 'PDF' | 'IMAGE';
+
+    @ApiProperty({ description: 'Full extracted text of the source' })
+    @IsString()
+    @Length(1, 200000)
+    text: string;
+}
+
+class AskDto {
+    @ApiProperty({ example: 'What is the distributive property?' })
+    @IsString()
+    @Length(1, 500)
+    question: string;
+}
 
 @ApiTags('AI Sources')
 @Controller('ai/sources')
@@ -23,6 +48,20 @@ export class SourcesController {
     @Get()
     list(@User() user: { id: string }) {
         return this.service.list(user.id);
+    }
+
+    @Roles('TEACHER')
+    @Post('ingest')
+    @ApiOperation({ summary: 'Ingest source text, chunk + auto-summarize' })
+    ingest(@Body() dto: IngestSourceDto, @User() user: { id: string }) {
+        return this.service.ingest({
+            userId: user.id,
+            filename: dto.filename,
+            kind: dto.kind,
+            // Single-page ingest: the whole text is page 1 for now (PDF/page
+            // splitting wires in later per spec 10).
+            pages: [{ page: 1, text: dto.text }],
+        });
     }
 
     @Roles('TEACHER')
