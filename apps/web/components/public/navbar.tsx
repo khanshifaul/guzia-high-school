@@ -49,7 +49,6 @@ export function Navbar() {
                         <span className="text-muted-foreground/30">|</span>
                         <span>EIIN: {cfg.eiin}</span>
                         <span className="text-muted-foreground/30">|</span>
-                        <span>{cfg.board}</span>
                     </div>
                     <span className="md:hidden inline-block text-primary font-bold tracking-wider">GHS</span>
 
@@ -67,8 +66,6 @@ export function Navbar() {
                 </div>
             </div>
 
-            {/* Notice ticker */}
-            <NoticeTicker />
 
             {/* LAYER 2: brand (collapsible on scroll) */}
             <motion.div
@@ -126,7 +123,8 @@ export function Navbar() {
                     })}
                 </div>
             </div>
-
+            {/* Notice ticker */}
+            <NoticeTicker />
             {/* Mobile drawer */}
             <AnimatePresence>
                 {isOpen ? (

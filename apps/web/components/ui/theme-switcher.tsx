@@ -60,7 +60,6 @@ export function ThemeSwitcher() {
     return (
         <DropdownMenuItem onClick={toggleTheme} closeOnSelect={false}>
             {getIcon()}
-            <span>Theme: {getLabel()}</span>
         </DropdownMenuItem>
     )
 }

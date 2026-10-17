@@ -19,11 +19,16 @@ export class SiteSettingsService {
 
   /** Public read; creates the singleton row (with defaults) if missing. */
   async get() {
-    const existing = await this.prisma.siteSetting.findUnique({ where: { id: 'singleton' } });
-    if (existing) return existing;
-    return this.prisma.siteSetting.create({
-      data: { id: 'singleton', importantLinks: DEFAULT_LINKS },
-    });
+        const existing = await this.prisma.siteSetting.findUnique({ where: { id: 'singleton' } });
+        if (existing) return existing;
+        return this.prisma.siteSetting.create({
+            data: {
+                id: 'singleton',
+                developedBy: 'Shifaul Islam',
+                developedByUrl: 'https://shifaul.dev',
+                importantLinks: DEFAULT_LINKS,
+            },
+        });
   }
 
   /** Admin update (partial). */
