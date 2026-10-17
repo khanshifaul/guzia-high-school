@@ -16,6 +16,19 @@
   "prisma": {
     "seed": "bun run prisma/seed.ts"
   },
+  "jest": {
+    "moduleFileExtensions": ["js", "json", "ts"],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/$1",
+      "^prisma/generated/client$": "<rootDir>/../prisma/generated/client"
+    },
+    "testEnvironment": "node"
+  },
   "dependencies": {
     "@nestjs/common": "^11.1.12",
     "@nestjs/config": "^4.0.2",

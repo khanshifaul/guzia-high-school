@@ -31,15 +31,27 @@ export function percent(marksObtained: number, totalMarks: number): number {
     return (marksObtained / totalMarks) * 100;
 }
 
-/** Find the band containing a percentage (bands are contiguous, inclusive). */
+/**
+ * Find the band for a percentage. Bands are defined by integer `minPercent`
+ * boundaries (A+ = 80, A = 70, …) but percentages are continuous, so a value
+ * like 79.99 must still grade as A. We therefore pick the band with the
+ * greatest minPercent that is <= pct — this covers the half-open ranges the
+ * integer boundaries imply ([70, 80), [80, 100]) without gap-falling to F.
+ */
 export function bandFor(pct: number, bands: Band[]): Band {
-    const match = bands.find((b) => pct >= b.minPercent && pct <= b.maxPercent);
-    if (match) return match;
-
-    // No band matched (pct outside every range, or the table is empty). Fall
-    // back to the lowest-point band so a misconfigured DB never 500s.
     if (bands.length === 0) return { minPercent: 0, maxPercent: 100, letter: "F", point: 0 };
-    return bands.reduce((lowest, b) => (b.point < lowest.point ? b : lowest), bands[0]);
+
+    let best: Band | null = null;
+    for (const b of bands) {
+        if (pct >= b.minPercent && (best === null || b.minPercent > best.minPercent)) {
+            best = b;
+        }
+    }
+    // Below every minPercent (e.g. a negative) → lowest band by point value.
+    if (best === null) {
+        return bands.reduce((lowest, b) => (b.point < lowest.point ? b : lowest), bands[0]);
+    }
+    return best;
 }
 
 /** Grade a single subject against the canonical bands. */
