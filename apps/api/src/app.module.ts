@@ -16,6 +16,7 @@ import { TeachersModule } from './teachers/teachers.module';
 import { AssignmentsModule } from './assignments/assignments.module';
 import { AdmissionsModule } from './admissions/admissions.module';
 import { NoticesModule } from './notices/notices.module';
+import { AiModule } from './ai/ai.module';
 import { AccessTokenGuard } from './common/guards/access-token.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { HealthController } from './health.controller';
@@ -39,6 +40,7 @@ import { HealthController } from './health.controller';
     AssignmentsModule,
     AdmissionsModule,
     NoticesModule,
+    AiModule,
   ],
   controllers: [HealthController],
   providers: [
