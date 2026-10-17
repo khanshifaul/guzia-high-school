@@ -19,6 +19,9 @@ export interface LlmCompleteOpts {
     maxTokens?: number;
     /** Use the vision model path (image inputs) instead of the text model. */
     vision?: boolean;
+    /** Which mock fixture to return when the mock provider is active. Callers
+     *  declare intent explicitly — substring-sniffing the prompt is fragile. */
+    mockFixture?: 'plan' | 'paper' | 'summary';
 }
 
 /** In-memory cache so we don't hit the DB on every generation. */
@@ -119,8 +122,9 @@ export class LlmService {
         if (!opts.json) {
             return 'This is a mocked AI response (AI_MOCK provider).';
         }
-        // Heuristic on the system prompt to pick a fixture shape.
-        if (opts.system.includes('weeks') || opts.system.includes('plan')) {
+        // Explicit intent from the caller (substring-sniffing proved fragile —
+        // "question-paper" contains "plan"). Fall back to summary.
+        if (opts.mockFixture === 'plan') {
             return JSON.stringify({
                 title: 'Mock Year Plan',
                 weeks: Array.from({ length: 12 }, (_, i) => ({
@@ -131,7 +135,7 @@ export class LlmService {
                 })),
             });
         }
-        if (opts.system.includes('questions') || opts.system.includes('paper')) {
+        if (opts.mockFixture === 'paper') {
             return JSON.stringify({
                 title: 'Mock Test Paper',
                 groups: [

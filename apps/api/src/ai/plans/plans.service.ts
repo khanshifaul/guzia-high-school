@@ -79,7 +79,7 @@ export class PlansService {
         const user = `Class: ${cls.name}\nSubject: ${subject.name}\nType: ${dto.type}\nWeeks: ${weekCount}` +
             (dto.topicsHint ? `\nFocus topics: ${dto.topicsHint}` : '');
 
-        const raw = await this.llm.complete({ system, user, json: true, maxTokens: 2000 });
+        const raw = await this.llm.complete({ system, user, json: true, maxTokens: 2000, mockFixture: 'plan' });
         const parsed = this.parsePlan(raw, weekCount);
 
         const weeks = this.fillDates(parsed.weeks, dto.startDate);

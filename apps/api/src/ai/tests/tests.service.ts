@@ -85,7 +85,7 @@ export class TestsService {
             `Class: ${cls.name}\nSubject: ${subject.name}\nTopics: ${dto.topics.join(', ')}\n` +
             `MCQ: ${mcq}, Short: ${short}, Long: ${long}\nTotal marks: ${dto.totalMarks}, Duration: ${dto.durationMinutes} min`;
 
-        const raw = await this.llm.complete({ system, user, json: true, maxTokens: 4000 });
+        const raw = await this.llm.complete({ system, user, json: true, maxTokens: 4000, mockFixture: 'paper' });
         const paper = this.parsePaper(raw, { mcq, short, long });
 
         // Assign marks + enforce the total.

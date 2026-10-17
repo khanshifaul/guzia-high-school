@@ -207,7 +207,7 @@ export class SourcesService {
             'Summarize the following school source material as JSON: {"summary": string, ' +
             '"keyTopics": string[], "glossary": [{"term": string, "definition": string}], ' +
             '"suggestedQuestions": string[]}. Respond only with JSON.';
-        const raw = await this.llm.complete({ system, user: truncated, json: true, maxTokens: 1200 });
+        const raw = await this.llm.complete({ system, user: truncated, json: true, maxTokens: 1200, mockFixture: 'summary' });
         let json: unknown;
         try {
             json = JSON.parse(raw);
