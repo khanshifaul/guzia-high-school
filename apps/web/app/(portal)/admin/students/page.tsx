@@ -1,0 +1,176 @@
+"use client";
+
+// app/(portal)/admin/students/page.tsx — student directory: search, filter,
+// create, view detail (with stats).
+
+import * as React from "react";
+import Link from "next/link";
+import { motion } from "motion/react";
+import { FaUsers, FaPlus, FaMagnifyingGlass, FaSpinner } from "react-icons/fa6";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { PageHeader } from "@/components/shared/page-header";
+import { api, RequestError } from "@/lib/api";
+
+interface Student {
+    id: string; admissionNo: string; fullName: string; rollNo: number;
+    class: { name: string }; section: { name: string } | null;
+    user: { email: string; status: string } | null;
+}
+interface ClassOption { id: string; name: string; sections: { id: string; name: string }[] }
+
+export default function AdminStudentsPage() {
+    const [students, setStudents] = React.useState<Student[]>([]);
+    const [classes, setClasses] = React.useState<ClassOption[]>([]);
+    const [search, setSearch] = React.useState("");
+    const [loading, setLoading] = React.useState(true);
+    const [loadingList, setLoadingList] = React.useState(false);
+
+    const [open, setOpen] = React.useState(false);
+    const [form, setForm] = React.useState({ fullName: "", email: "", password: "password123", classId: "", sectionId: "", rollNo: "1" });
+    const [busy, setBusy] = React.useState(false);
+    const [feedback, setFeedback] = React.useState<{ kind: "ok" | "err"; msg: string } | null>(null);
+
+    const load = React.useCallback((q: string) => {
+        setLoadingList(true);
+        api<{ data: Student[] }>(`/students${q ? `?search=${encodeURIComponent(q)}` : ""}`)
+            .then((p) => setStudents(p.data))
+            .catch(() => setStudents([]))
+            .finally(() => setLoadingList(false));
+    }, []);
+
+    React.useEffect(() => {
+        load("");
+        api<{ classes: ClassOption[] }>("/classes")
+            .then((p) => setClasses(p.classes))
+            .catch(() => setClasses([]))
+            .finally(() => setLoading(false));
+    }, [load]);
+
+    React.useEffect(() => {
+        const t = setTimeout(() => load(search), 300);
+        return () => clearTimeout(t);
+    }, [search, load]);
+
+    async function create() {
+        setBusy(true);
+        setFeedback(null);
+        try {
+            await api("/students", {
+                method: "POST",
+                body: {
+                    fullName: form.fullName,
+                    email: form.email,
+                    password: form.password,
+                    classId: form.classId,
+                    sectionId: form.sectionId || undefined,
+                    rollNo: Number(form.rollNo),
+                },
+            });
+            setFeedback({ kind: "ok", msg: "Student created" });
+            setOpen(false);
+            setForm({ fullName: "", email: "", password: "password123", classId: "", sectionId: "", rollNo: "1" });
+            load(search);
+        } catch (err) {
+            setFeedback({ kind: "err", msg: err instanceof RequestError ? err.messages.join("; ") : "Create failed" });
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    if (loading) return <div className="space-y-6"><PageHeader title="Students" icon={FaUsers} /><Skeleton className="h-32" /></div>;
+
+    return (
+        <div className="space-y-6">
+            <PageHeader title="Students" subtitle={`${students.length} enrolled`} icon={FaUsers}
+                actions={
+                    <Dialog open={open} onOpenChange={setOpen}>
+                        <DialogTrigger asChild>
+                            <Button className="font-black text-xs uppercase tracking-wider"><FaPlus size={12} /> Add Student</Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-lg">
+                            <DialogHeader><DialogTitle className="font-black uppercase tracking-tight">Add Student</DialogTitle></DialogHeader>
+                            <div className="space-y-4">
+                                <Input placeholder="Full name" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} className="h-11" />
+                                <Input type="email" placeholder="Email (login)" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="h-11" />
+                                <Input placeholder="Temp password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="h-11" />
+                                <div className="grid grid-cols-3 gap-3">
+                                    <Select value={form.classId || undefined} onValueChange={(v) => setForm({ ...form, classId: v, sectionId: "" })}>
+                                        <SelectTrigger className="h-11"><SelectValue placeholder="Class" /></SelectTrigger>
+                                        <SelectContent>{classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                    <Select value={form.sectionId || undefined} onValueChange={(v) => setForm({ ...form, sectionId: v })}>
+                                        <SelectTrigger className="h-11"><SelectValue placeholder="Section" /></SelectTrigger>
+                                        <SelectContent>{classes.find((c) => c.id === form.classId)?.sections.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                    <Input type="number" min={1} placeholder="Roll" value={form.rollNo} onChange={(e) => setForm({ ...form, rollNo: e.target.value })} className="h-11" />
+                                </div>
+                                <Button onClick={create} disabled={busy || !form.fullName || !form.email || !form.classId} className="w-full h-11 font-black text-xs uppercase tracking-wider">
+                                    {busy ? <><FaSpinner className="animate-spin" size={12} /> Creating…</> : "Create Student"}
+                                </Button>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
+                } />
+
+            <div className="relative max-w-md">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground"><FaMagnifyingGlass size={12} /></div>
+                <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name or admission no…" className="pl-9 h-11" />
+            </div>
+
+            {feedback ? (
+                <div className={`p-4 text-xs font-bold text-center uppercase tracking-wide rounded-xl shadow-sm border ${feedback.kind === "ok" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-destructive/10 text-destructive border-destructive/20"}`}>
+                    {feedback.msg}
+                </div>
+            ) : null}
+
+            {loadingList ? (
+                <Skeleton className="h-64" />
+            ) : students.length === 0 ? (
+                <EmptyState title="No students" description="Add a student or adjust your search." />
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {students.map((s, i) => (
+                        <motion.div key={s.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.02, 0.3) }}>
+                            <Link href={`/admin/students/${s.id}`}>
+                                <Card className="border-border/60 shadow-sm cursor-pointer hover:border-primary/20 transition-all h-full">
+                                    <CardContent className="p-5 flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black shrink-0">
+                                            {s.fullName.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-bold truncate">{s.fullName}</p>
+                                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{s.admissionNo}</p>
+                                            <div className="flex gap-1.5 mt-1">
+                                                <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px]">{s.class.name}</Badge>
+                                                {s.section ? <Badge variant="outline" className="text-[9px]">{s.section.name}</Badge> : null}
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </Link>
+                        </motion.div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
