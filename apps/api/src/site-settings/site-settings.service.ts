@@ -35,13 +35,15 @@ export class SiteSettingsService {
   async update(dto: UpdateSiteSettingsDto) {
     await this.get(); // ensure row exists
     const { importantLinks, ...rest } = dto;
+    // Round-trip through JSON so DTO instances become plain objects for Prisma.
+    const links = importantLinks
+      ? (JSON.parse(JSON.stringify(importantLinks)) as Prisma.InputJsonValue)
+      : undefined;
     return this.prisma.siteSetting.update({
       where: { id: 'singleton' },
       data: {
         ...rest,
-        ...(importantLinks
-          ? { importantLinks: importantLinks as unknown as Prisma.InputJsonValue }
-          : {}),
+        ...(links ? { importantLinks: links } : {}),
       },
     });
   }

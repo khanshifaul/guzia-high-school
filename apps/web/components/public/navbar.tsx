@@ -9,7 +9,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { FaGlobe, FaPhone, FaUserTie, FaUserGraduate } from "react-icons/fa";
+import { FaGlobe, FaPhone, FaSignInAlt } from "react-icons/fa";
 import { FiMenu, FiX } from "react-icons/fi";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "@/components/ui/theme-switcher";
@@ -25,6 +25,46 @@ const navLinks = [
     { href: "/admission", labelEn: "Admission", labelBn: "ভর্তি" },
     { href: "/#contact", labelEn: "Contact", labelBn: "যোগাযোগ" },
 ];
+
+const BN_DIGITS = ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"];
+
+function toBnDigits(s: string): string {
+    return s.replace(/[0-9]/g, (d) => BN_DIGITS[Number(d)]);
+}
+
+/** Live date + time in the utility bar. Hydration-safe (blank until mounted),
+ *  bilingual (Bengali digits in BN mode), ticks every second. */
+function LiveClock() {
+    const { language } = useLanguage();
+    const [now, setNow] = React.useState<Date | null>(null);
+
+    React.useEffect(() => {
+        setNow(new Date());
+        const t = setInterval(() => setNow(new Date()), 1000);
+        return () => clearInterval(t);
+    }, []);
+
+    if (!now) return <span className="text-[11px] font-semibold text-muted-foreground">—</span>;
+
+    const date = now.toLocaleDateString(language === "bn" ? "bn-BD" : "en-GB", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+    });
+    const time = now.toLocaleTimeString(language === "bn" ? "bn-BD" : "en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+    });
+
+    return (
+        <span className="text-[11px] font-semibold text-muted-foreground whitespace-nowrap">
+            {language === "bn" ? toBnDigits(`${date} · ${time}`) : `${date} · ${time}`}
+        </span>
+    );
+}
 
 export function Navbar() {
     const pathname = usePathname();
@@ -48,11 +88,12 @@ export function Navbar() {
                         <span className="flex items-center gap-1.5"><FaPhone size={10} /> {cfg.phone}</span>
                         <span className="text-muted-foreground/30">|</span>
                         <span>EIIN: {cfg.eiin}</span>
-                        <span className="text-muted-foreground/30">|</span>
                     </div>
                     <span className="md:hidden inline-block text-primary font-bold tracking-wider">GHS</span>
 
                     <div className="flex items-center gap-3">
+                        <LiveClock />
+                        <span className="w-px h-3 bg-border hidden md:block" />
                         <button
                             onClick={() => setLanguage(language === "en" ? "bn" : "en")}
                             className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors text-[11px] font-semibold text-muted-foreground"
@@ -91,12 +132,7 @@ export function Navbar() {
                         </Link>
                         <Link href="/login">
                             <Button variant="outline" size="sm" className="gap-1.5 font-black text-[10px] uppercase tracking-wider">
-                                <FaUserTie size={11} /> {t("Teacher", "শিক্ষক")}
-                            </Button>
-                        </Link>
-                        <Link href="/login">
-                            <Button variant="outline" size="sm" className="gap-1.5 font-black text-[10px] uppercase tracking-wider">
-                                <FaUserGraduate size={11} /> {t("Student", "শিক্ষার্থী")}
+                                <FaSignInAlt size={11} /> {t("Login", "লগইন")}
                             </Button>
                         </Link>
                     </div>

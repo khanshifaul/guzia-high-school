@@ -20,6 +20,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/shared/page-header";
+import { SiteSettingsPanel } from "@/components/admin/site-settings-panel";
 import { api, RequestError } from "@/lib/api";
 
 interface ProviderConfig {
@@ -128,7 +129,7 @@ export default function AdminSettingsPage() {
 
     return (
         <div className="space-y-6">
-            <PageHeader title="Settings" subtitle="AI provider configuration" icon={FaGear} />
+            <PageHeader title="Settings" subtitle="AI provider & site configuration" icon={FaGear} />
 
             {feedback ? (
                 <div className={`p-4 text-xs font-bold text-center uppercase tracking-wide rounded-xl shadow-sm border ${feedback.kind === "ok" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-destructive/10 text-destructive border-destructive/20"}`}>
@@ -208,6 +209,8 @@ export default function AdminSettingsPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            <SiteSettingsPanel />
         </div>
     );
 }

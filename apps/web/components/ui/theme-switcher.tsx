@@ -50,13 +50,6 @@ export function ThemeSwitcher() {
         return <FiSun className="mr-2 h-4 w-4" />
     }
 
-    const getLabel = () => {
-        if (!mounted) return "Theme"
-        if (theme === "system") return "System"
-        if (theme === "dark") return "Dark"
-        return "Light"
-    }
-
     return (
         <DropdownMenuItem onClick={toggleTheme} closeOnSelect={false}>
             {getIcon()}

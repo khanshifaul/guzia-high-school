@@ -1,6 +1,7 @@
 // src/site-settings/dto/update-site-settings.dto.ts — admin edit of public
 // site info (phone, email, EIIN, board, socials, important links).
-import { IsArray, IsOptional, IsString, IsUrl, Length } from 'class-validator';
+import { Type } from 'class-transformer';
+import { ArrayNotEmpty, IsArray, IsOptional, IsString, IsUrl, Length, ValidateNested } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ImportantLinkDto {
@@ -44,5 +45,8 @@ export class UpdateSiteSettingsDto {
   @ApiPropertyOptional({ type: [ImportantLinkDto] })
   @IsOptional()
   @IsArray()
+  @ArrayNotEmpty()
+  @ValidateNested({ each: true })
+  @Type(() => ImportantLinkDto)
   importantLinks?: ImportantLinkDto[];
 }
