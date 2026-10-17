@@ -64,8 +64,8 @@ export default function TeacherAssignmentsPage() {
     React.useEffect(() => {
         if (!classId) return;
         setLoadingList(true);
-        api<{ data: Assignment[] }>(`/assignments/class/${classId}`)
-            .then((p) => setAssignments(p.data))
+        api<Assignment[]>(`/assignments/class/${classId}`)
+            .then((p) => setAssignments(p))
             .catch(() => setAssignments([]))
             .finally(() => setLoadingList(false));
     }, [classId]);
@@ -82,8 +82,8 @@ export default function TeacherAssignmentsPage() {
             setOpen(false);
             setTitle(""); setDescription(""); setSubjectId(null); setDueDate("");
             if (classId) {
-                const p = await api<{ data: Assignment[] }>(`/assignments/class/${classId}`);
-                setAssignments(p.data);
+                const p = await api<Assignment[]>(`/assignments/class/${classId}`);
+                setAssignments(p);
             }
         } catch (err) {
             setFeedback({ kind: "err", msg: err instanceof RequestError ? err.messages.join("; ") : "Create failed" });

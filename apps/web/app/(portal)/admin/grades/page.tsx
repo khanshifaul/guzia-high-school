@@ -34,8 +34,8 @@ export default function AdminGradesPage() {
     const [feedback, setFeedback] = React.useState<{ kind: "ok" | "err"; msg: string } | null>(null);
 
     const load = React.useCallback(() => {
-        api<{ data: Exam[] }>("/exams")
-            .then((p) => setExams(p.data))
+        api<Exam[]>("/exams")
+            .then((p) => setExams(p))
             .catch(() => setExams([]))
             .finally(() => setLoading(false));
     }, []);

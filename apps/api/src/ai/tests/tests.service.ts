@@ -155,7 +155,8 @@ export class TestsService {
         return result.data;
     }
 
-    async findOne(id: string, teacherId: string) {
+    async findOne(id: string, userId: string) {
+        const teacherId = await this.resolveTeacherId(userId);
         const paper = await this.prisma.questionPaper.findUnique({
             where: { id },
             include: { questions: { orderBy: { order: 'asc' } }, class: true, subject: true },

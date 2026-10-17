@@ -32,8 +32,8 @@ export default function AdminStudentDetailPage() {
     const [error, setError] = React.useState<string | null>(null);
 
     React.useEffect(() => {
-        api<{ data: Detail }>(`/students/${params.id}`)
-            .then((p) => setStudent(p.data))
+        api<Detail>(`/students/${params.id}`)
+            .then((p) => setStudent(p))
             .catch(() => setError("Failed to load student"))
             .finally(() => setLoading(false));
     }, [params.id]);

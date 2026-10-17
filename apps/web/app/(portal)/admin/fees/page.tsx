@@ -54,8 +54,8 @@ export default function AdminFeesPage() {
     const [feedback, setFeedback] = React.useState<{ kind: "ok" | "err"; msg: string } | null>(null);
 
     const loadHeads = React.useCallback(() => {
-        api<{ data: FeeHead[] }>("/fees/heads")
-            .then((p) => setHeads(p.data))
+        api<FeeHead[]>("/fees/heads")
+            .then((p) => setHeads(p))
             .catch(() => setHeads([]))
             .finally(() => setLoading(false));
     }, []);
@@ -73,8 +73,8 @@ export default function AdminFeesPage() {
 
     React.useEffect(() => {
         if (!studentId) { setLedger(null); return; }
-        api<{ data: Ledger }>(`/fees/ledger/${studentId}`)
-            .then((p) => setLedger(p.data))
+        api<Ledger>(`/fees/ledger/${studentId}`)
+            .then((p) => setLedger(p))
             .catch(() => setLedger(null));
     }, [studentId]);
 
@@ -100,7 +100,7 @@ export default function AdminFeesPage() {
             });
             setFeedback({ kind: "ok", msg: `Payment recorded across ${res.allocations.length} invoice(s) (waterfall)` });
             setOpenPay(false); setPayAmount("");
-            api<{ data: Ledger }>(`/fees/ledger/${studentId}`).then((p) => setLedger(p.data));
+            api<Ledger>(`/fees/ledger/${studentId}`).then((p) => setLedger(p));
         } catch (err) {
             setFeedback({ kind: "err", msg: err instanceof RequestError ? err.messages.join("; ") : "Payment failed" });
         } finally { setBusy(false); }

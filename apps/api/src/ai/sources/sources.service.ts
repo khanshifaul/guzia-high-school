@@ -3,6 +3,7 @@
 // (RAG-lite keyword retrieval, top-k chunks → LLM, page-cited).
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
+import { UploadService } from '../../upload/upload.service';
 import { LlmService } from '../llm/llm.service';
 import { z } from 'zod';
 
@@ -21,6 +22,7 @@ export class SourcesService {
     constructor(
         private readonly prisma: DatabaseService,
         private readonly llm: LlmService,
+        private readonly upload: UploadService,
     ) {}
 
     async list(userId: string) {
@@ -87,6 +89,58 @@ export class SourcesService {
 
         return this.prisma.sourceDocument.findUnique({
             where: { id: doc.id },
+            include: { chunks: true },
+        });
+    }
+
+    /** Handle an uploaded file (PDF/text): store it (R2 or local), extract
+     *  text (unpdf for PDFs), then run the normal ingest pipeline. */
+    async ingestUpload(
+        userId: string,
+        file: { buffer: Buffer; originalname: string; mimetype: string } | undefined,
+    ) {
+        if (!file) throw new BadRequestException('No file provided (use form field "file")');
+
+        const isPdf = file.mimetype === 'application/pdf' || file.originalname.toLowerCase().endsWith('.pdf');
+        const isText = file.mimetype === 'text/plain' || file.originalname.toLowerCase().endsWith('.txt');
+        if (!isPdf && !isText) {
+            throw new BadRequestException('Only PDF and plain-text (.txt) files are supported');
+        }
+
+        // Store the original file (R2 or local disk).
+        const stored = await this.upload.storeFile(
+            file.buffer,
+            file.originalname,
+            file.mimetype,
+            'sources',
+        );
+
+        // Extract text: unpdf for PDFs, direct decode for text.
+        let pages: { page: number; text: string }[];
+        if (isPdf) {
+            const { extractText } = await import('unpdf');
+            const doc = await extractText(file.buffer, { mergePages: false });
+            const raw = (doc.text as string[]) ?? [];
+            pages = raw.map((text, i) => ({ page: i + 1, text })).filter((p) => p.text.trim());
+            if (pages.length === 0) {
+                throw new BadRequestException(
+                    'No extractable text in this PDF (it may be a scanned image).',
+                );
+            }
+        } else {
+            pages = [{ page: 1, text: file.buffer.toString('utf8') }];
+        }
+
+        const doc = await this.ingest({
+            userId,
+            filename: file.originalname,
+            kind: isPdf ? 'PDF' : 'PDF',
+            pages,
+        });
+        // Attach the stored-file URL so the UI can link back to the original.
+        return this.prisma.sourceDocument.update({
+            where: { id: (doc as { id: string }).id },
+            data: { summary: { ...((doc as { summary: unknown }).summary ?? {}), fileUrl: stored.url, fileKey: stored.key, storage: stored.storage } as never },
             include: { chunks: true },
         });
     }

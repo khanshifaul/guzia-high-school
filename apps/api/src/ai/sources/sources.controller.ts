@@ -8,13 +8,17 @@ import {
     Param,
     Post,
     Query,
+    UploadedFile,
+    UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { IsIn, IsString, Length } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { User } from '../../common/decorators/user.decorator';
 import { SourcesService } from './sources.service';
+import { UploadService } from '../../upload/upload.service';
 
 class IngestSourceDto {
     @ApiProperty({ example: 'ch3-algebra.txt' })
@@ -42,12 +46,33 @@ class AskDto {
 @ApiTags('AI Sources')
 @Controller('ai/sources')
 export class SourcesController {
-    constructor(private readonly service: SourcesService) {}
+    constructor(
+        private readonly service: SourcesService,
+        private readonly uploadService: UploadService,
+    ) {}
 
     @Roles('TEACHER')
     @Get()
     list(@User() user: { id: string }) {
         return this.service.list(user.id);
+    }
+
+    @Roles('TEACHER')
+    @Post('upload')
+    @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 15 * 1024 * 1024 } }))
+    @ApiOperation({ summary: 'Upload a PDF/text file → store (R2/local), extract, summarize' })
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: { file: { type: 'string', format: 'binary' } },
+        },
+    })
+    async uploadSource(
+        @UploadedFile() file: { buffer: Buffer; originalname: string; mimetype: string } | undefined,
+        @User() user: { id: string },
+    ) {
+        return this.service.ingestUpload(user.id, file);
     }
 
     @Roles('TEACHER')

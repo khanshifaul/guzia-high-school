@@ -37,8 +37,8 @@ export default function StudentAssignmentsPage() {
 
     const load = React.useCallback(() => {
         if (!classId) return;
-        api<{ data: Assignment[] }>(`/assignments/class/${classId}`)
-            .then((p) => setAssignments(p.data))
+        api<Assignment[]>(`/assignments/class/${classId}`)
+            .then((p) => setAssignments(p))
             .catch(() => setAssignments([]))
             .finally(() => setLoading(false));
     }, [classId]);

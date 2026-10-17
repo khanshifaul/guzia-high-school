@@ -113,6 +113,48 @@ export class ProviderConfigService {
             return { ok: false, error: (err as Error).message };
         }
     }
+
+    /**
+     * Fetch the provider's available models (OpenAI GET /models). Accepts
+     * unsaved form values so the admin can pull the list before saving.
+     */
+    async listModels(dto: UpdateProviderConfigDto): Promise<{ models: string[] }> {
+        const secret = this.configService.get<string>('AI_CONFIG_SECRET') ?? '';
+        const existing = await this.prisma.aiProviderConfig.findUnique({
+            where: { id: 'singleton' },
+        });
+
+        const apiKey =
+            dto.apiKey && dto.apiKey.length > 0
+                ? dto.apiKey
+                : existing?.apiKeyEnc
+                  ? (await import('./llm/crypto.util')).decrypt(existing.apiKeyEnc, secret)
+                  : '';
+
+        const isMock = (dto.name ?? existing?.name ?? '').toLowerCase().startsWith('mock');
+        if (isMock) {
+            // Offline demo: return a small static list so the dropdown works.
+            return { models: ['mock-text-model', 'mock-vision-model'] };
+        }
+
+        const baseUrl = dto.baseUrl ?? existing?.baseUrl;
+        if (!baseUrl) {
+            throw new NotFoundException('Set a base URL first, then fetch models.');
+        }
+
+        try {
+            const { OpenAI } = await import('openai');
+            const client = new OpenAI({ apiKey: apiKey || 'missing-key', baseURL: baseUrl });
+            const list = await client.models.list();
+            const models = (list.data ?? [])
+                .map((m) => m.id)
+                .filter((id): id is string => typeof id === 'string')
+                .sort();
+            return { models };
+        } catch (err) {
+            throw new NotFoundException(`Could not fetch models: ${(err as Error).message}`);
+        }
+    }
 }
 
 /** Mask a key as "sk-…last4" for the UI. */

@@ -31,4 +31,11 @@ export class ProviderConfigController {
     test(@Body() dto: UpdateProviderConfigDto) {
         return this.service.testConnection(dto);
     }
+
+    @Roles('ADMIN')
+    @Post('models')
+    @ApiOperation({ summary: 'Fetch available models from the provider (OpenAI /models)' })
+    listModels(@Body() dto: UpdateProviderConfigDto) {
+        return this.service.listModels(dto);
+    }
 }

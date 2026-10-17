@@ -1,11 +1,11 @@
 "use client";
 
 // app/(portal)/admin/settings/page.tsx — admin settings: AI provider control
-// panel (base URL, models, masked key, test-connection). The "switch LLM
-// without restart" demo.
+// panel. Base URL + API key + "Fetch models" → select text/vision models from
+// the provider's list. No temperature / provider-name fields (kept simple).
 
 import * as React from "react";
-import { FaGear, FaWifi, FaSpinner } from "react-icons/fa6";
+import { FaGear, FaWifi, FaSpinner, FaDownload } from "react-icons/fa6";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,45 +24,90 @@ import { api, RequestError } from "@/lib/api";
 
 interface ProviderConfig {
     id: string; name: string; baseUrl: string; textModel: string; visionModel: string | null;
-    apiKeyHint: string | null; temperature: number; maxTokens: number; enabled: boolean;
+    apiKeyHint: string | null; enabled: boolean;
 }
 interface TestResult { ok: boolean; latencyMs?: number; reply?: string; error?: string }
+
+const NONE = "__none__";
+
+/** Derive a short display label from the base URL host (replaces the old
+ *  free-text provider name; keeps mock detection off when pointing at a real
+ *  provider). */
+function deriveLabel(baseUrl: string): string {
+    try {
+        const host = new URL(baseUrl).hostname.replace(/^www\./, "");
+        return host.split(".")[0] || host;
+    } catch {
+        return "Mock";
+    }
+}
 
 export default function AdminSettingsPage() {
     const [config, setConfig] = React.useState<ProviderConfig | null>(null);
     const [loading, setLoading] = React.useState(true);
-    const [form, setForm] = React.useState({ name: "", baseUrl: "", textModel: "", visionModel: "", apiKey: "", temperature: 0.3, enabled: true });
+    const [baseUrl, setBaseUrl] = React.useState("");
+    const [textModel, setTextModel] = React.useState("");
+    const [visionModel, setVisionModel] = React.useState(NONE);
+    const [apiKey, setApiKey] = React.useState("");
+    const [enabled, setEnabled] = React.useState(true);
+    const [models, setModels] = React.useState<string[]>([]);
+    const [fetching, setFetching] = React.useState(false);
     const [busy, setBusy] = React.useState(false);
     const [test, setTest] = React.useState<TestResult | null>(null);
     const [testing, setTesting] = React.useState(false);
     const [feedback, setFeedback] = React.useState<{ kind: "ok" | "err"; msg: string } | null>(null);
 
     React.useEffect(() => {
-        api<{ data: ProviderConfig }>("/ai/provider-config")
-            .then((p) => {
-                const c = p.data;
+        api<ProviderConfig>("/ai/provider-config")
+            .then((c) => {
                 setConfig(c);
-                setForm({ name: c.name, baseUrl: c.baseUrl, textModel: c.textModel, visionModel: c.visionModel ?? "", apiKey: "", temperature: c.temperature, enabled: c.enabled });
+                setBaseUrl(c.baseUrl);
+                setTextModel(c.textModel);
+                setVisionModel(c.visionModel ?? NONE);
+                setEnabled(c.enabled);
+                // If a text model is already set, show it in the dropdown too.
+                if (c.textModel) setModels((m) => (m.includes(c.textModel) ? m : [c.textModel, ...m]));
             })
             .catch(() => setConfig(null))
             .finally(() => setLoading(false));
     }, []);
 
+    async function fetchModels() {
+        setFetching(true);
+        setFeedback(null);
+        try {
+            const body: Record<string, unknown> = { baseUrl };
+            if (apiKey) body.apiKey = apiKey;
+            const res = await api<{ models: string[] }>("/ai/provider-config/models", { method: "POST", body });
+            setModels(res.models);
+            setFeedback({ kind: "ok", msg: `Loaded ${res.models.length} models from provider` });
+        } catch (err) {
+            setFeedback({ kind: "err", msg: err instanceof RequestError ? err.messages.join("; ") : "Could not fetch models" });
+        } finally {
+            setFetching(false);
+        }
+    }
+
     async function save() {
         setBusy(true); setFeedback(null);
         try {
+            // Keep the seeded mock mode unless the admin points at a real
+            // provider (key entered or base URL changed).
+            const keepMock =
+                !!config?.name.toLowerCase().startsWith("mock") &&
+                !apiKey &&
+                baseUrl === config?.baseUrl;
             const body: Record<string, unknown> = {
-                name: form.name,
-                baseUrl: form.baseUrl,
-                textModel: form.textModel,
-                visionModel: form.visionModel || null,
-                temperature: form.temperature,
-                enabled: form.enabled,
+                name: keepMock ? config?.name : deriveLabel(baseUrl),
+                baseUrl,
+                textModel,
+                visionModel: visionModel === NONE ? null : visionModel,
+                enabled,
             };
-            if (form.apiKey) body.apiKey = form.apiKey;
-            const updated = await api<{ data: ProviderConfig }>("/ai/provider-config", { method: "PUT", body });
-            setConfig(updated.data);
-            setFeedback({ kind: "ok", msg: "Provider config saved (applies within 60s)" });
+            if (apiKey) body.apiKey = apiKey;
+            const updated = await api<ProviderConfig>("/ai/provider-config", { method: "PUT", body });
+            setConfig(updated);
+            setFeedback({ kind: "ok", msg: "Provider saved (applies within 60s)" });
         } catch (err) {
             setFeedback({ kind: "err", msg: err instanceof RequestError ? err.messages.join("; ") : "Save failed" });
         } finally { setBusy(false); }
@@ -71,10 +116,9 @@ export default function AdminSettingsPage() {
     async function testConnection() {
         setTesting(true); setTest(null);
         try {
-            const body: Record<string, unknown> = { name: form.name, baseUrl: form.baseUrl, textModel: form.textModel };
-            if (form.apiKey) body.apiKey = form.apiKey;
-            const res = await api<TestResult>("/ai/provider-config/test", { method: "POST", body });
-            setTest(res);
+            const body: Record<string, unknown> = { baseUrl, textModel };
+            if (apiKey) body.apiKey = apiKey;
+            setTest(await api<TestResult>("/ai/provider-config/test", { method: "POST", body }));
         } catch (err) {
             setTest({ ok: false, error: err instanceof RequestError ? err.messages.join("; ") : "Test failed" });
         } finally { setTesting(false); }
@@ -101,50 +145,56 @@ export default function AdminSettingsPage() {
                 </CardHeader>
                 <CardContent className="p-6 space-y-5">
                     <p className="text-xs text-muted-foreground">
-                        Point the app at any OpenAI-compatible API (DeepSeek, OpenAI, Groq, local Ollama…). Changes apply within 60s — no restart.
+                        OpenAI-compatible: DeepSeek, OpenAI, Groq, local Ollama… Enter the base URL + key, then fetch models to pick text/vision.
                     </p>
+
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Base URL</label>
+                        <Input value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} className="h-11" placeholder="https://api.deepseek.com/v1" />
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
+                            API key {config?.apiKeyHint ? <span className="text-emerald-600">(stored: {config.apiKeyHint})</span> : <span className="text-muted-foreground">(none)</span>}
+                        </label>
+                        <Input type="password" value={apiKey} onChange={(e) => setApiKey(e.target.value)} className="h-11" placeholder="sk-… (leave blank to keep)" />
+                    </div>
+
+                    <Button onClick={fetchModels} disabled={fetching || !baseUrl} variant="outline"
+                        className="w-full font-black text-xs uppercase tracking-wider border-dashed">
+                        {fetching ? <><FaSpinner className="animate-spin" size={12} /> Fetching models…</> : <><FaDownload size={12} /> Fetch models from provider</>}
+                    </Button>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Provider name</label>
-                            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="h-11" placeholder="DeepSeek" />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Base URL</label>
-                            <Input value={form.baseUrl} onChange={(e) => setForm({ ...form, baseUrl: e.target.value })} className="h-11" placeholder="https://api.deepseek.com/v1" />
-                        </div>
-                        <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Text model</label>
-                            <Input value={form.textModel} onChange={(e) => setForm({ ...form, textModel: e.target.value })} className="h-11" placeholder="deepseek-chat" />
+                            <Select value={textModel || undefined} onValueChange={setTextModel}>
+                                <SelectTrigger className="h-11 text-xs"><SelectValue placeholder={models.length ? "Select a model" : "Fetch models first"} /></SelectTrigger>
+                                <SelectContent>
+                                    {models.map((m) => (<SelectItem key={m} value={m}>{m}</SelectItem>))}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Vision model (optional)</label>
-                            <Input value={form.visionModel} onChange={(e) => setForm({ ...form, visionModel: e.target.value })} className="h-11" placeholder="for image OCR" />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
-                                API key {config?.apiKeyHint ? <span className="text-emerald-600">(stored: {config.apiKeyHint})</span> : <span className="text-muted-foreground">(none)</span>}
-                            </label>
-                            <Input type="password" value={form.apiKey} onChange={(e) => setForm({ ...form, apiKey: e.target.value })} className="h-11" placeholder="sk-… (leave blank to keep)" />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Temperature ({form.temperature})</label>
-                            <input type="range" min={0} max={2} step={0.1} value={form.temperature}
-                                onChange={(e) => setForm({ ...form, temperature: Number(e.target.value) })}
-                                className="w-full mt-3 accent-[var(--primary)]" />
+                            <Select value={visionModel} onValueChange={setVisionModel}>
+                                <SelectTrigger className="h-11 text-xs"><SelectValue placeholder="None (text-only)" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={NONE}>None (text-only)</SelectItem>
+                                    {models.map((m) => (<SelectItem key={m} value={m}>{m}</SelectItem>))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
+
                     <div className="flex items-center gap-3">
-                        <Switch checked={form.enabled} onCheckedChange={(v) => setForm({ ...form, enabled: v })} />
+                        <Switch checked={enabled} onCheckedChange={setEnabled} />
                         <span className="text-sm font-semibold">Provider enabled</span>
                     </div>
 
                     {test ? (
                         <div className={`p-4 rounded-xl border text-sm ${test.ok ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600" : "bg-destructive/10 border-destructive/20 text-destructive"}`}>
-                            {test.ok ? (
-                                <>✓ Connected in {test.latencyMs}ms — “{test.reply}”</>
-                            ) : (
-                                <>✗ {test.error}</>
-                            )}
+                            {test.ok ? <>✓ Connected in {test.latencyMs}ms — “{test.reply}”</> : <>✗ {test.error}</>}
                         </div>
                     ) : null}
 
@@ -152,7 +202,7 @@ export default function AdminSettingsPage() {
                         <Button onClick={testConnection} disabled={testing} variant="outline" className="font-black text-xs uppercase tracking-wider">
                             {testing ? <><FaSpinner className="animate-spin" size={12} /> Testing…</> : <><FaWifi size={12} /> Test Connection</>}
                         </Button>
-                        <Button onClick={save} disabled={busy} className="font-black text-xs uppercase tracking-wider">
+                        <Button onClick={save} disabled={busy || !baseUrl || !textModel} className="font-black text-xs uppercase tracking-wider">
                             {busy ? <><FaSpinner className="animate-spin" size={12} /> Saving…</> : "Save Config"}
                         </Button>
                     </div>
