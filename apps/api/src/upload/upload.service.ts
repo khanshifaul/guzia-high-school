@@ -116,7 +116,7 @@ export class UploadService {
     }
 
     /** Stream a stored file back (used by the /files/:key download route). */
-    async getFile(key: string, contentType: string): Promise<Readable> {
+    async getFile(key: string, _contentType: string): Promise<Readable> {
         if (this.client) {
             const res = await this.client.send(
                 new GetObjectCommand({ Bucket: this.bucket, Key: key }),

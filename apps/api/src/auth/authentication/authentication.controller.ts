@@ -8,12 +8,10 @@ import {
   HttpCode,
   HttpStatus,
   Post,
-  Req,
   Res,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { Public } from '../../common/decorators/public.decorator';
 import { User } from '../../common/decorators/user.decorator';
 import { clearAuthCookie, setAuthCookie } from '../../common/cookie.util';

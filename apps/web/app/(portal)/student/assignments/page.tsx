@@ -27,7 +27,7 @@ interface Assignment {
 }
 
 export default function StudentAssignmentsPage() {
-    const { studentId, classId, loading: loadingMe } = useMyStudent();
+    const { classId, loading: loadingMe } = useMyStudent();
     const [assignments, setAssignments] = React.useState<Assignment[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [openSubmit, setOpenSubmit] = React.useState<string | null>(null);

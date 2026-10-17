@@ -20,8 +20,6 @@ function rng(seed: number): () => number {
   };
 }
 const random = rng(42);
-const pick = <T>(arr: T[]): T => arr[Math.floor(random() * arr.length)];
-
 const GRADE_BANDS = [
   { minPercent: 80, maxPercent: 100, letter: "A+", point: 4.0 },
   { minPercent: 70, maxPercent: 79, letter: "A", point: 3.5 },
@@ -149,9 +147,9 @@ async function main(): Promise<void> {
   const sectionsA = await prisma.section.create({
     data: { name: "A", classId: focusClass.id },
   });
-  const sectionsB = await prisma.section.create({
-    data: { name: "B", classId: focusClass.id },
-  });
+    await prisma.section.create({
+      data: { name: "B", classId: focusClass.id },
+    });
   for (const cls of [classes[0], classes[1], classes[3], classes[4]]) {
     await prisma.section.createMany({
       data: [

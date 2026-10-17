@@ -444,9 +444,9 @@ const SidebarMenuButton = React.forwardRef<
         {
             asChild = false,
             isActive = false,
-            variant = "default",
+            variant: _variant = "default",
             size = "default",
-            tooltip,
+            tooltip: _tooltip,
             className,
             ...props
         },

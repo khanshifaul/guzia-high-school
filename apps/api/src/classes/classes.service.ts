@@ -1,11 +1,6 @@
 // src/classes/classes.service.ts — all Prisma access for the academic
 // structure (classes, sections, subjects, teacher assignments).
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { AssignTeacherDto, CreateClassDto, CreateSectionDto, CreateSubjectDto } from './dto';
 

@@ -6,7 +6,6 @@ import {
     Injectable,
     Logger,
     ServiceUnavailableException,
-    BadRequestException,
 } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
 import { AiProviderConfig } from 'prisma/generated/client';

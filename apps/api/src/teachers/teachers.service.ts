@@ -72,7 +72,7 @@ export class TeachersService {
             }
             return tx.teacher.update({
                 where: { id },
-                data: { ...(dto.phone !== undefined ? { phone: dto.phone } : {}) },
+                data: { phone: dto.phone },
                 include: { user: { select: { id: true, email: true, fullName: true, status: true } } },
             });
         });

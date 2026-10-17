@@ -122,9 +122,6 @@ function buildReport(
     trainN: number,
     holdoutN: number,
 ): string {
-    const weightLines = model.features
-        .map((f, i) => `| ${f} | ${model.weights[i].toFixed(4)} |`)
-        .join('\n');
 
     return `# At-Risk Classifier — Evaluation Report
 

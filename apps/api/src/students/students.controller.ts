@@ -10,9 +10,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Public } from '../common/decorators/public.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
-import { User } from '../common/decorators/user.decorator';
 import { StudentsService } from './students.service';
 import { CreateStudentDto, UpdateStudentDto } from './dto';
 

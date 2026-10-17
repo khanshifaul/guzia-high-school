@@ -6,7 +6,7 @@
 
 import * as React from "react";
 import { motion } from "motion/react";
-import { FaFolderOpen, FaSpinner, FaPaperPlane, FaSync } from "react-icons/fa6";
+import { FaFolderOpen, FaSpinner, FaPaperPlane } from "react-icons/fa6";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

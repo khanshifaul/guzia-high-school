@@ -7,7 +7,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { FaGraduationCap, FaArrowRightFromBracket, FaUser, FaGear } from "react-icons/fa6";
+import { FaGraduationCap, FaArrowRightFromBracket, FaGear } from "react-icons/fa6";
 import {
     Sidebar,
     SidebarContent,
@@ -36,7 +36,6 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { ThemeSwitcher } from "@/components/ui/theme-switcher";
-import { Skeleton } from "@/components/ui/skeleton";
 import { logout, useSession, type SessionUser } from "@/lib/auth-client";
 import { NAV_BY_ROLE } from "./role-nav";
 

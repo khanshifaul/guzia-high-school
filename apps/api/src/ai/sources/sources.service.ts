@@ -140,7 +140,14 @@ export class SourcesService {
         // Attach the stored-file URL so the UI can link back to the original.
         return this.prisma.sourceDocument.update({
             where: { id: (doc as { id: string }).id },
-            data: { summary: { ...((doc as { summary: unknown }).summary ?? {}), fileUrl: stored.url, fileKey: stored.key, storage: stored.storage } as never },
+            data: {
+                summary: {
+                    ...((doc as { summary?: Record<string, unknown> }).summary),
+                    fileUrl: stored.url,
+                    fileKey: stored.key,
+                    storage: stored.storage,
+                },
+            },
             include: { chunks: true },
         });
     }

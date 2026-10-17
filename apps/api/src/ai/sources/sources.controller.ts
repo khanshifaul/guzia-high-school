@@ -7,7 +7,6 @@ import {
     Get,
     Param,
     Post,
-    Query,
     UploadedFile,
     UseInterceptors,
 } from '@nestjs/common';
@@ -34,13 +33,6 @@ class IngestSourceDto {
     @IsString()
     @Length(1, 200000)
     text: string;
-}
-
-class AskDto {
-    @ApiProperty({ example: 'What is the distributive property?' })
-    @IsString()
-    @Length(1, 500)
-    question: string;
 }
 
 @ApiTags('AI Sources')
@@ -114,7 +106,7 @@ export class SourcesController {
 
     @Roles('TEACHER')
     @Get(':id/chunks')
-    chunks(@Param('id') id: string, @User() user: { id: string }, @Query('page') page?: string) {
+    chunks(@Param('id') id: string, @User() user: { id: string }) {
         return this.service.get(id, user.id);
     }
 }

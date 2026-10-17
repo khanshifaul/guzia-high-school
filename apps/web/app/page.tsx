@@ -14,7 +14,7 @@ import {
     FaGraduationCap, FaChalkboardUser, FaBookOpen, FaFlask, FaTrophy, FaUsers,
     FaUserGraduate, FaSchool, FaAward, FaCalendarCheck, FaMicroscope, FaLaptopCode,
     FaDumbbell, FaMusic, FaBook, FaQuoteLeft, FaStar, FaPersonRunning, FaUtensils,
-    FaBus, FaPaintbrush, FaArrowRight, FaHeart,
+    FaBus, FaArrowRight, FaHeart,
 } from "react-icons/fa6";
 import { Navbar } from "@/components/public/navbar";
 import { Footer } from "@/components/public/footer";
