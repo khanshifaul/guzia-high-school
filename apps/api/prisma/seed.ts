@@ -80,6 +80,7 @@ async function main(): Promise<void> {
     prisma.notice.deleteMany(),
     prisma.admissionApplication.deleteMany(),
     prisma.atRiskScore.deleteMany(),
+    prisma.aiProviderConfig.deleteMany(),
     prisma.teachingPlan.deleteMany(),
     prisma.questionPaper.deleteMany(),
     prisma.sourceDocument.deleteMany(),
@@ -88,6 +89,9 @@ async function main(): Promise<void> {
   ]);
 
   const passwordHash = await bcrypt.hash("password123", 10);
+
+  // Canonical grade bands (specs/04) — the single source of truth for grading.
+  await prisma.gradeBand.createMany({ data: GRADE_BANDS });
 
   // Users: 1 admin, 3 teachers, 15 students (class 8-A), 8 parents.
   const admin = await prisma.user.create({

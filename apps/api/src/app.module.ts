@@ -7,6 +7,8 @@ import { appConfig } from './config/app.config';
 import { validationSchema } from './config/validation.schema';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './auth/auth.module';
+import { ClassesModule } from './classes/classes.module';
+import { StudentsModule } from './students/students.module';
 import { AccessTokenGuard } from './common/guards/access-token.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { HealthController } from './health.controller';
@@ -21,6 +23,8 @@ import { HealthController } from './health.controller';
     }),
     DatabaseModule,
     AuthModule,
+    ClassesModule,
+    StudentsModule,
   ],
   controllers: [HealthController],
   providers: [
