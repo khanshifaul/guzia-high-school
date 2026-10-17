@@ -23,6 +23,16 @@ Built as the **NT Tech Innovation Full-Stack Developer assessment**.
 
 ```bash
 git clone <repo> && cd guzia-high-school
+./scripts/bootstrap.sh        # install, start Postgres, migrate, seed, train AI model
+./scripts/dev.sh              # run API (:4000) + web (:3004) together
+```
+
+Then open http://localhost:3004 and sign in with a demo account.
+
+<details>
+<summary>Manual setup (step by step)</summary>
+
+```bash
 docker compose up -d                 # PostgreSQL 18 on :5434
 bun install
 
@@ -39,8 +49,11 @@ cd apps/web
 cp .env.example .env.local           # API_BASE_URL=http://localhost:4000
 bun run dev                          # http://localhost:3004
 ```
+</details>
 
-Open http://localhost:3004 and sign in with a demo account.
+Other scripts: `scripts/seed-reset.sh` (reseed + retrain),
+`scripts/api-tests/run-tests.sh` (unit + e2e), `scripts/check-docs-links.mjs`,
+`infrastructure/postgres/backup.sh`. See `scripts/README.md`.
 
 ## Demo credentials
 
