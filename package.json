@@ -1,0 +1,22 @@
+{
+  "name": "guzia-high-school",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev": "bun --filter '@guzia/*' dev",
+    "dev:api": "bun --filter '@guzia/api' dev",
+    "dev:web": "bun --filter '@guzia/web' dev",
+    "build": "bun --filter '@guzia/*' build",
+    "test": "bun --filter '@guzia/api' test && bun --filter '@guzia/web' test",
+    "lint": "oxlint apps",
+    "db:migrate": "bun --filter '@guzia/api' db:migrate",
+    "db:seed": "bun --filter '@guzia/api' db:seed",
+    "ai:train": "bun --filter '@guzia/api' ai:train",
+    "generate:api": "bun --filter '@guzia/web' generate:api"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "oxlint": "^1.78.0",
+    "typescript": "^5.9.3"
+  }
+}
