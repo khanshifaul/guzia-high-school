@@ -6,8 +6,7 @@
     "dev": "next dev -p 3004",
     "build": "next build",
     "start": "next start -p 3004",
-    "test": "vitest run",
-    "generate:api": "bun run scripts/generate-api-client.ts"
+    "test": "vitest run"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

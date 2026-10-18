@@ -12,8 +12,7 @@
     "lint": "oxlint apps",
     "db:migrate": "bun --filter '@guzia/api' db:migrate",
     "db:seed": "bun --filter '@guzia/api' db:seed",
-    "ai:train": "bun --filter '@guzia/api' ai:train",
-    "generate:api": "bun --filter '@guzia/web' generate:api"
+    "ai:train": "bun --filter '@guzia/api' ai:train"
   },
   "devDependencies": {
     "@types/node": "^20.17.0",
