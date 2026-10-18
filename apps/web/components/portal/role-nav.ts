@@ -16,6 +16,7 @@ import {
     FaCalendarDays,
     FaBookOpen,
     FaListCheck,
+    FaFileLines,
     FaFolderOpen,
     FaImages,
 } from "react-icons/fa6";
@@ -112,6 +113,7 @@ export const STUDENT_NAV: NavSection[] = [
             { label: "Attendance", href: "/student/attendance", icon: FaCalendarDays },
             { label: "Grades", href: "/student/grades", icon: FaGraduationCap },
             { label: "Assignments", href: "/student/assignments", icon: FaListCheck },
+            { label: "Admissions", href: "/student/admissions", icon: FaFileLines },
             { label: "Fees", href: "/student/fees", icon: FaMoneyBillWave },
         ],
     },

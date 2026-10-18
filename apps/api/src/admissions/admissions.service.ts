@@ -10,6 +10,7 @@ import { DatabaseService } from '../database/database.service';
 import { EmailService } from '../email/email.service';
 import { SubmitApplicationDto } from './dto/submit-application.dto';
 import { AdmissionDecision, ReviewApplicationDto } from './dto/review-application.dto';
+import { EditApplicationDto } from './dto/edit-application.dto';
 
 @Injectable()
 export class AdmissionsService {
@@ -90,13 +91,46 @@ export class AdmissionsService {
         };
     }
 
-    /** Admin: review queue (optionally filter by status). */
-    async queue(status?: string) {
+    /** Admin: review queue (optionally filter by status and class wanted). */
+    async queue(status?: string, className?: string) {
+        const where: Record<string, unknown> = {};
+        if (status) where.status = status;
+        if (className) where.formData = { path: ['classWanted'], equals: className };
         const applications = await this.prisma.admissionApplication.findMany({
-            where: status ? { status: status as 'SUBMITTED' } : {},
+            where,
             orderBy: { submittedAt: 'desc' },
         });
         return { data: applications, meta: { total: applications.length } };
+    }
+
+    /** Applicant: their own application (self-scoped by JWT userId). */
+    async me(userId: string) {
+        const application = await this.prisma.admissionApplication.findFirst({
+            where: { userId },
+        });
+        if (!application)
+            throw new NotFoundException('No application found for your account');
+        return application;
+    }
+
+    /** Admin: edit a submitted application's formData. Locked once reviewed. */
+    async edit(id: string, dto: EditApplicationDto) {
+        const application = await this.prisma.admissionApplication.findUnique({
+            where: { id },
+        });
+        if (!application) throw new NotFoundException('Application not found');
+        if (application.status !== 'SUBMITTED') {
+            throw new ConflictException(
+                'This application has already been reviewed and cannot be edited',
+            );
+        }
+        const updated = await this.prisma.admissionApplication.update({
+            where: { id },
+            data: {
+                formData: { ...(application.formData as Record<string, string>), ...dto.formData },
+            },
+        });
+        return updated;
     }
 
     async findOne(id: string) {
