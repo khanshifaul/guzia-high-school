@@ -10,6 +10,11 @@ interface SelectContextValue {
     open: boolean
     setOpen: (open: boolean) => void
     triggerRef: React.RefObject<HTMLButtonElement | null>
+    query: string
+    setQuery: (q: string) => void
+    searchable: boolean
+    disabled: boolean
+    label: string
 }
 
 const SelectContext = React.createContext<SelectContextValue | null>(null)
@@ -19,32 +24,54 @@ interface SelectProps {
     value?: string
     onValueChange?: (value: string) => void
     defaultValue?: string
+    /** Show a filter box at the top of the dropdown (great for long lists). */
+    searchable?: boolean
+    /** Disable the trigger (non-interactive). */
+    disabled?: boolean
+    /** Accessible name for the trigger button. */
+    label?: string
+}
+
+/** Recursively flatten React children into plain text (for search matching). */
+function getNodeText(node: React.ReactNode): string {
+    if (node == null || typeof node === "boolean") return ""
+    if (typeof node === "string" || typeof node === "number") return String(node)
+    if (Array.isArray(node)) return node.map(getNodeText).join("")
+    if (React.isValidElement(node)) return getNodeText((node.props as { children?: React.ReactNode }).children)
+    return ""
 }
 
 /**
- * Custom Select dropdown with keyboard navigation
- * 
+ * Custom Select dropdown with keyboard navigation, optional search filter.
+ *
  * @example
- * <Select value={value} onValueChange={setValue}>
+ * <Select value={value} onValueChange={setValue} searchable>
  *   <SelectTrigger>
  *     <SelectValue placeholder="Select option" />
  *   </SelectTrigger>
  *   <SelectContent>
- *     <SelectItem value="option1">Option 1</SelectItem>
- *     <SelectItem value="option2">Option 2</SelectItem>
+ *     <SelectItem value="a">Option A</SelectItem>
  *   </SelectContent>
  * </Select>
  */
-function Select({ children, value: controlledValue, onValueChange, defaultValue = "" }: SelectProps) {
+function Select({ children, value: controlledValue, onValueChange, defaultValue = "", searchable = false, disabled = false, label = "" }: SelectProps) {
     const [uncontrolledValue, setUncontrolledValue] = React.useState(defaultValue)
     const [open, setOpen] = React.useState(false)
+    const [query, setQuery] = React.useState("")
     const triggerRef = React.useRef<HTMLButtonElement>(null)
 
     const value = controlledValue !== undefined ? controlledValue : uncontrolledValue
     const setValue = onValueChange || setUncontrolledValue
 
+    // Clear the filter whenever the dropdown closes.
+    React.useEffect(() => {
+        if (!open) setQuery("")
+    }, [open])
+
     return (
-        <SelectContext.Provider value={{ value, onValueChange: setValue, open, setOpen, triggerRef }}>
+        <SelectContext.Provider
+            value={{ value, onValueChange: setValue, open, setOpen, triggerRef, query, setQuery, searchable, disabled, label }}
+        >
             <div className="relative">
                 {children}
             </div>
@@ -73,11 +100,13 @@ const SelectTrigger = React.forwardRef<
             role="combobox"
             aria-expanded={context.open}
             aria-haspopup="listbox"
+            disabled={context.disabled}
+            aria-label={context.label || undefined}
             className={cn(
-                "flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+                "flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 cursor-pointer",
                 className
             )}
-            onClick={() => context.setOpen(!context.open)}
+            onClick={() => !context.disabled && context.setOpen(!context.open)}
             {...props}
         >
             {children}
@@ -115,15 +144,19 @@ interface SelectContentProps extends React.HTMLAttributes<HTMLDivElement> {
     portal?: boolean
     align?: "start" | "center" | "end"
     side?: "top" | "bottom"
+    /** Show the filter box (also settable on `Select`). */
+    searchable?: boolean
 }
 
 const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
-    ({ className, children, sideOffset = 4, portal = true, align: _align = "start", side: _side = "bottom", ...props }, ref) => {
+    ({ className, children, sideOffset = 4, portal = true, align: _align = "start", side: _side = "bottom", searchable = false, ...props }, ref) => {
         const context = React.useContext(SelectContext)
         if (!context) throw new Error("SelectContent must be used within Select")
         const contentRef = React.useRef<HTMLDivElement>(null)
+        const searchRef = React.useRef<HTMLInputElement>(null)
         const [position, setPosition] = React.useState({ top: 0, left: 0 })
         const [mounted, setMounted] = React.useState(false)
+        const showSearch = searchable || context.searchable
 
         React.useEffect(() => {
             setMounted(true)
@@ -171,7 +204,13 @@ const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
                         top = triggerRect.top - contentRect.height - sideOffset
                     }
 
-                    // Horizontal - Select usually matches trigger width or starts aligned
+                    // Keep the whole list inside the viewport vertically.
+                    if (top < 4) top = 4
+                    if (top + contentRect.height > viewportHeight - 4) {
+                        top = Math.max(4, viewportHeight - contentRect.height - 4)
+                    }
+
+                    // Horizontal
                     left = triggerRect.left
 
                     // Clamping
@@ -180,15 +219,16 @@ const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
                         left = viewportWidth - contentRect.width - 4
                     }
 
-                    // Match width if it fits, or at least min-width of trigger
-                    // For now keeping simple positioning
-
                     setPosition({ top, left })
                 }
             }
 
             if (context.open) {
-                requestAnimationFrame(checkPosition)
+                requestAnimationFrame(() => {
+                    checkPosition()
+                    // Focus the filter box for keyboard-first use.
+                    if (showSearch) searchRef.current?.focus()
+                })
             }
 
             const timer = setTimeout(() => {
@@ -210,6 +250,14 @@ const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
         if (!context.open) return null
         if (portal && !mounted) return null
 
+        // Count items that survive the current filter so we can show an
+        // empty state ("No matches") instead of a blank list.
+        const q = context.query.trim().toLowerCase()
+        const visibleCount = React.Children.toArray(children).filter((child) => {
+            if (!q || !React.isValidElement(child)) return true
+            return getNodeText((child.props as { children?: React.ReactNode }).children).toLowerCase().includes(q)
+        }).length
+
         const content = (
             <div
                 ref={(node) => {
@@ -219,10 +267,11 @@ const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
                 }}
                 role="listbox"
                 className={cn(
-                    "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
+                    "z-50 min-w-[8rem] flex flex-col overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md",
                     "animate-in fade-in-0 zoom-in-95",
-                    !portal && "absolute",
-                    !portal && "mt-1",
+                    // Bounded height so long lists scroll instead of overflowing.
+                    "max-h-72",
+                    !portal && "absolute mt-1",
                     portal && "fixed",
                     className
                 )}
@@ -235,7 +284,26 @@ const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
                 onClick={(e) => e.stopPropagation()}
                 {...props}
             >
-                {children}
+                {showSearch ? (
+                    <div className="border-b border-border/60 p-1.5">
+                        <input
+                            ref={searchRef}
+                            value={context.query}
+                            onChange={(e) => context.setQuery(e.target.value)}
+                            placeholder="Search…"
+                            aria-label="Search options"
+                            className="w-full rounded-sm border border-input bg-background px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-ring"
+                        />
+                    </div>
+                ) : null}
+
+                <div className="overflow-y-auto p-1">
+                    {visibleCount === 0 ? (
+                        <div className="px-2 py-3 text-center text-xs text-muted-foreground">No matches found</div>
+                    ) : (
+                        children
+                    )}
+                </div>
             </div>
         )
 
@@ -259,13 +327,17 @@ const SelectItem = React.forwardRef<HTMLDivElement, SelectItemProps>(
 
         const isSelected = context.value === value
 
+        // Hide this option when it doesn't match the active search filter.
+        const q = context.query.trim().toLowerCase()
+        if (q && !getNodeText(children).toLowerCase().includes(q)) return null
+
         return (
             <div
                 ref={ref}
                 role="option"
                 aria-selected={isSelected}
                 className={cn(
-                    "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                    "relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
                     isSelected && "bg-accent text-accent-foreground",
                     className
                 )}

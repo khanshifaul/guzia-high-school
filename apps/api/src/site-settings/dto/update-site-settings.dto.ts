@@ -42,6 +42,12 @@ export class UpdateSiteSettingsDto {
   @ApiPropertyOptional() @IsOptional() @IsUrl({ require_tld: false }) linkedinUrl?: string;
   @ApiPropertyOptional() @IsOptional() @IsUrl({ require_tld: false }) websiteUrl?: string;
 
+  @ApiPropertyOptional({ description: 'Google Maps embed iframe src for the /contact page' })
+  @IsOptional()
+  @IsString()
+  @Length(1, 800)
+  mapEmbedUrl?: string;
+
   @ApiPropertyOptional({ type: [ImportantLinkDto] })
   @IsOptional()
   @IsArray()

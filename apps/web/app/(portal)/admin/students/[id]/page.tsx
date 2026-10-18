@@ -18,11 +18,26 @@ import { api } from "@/lib/api";
 
 interface GradedSubject { subject: string; marksObtained: number; totalMarks: number; percent: number; letter: string; point: number }
 interface Detail {
-    id: string; admissionNo: string; fullName: string; rollNo: number;
+    id: string; admissionNo: string; fullName: string; fullNameBn?: string | null; rollNo: number;
+    photoUrl?: string | null; dateOfBirth?: string | null; gender?: string | null; bloodGroup?: string | null;
+    religion?: string | null; nationality?: string | null; birthCertNo?: string | null; admissionDate?: string | null;
+    guardianName?: string | null; guardianRelation?: string | null; guardianPhone?: string | null; guardianNid?: string | null;
+    village?: string | null; road?: string | null; ward?: string | null; postOffice?: string | null;
+    policeStation?: string | null; upazila?: string | null; district?: string | null; postalCode?: string | null;
+    previousSchool?: string | null; status?: string;
     class: { name: string }; section: { name: string } | null;
     user: { email: string } | null;
     stats: { attendancePct: number; cgpa: number; totalDue: number };
     transcript: { exams: { id: string; name: string; gpa: number; subjects: GradedSubject[] }[] };
+}
+
+function InfoRow({ label, value }: { label: string; value?: string | null }) {
+    return (
+        <div className="flex items-start gap-3 py-2 border-b border-border/40 last:border-0">
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider w-36 shrink-0">{label}</span>
+            <span className="text-sm text-foreground">{value || <span className="text-muted-foreground">—</span>}</span>
+        </div>
+    );
 }
 
 export default function AdminStudentDetailPage() {
@@ -57,6 +72,58 @@ export default function AdminStudentDetailPage() {
                 <StatCard value={`${student.stats.attendancePct}%`} label="Attendance" />
                 <StatCard value={student.stats.cgpa.toFixed(2)} label="CGPA" />
                 <StatCard value={`৳${student.stats.totalDue}`} label="Pending Fees" />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Photo + personal */}
+                <Card className="border-border/60 shadow-sm">
+                    <CardContent className="p-6">
+                        <div className="flex flex-col items-center text-center mb-4">
+                            {student.photoUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={student.photoUrl} alt={student.fullName} className="size-24 rounded-full object-cover border-2 border-primary/20 mb-3" />
+                            ) : (
+                                <div className="size-24 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-3xl mb-3">
+                                    {student.fullName.charAt(0).toUpperCase()}
+                                </div>
+                            )}
+                            <p className="font-black text-lg">{student.fullName}</p>
+                            {student.fullNameBn ? <p className="text-sm text-muted-foreground">{student.fullNameBn}</p> : null}
+                        </div>
+                        <InfoRow label="Admission No" value={student.admissionNo} />
+                        <InfoRow label="Class / Section" value={`${student.class.name}${student.section ? `-${student.section.name}` : ""}`} />
+                        <InfoRow label="Roll" value={String(student.rollNo)} />
+                        <InfoRow label="Status" value={student.status} />
+                        <InfoRow label="Email" value={student.user?.email} />
+                    </CardContent>
+                </Card>
+
+                {/* Personal details */}
+                <Card className="border-border/60 shadow-sm">
+                    <CardHeader className="border-b border-border/60 pb-4"><CardTitle className="text-sm font-black uppercase tracking-tight">Personal</CardTitle></CardHeader>
+                    <CardContent className="p-6">
+                        <InfoRow label="Date of Birth" value={student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString("en-GB") : null} />
+                        <InfoRow label="Gender" value={student.gender} />
+                        <InfoRow label="Blood Group" value={student.bloodGroup} />
+                        <InfoRow label="Religion" value={student.religion} />
+                        <InfoRow label="Nationality" value={student.nationality} />
+                        <InfoRow label="Birth Cert. No" value={student.birthCertNo} />
+                        <InfoRow label="Admission Date" value={student.admissionDate ? new Date(student.admissionDate).toLocaleDateString("en-GB") : null} />
+                        <InfoRow label="Previous School" value={student.previousSchool} />
+                    </CardContent>
+                </Card>
+
+                {/* Guardian + address */}
+                <Card className="border-border/60 shadow-sm">
+                    <CardHeader className="border-b border-border/60 pb-4"><CardTitle className="text-sm font-black uppercase tracking-tight">Guardian & Address</CardTitle></CardHeader>
+                    <CardContent className="p-6">
+                        <InfoRow label="Guardian" value={student.guardianName} />
+                        <InfoRow label="Relation" value={student.guardianRelation} />
+                        <InfoRow label="Guardian Phone" value={student.guardianPhone} />
+                        <InfoRow label="Guardian NID" value={student.guardianNid} />
+                        <InfoRow label="Address" value={[student.village, student.road, student.ward, student.postOffice, student.policeStation, student.upazila, student.district, student.postalCode].filter(Boolean).join(", ")} />
+                    </CardContent>
+                </Card>
             </div>
 
             {student.transcript.exams.length === 0 ? (

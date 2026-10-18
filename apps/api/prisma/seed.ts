@@ -147,9 +147,9 @@ async function main(): Promise<void> {
   const sectionsA = await prisma.section.create({
     data: { name: "A", classId: focusClass.id },
   });
-    await prisma.section.create({
-      data: { name: "B", classId: focusClass.id },
-    });
+  const sectionsB = await prisma.section.create({
+    data: { name: "B", classId: focusClass.id },
+  });
   for (const cls of [classes[0], classes[1], classes[3], classes[4]]) {
     await prisma.section.createMany({
       data: [
@@ -163,13 +163,25 @@ async function main(): Promise<void> {
     SUBJECTS.map((s) => prisma.subject.create({ data: s })),
   );
 
-  // ClassSubject: teacher assignment (teacher i teaches subject i%6 to class 8).
+  // ClassSubject: teacher assignment per SECTION — same subject can have a
+  // different teacher for section A vs B (e.g. Bangla: teacher1 for A,
+  // teacher2 for B). Demo: section A gets teacher i, section B gets teacher i+1.
   await prisma.classSubject.createMany({
-    data: subjects.map((s, i) => ({
-      classId: focusClass.id,
-      subjectId: s.id,
-      teacherId: teachers[i % teachers.length].id,
-    })),
+    data: subjects.flatMap((s, i) => [
+      {
+        classId: focusClass.id,
+        sectionId: sectionsA.id,
+        subjectId: s.id,
+        teacherId: teachers[i % teachers.length].id,
+      },
+      {
+        classId: focusClass.id,
+        sectionId: sectionsB.id,
+        subjectId: s.id,
+        // Different teacher for the same subject in section B.
+        teacherId: teachers[(i + 1) % teachers.length].id,
+      },
+    ]),
   });
 
   // Students: 15 in class 8-A, linked to parents (first 8 parents, wrap).

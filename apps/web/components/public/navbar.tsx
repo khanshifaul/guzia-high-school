@@ -19,11 +19,11 @@ import { useSiteConfig } from "@/lib/site-config";
 
 const navLinks = [
     { href: "/", labelEn: "Home", labelBn: "হোম" },
-    { href: "/#programs", labelEn: "Academics", labelBn: "একাডেমিক" },
-    { href: "/#facilities", labelEn: "Facilities", labelBn: "সুবিধা" },
-    { href: "/#notices", labelEn: "Notices", labelBn: "বিজ্ঞপ্তি" },
-    { href: "/admission", labelEn: "Admission", labelBn: "ভর্তি" },
-    { href: "/#contact", labelEn: "Contact", labelBn: "যোগাযোগ" },
+    { href: "/about", labelEn: "About Us", labelBn: "আমাদের সম্পর্কে" },
+    { href: "/academics", labelEn: "Academics", labelBn: "একাডেমিক" },
+    { href: "/news", labelEn: "News", labelBn: "সংবাদ" },
+    { href: "/gallery", labelEn: "Gallery", labelBn: "গ্যালারি" },
+    { href: "/contact", labelEn: "Contact", labelBn: "যোগাযোগ" },
 ];
 
 const BN_DIGITS = ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"];
@@ -96,13 +96,14 @@ export function Navbar() {
                         <span className="w-px h-3 bg-border hidden md:block" />
                         <button
                             onClick={() => setLanguage(language === "en" ? "bn" : "en")}
+                            aria-label={language === "en" ? "Switch to Bangla" : "Switch to English"}
+                            title={language === "en" ? "Switch to Bangla" : "Switch to English"}
                             className="flex items-center gap-1.5 cursor-pointer hover:text-foreground transition-colors text-[11px] font-semibold text-muted-foreground"
                         >
-                            <FaGlobe size={11} />
-                            <span>{language === "en" ? "বাংলা" : "English"}</span>
+                            <FaGlobe size={13} />
                         </button>
                         <span className="w-px h-3 bg-border hidden md:block" />
-                        <ThemeSwitcher />
+                        <ThemeSwitcher variant="icon" />
                     </div>
                 </div>
             </div>
@@ -126,7 +127,7 @@ export function Navbar() {
                     </Link>
                     <div className="hidden lg:flex items-center gap-2 shrink-0">
                         <Link href="/admission">
-                            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider px-4 py-2 shadow-md hover:scale-[1.02] transition-transform duration-200">
+                            <Button className="bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs uppercase tracking-wider px-4 py-2 shadow-md hover:scale-[1.02] transition-transform duration-200">
                                 {t("Online Admission", "অনলাইন ভর্তি")}
                             </Button>
                         </Link>
@@ -172,7 +173,7 @@ export function Navbar() {
                                 </Link>
                             ))}
                             <Link href="/admission" onClick={() => setIsOpen(false)}>
-                                <Button className="w-full mt-2 h-12 font-black text-sm uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white">
+                                <Button className="w-full mt-2 h-12 font-black text-sm uppercase tracking-wider bg-emerald-700 hover:bg-emerald-800 text-white">
                                     {t("Online Admission", "অনলাইন ভর্তি")}
                                 </Button>
                             </Link>

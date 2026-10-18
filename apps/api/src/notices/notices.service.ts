@@ -18,6 +18,16 @@ export class NoticesService {
         return { data: notices, meta: { total: notices.length } };
     }
 
+    /** Public site: only global notices (audience null), latest first. */
+    async publicNotices(limit = 6) {
+        const notices = await this.prisma.notice.findMany({
+            where: { audience: null },
+            orderBy: { createdAt: 'desc' },
+            take: limit,
+        });
+        return { data: notices, meta: { total: notices.length } };
+    }
+
     async create(dto: CreateNoticeDto, authorId: string) {
         return this.prisma.notice.create({
             data: {

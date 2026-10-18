@@ -25,6 +25,8 @@ Built as the **NT Tech Innovation Full-Stack Developer assessment**.
 git clone <repo> && cd guzia-high-school
 ./scripts/bootstrap.sh        # install, start Postgres, migrate, seed, train AI model
 ./scripts/dev.sh              # run API (:4000) + web (:3004) together
+bun run start            # run API (:4000) + web (:3004) from build output (requires `bun run build` first)
+
 ```
 
 Then open http://localhost:3004 and sign in with a demo account.

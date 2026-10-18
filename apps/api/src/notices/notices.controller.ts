@@ -1,6 +1,7 @@
 // src/notices/notices.controller.ts — notices (create/delete admin+teacher).
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Public } from '../common/decorators/public.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { User } from '../common/decorators/user.decorator';
 import { NoticesService } from './notices.service';
@@ -10,6 +11,14 @@ import { CreateNoticeDto } from './dto';
 @Controller('notices')
 export class NoticesController {
     constructor(private readonly service: NoticesService) {}
+
+    @Public()
+    @Get('public')
+    @ApiOperation({ summary: 'Global notices for the public site (ticker/landing)' })
+    publicNotices(@Query('limit') limit?: string) {
+        const n = limit ? Math.min(parseInt(limit, 10) || 6, 20) : 6;
+        return this.service.publicNotices(n);
+    }
 
     @Roles('ADMIN', 'TEACHER', 'STUDENT', 'PARENT')
     @Get()

@@ -1,7 +1,8 @@
 "use client";
 
-// app/(portal)/admin/classes/page.tsx — academic structure: classes, sections,
-// subjects, and teacher assignment per class-subject.
+// app/(portal)/admin/classes/page.tsx — academic structure. Teacher assignment
+// is per SECTION: the same subject can have a different teacher for section A
+// vs B (e.g. Class 8-A Bangla = Teacher 1, 8-B Bangla = Teacher 2).
 
 import * as React from "react";
 import { motion } from "motion/react";
@@ -28,9 +29,16 @@ import {
 import { PageHeader } from "@/components/shared/page-header";
 import { api, RequestError } from "@/lib/api";
 
-interface ClassSubject { id: string; subject: { id: string; name: string }; teacher: { user: { fullName: string } } | null }
+interface ClassSubject {
+    id: string;
+    subject: { id: string; name: string };
+    section: { id: string; name: string };
+    teacher: { user: { fullName: string } } | null;
+}
 interface SchoolClass {
-    id: string; name: string; _count: { students: number };
+    id: string;
+    name: string;
+    _count: { students: number };
     sections: { id: string; name: string; _count?: { students: number } }[];
     subjects: ClassSubject[];
 }
@@ -45,8 +53,8 @@ export default function AdminClassesPage() {
     const [feedback, setFeedback] = React.useState<{ kind: "ok" | "err"; msg: string } | null>(null);
     const [busy, setBusy] = React.useState(false);
 
-    // Dialog states: "class" | "subject" | { kind: "section"|"attach", classId }
-    const [dialog, setDialog] = React.useState<"class" | "subject" | { kind: "section" | "attach"; classId: string } | null>(null);
+    // "class" | "subject" | { kind: "section"|"attach", classId, sectionId? }
+    const [dialog, setDialog] = React.useState<"class" | "subject" | { kind: "section" | "attach"; classId: string; sectionId?: string } | null>(null);
     const [className, setClassName] = React.useState("");
     const [sectionName, setSectionName] = React.useState("");
     const [subjectName, setSubjectName] = React.useState("");
@@ -54,7 +62,7 @@ export default function AdminClassesPage() {
     const [attachSubjectId, setAttachSubjectId] = React.useState("");
 
     const load = React.useCallback(() => {
-        api<{ classes: SchoolClass[] }>("/classes")
+        api<{ classes: SchoolClass[]; schoolSubjects: SubjectOption[] }>("/classes")
             .then((p) => {
                 setClasses(p.classes);
                 setSubjects(p.schoolSubjects ?? []);
@@ -97,14 +105,15 @@ export default function AdminClassesPage() {
                 setFeedback({ kind: "ok", msg: `Section "${sectionName}" added` });
                 setSectionName("");
             } else if (dialog && typeof dialog === "object" && dialog.kind === "attach") {
-                await api(`/classes/${dialog.classId}/subjects/${attachSubjectId}`, { method: "POST" });
-                setFeedback({ kind: "ok", msg: "Subject attached to class" });
+                if (!dialog.sectionId) throw new Error("Select a section");
+                await api(`/classes/${dialog.classId}/sections/${dialog.sectionId}/subjects/${attachSubjectId}`, { method: "POST" });
+                setFeedback({ kind: "ok", msg: "Subject attached to section" });
                 setAttachSubjectId("");
             }
             setDialog(null);
             load();
         } catch (err) {
-            setFeedback({ kind: "err", msg: err instanceof RequestError ? err.messages.join("; ") : "Action failed" });
+            setFeedback({ kind: "err", msg: err instanceof RequestError ? err.messages.join("; ") : (err instanceof Error ? err.message : "Action failed") });
         } finally { setBusy(false); }
     }
 
@@ -112,7 +121,7 @@ export default function AdminClassesPage() {
 
     return (
         <div className="space-y-6">
-            <PageHeader title="Classes & Subjects" subtitle="Academic structure and teacher assignments" icon={FaLayerGroup}
+            <PageHeader title="Classes & Subjects" subtitle="Teachers are assigned per section — the same subject can have different teachers for each section." icon={FaLayerGroup}
                 actions={
                     <>
                         <Button onClick={() => setDialog("subject")} className="font-black text-xs uppercase tracking-wider">
@@ -131,65 +140,84 @@ export default function AdminClassesPage() {
             ) : null}
 
             {classes.length === 0 ? (
-                <EmptyState title="No classes" description="Classes are seeded; add via the API." />
+                <EmptyState title="No classes" description="Create a class to get started." />
             ) : (
-                classes.map((cls) => (
-                    <motion.div key={cls.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}>
-                        <Card className="border-border/60 shadow-sm">
-                            <CardHeader className="border-b border-border/60 pb-4 flex flex-row items-center justify-between">
-                                <CardTitle className="text-lg font-black uppercase tracking-tight">{cls.name}</CardTitle>
-                                <div className="flex items-center gap-2">
-                                    <Badge className="bg-primary/10 text-primary border-primary/20">{cls._count.students} students</Badge>
-                                    <Badge variant="outline">{cls.sections.length} sections</Badge>
-                                    <Button size="sm" variant="outline" onClick={() => { setSectionName(""); setDialog({ kind: "section", classId: cls.id }); }}
-                                        className="font-black text-[10px] uppercase tracking-wider">
-                                        <FaPlus size={10} /> Section
-                                    </Button>
-                                    <Button size="sm" variant="outline" onClick={() => { setAttachSubjectId(""); setDialog({ kind: "attach", classId: cls.id }); }}
-                                        className="font-black text-[10px] uppercase tracking-wider">
-                                        <FaPlus size={10} /> Subject
-                                    </Button>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="p-6 space-y-4">
-                                <div>
-                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-2">Sections</p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {cls.sections.map((s) => (
-                                            <Badge key={s.id} variant="outline">{s.name}</Badge>
-                                        ))}
+                classes.map((cls) => {
+                    // Group the class's ClassSubject rows by section.
+                    const bySection = new Map<string, ClassSubject[]>();
+                    for (const cs of cls.subjects) {
+                        const key = cs.section?.name ?? "—";
+                        if (!bySection.has(key)) bySection.set(key, []);
+                        bySection.get(key)!.push(cs);
+                    }
+                    const sectionNames = [...bySection.keys()].sort();
+
+                    return (
+                        <motion.div key={cls.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}>
+                            <Card className="border-border/60 shadow-sm">
+                                <CardHeader className="border-b border-border/60 pb-4 flex flex-row items-center justify-between">
+                                    <CardTitle className="text-lg font-black uppercase tracking-tight">{cls.name}</CardTitle>
+                                    <div className="flex items-center gap-2">
+                                        <Badge className="bg-primary/10 text-primary border-primary/20">{cls._count.students} students</Badge>
+                                        <Badge variant="outline">{cls.sections.length} sections</Badge>
+                                        <Button size="sm" variant="outline" onClick={() => { setSectionName(""); setDialog({ kind: "section", classId: cls.id }); }}
+                                            className="font-black text-[10px] uppercase tracking-wider">
+                                            <FaPlus size={10} /> Section
+                                        </Button>
                                     </div>
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-2">Subjects & teachers</p>
-                                    <div className="space-y-2">
-                                        {cls.subjects.map((cs) => (
-                                            <div key={cs.id} className="flex items-center justify-between gap-3 p-2 rounded-lg border border-border/60">
-                                                <span className="text-sm font-semibold">{cs.subject.name}</span>
-                                                <Select value={cs.teacher ? cs.teacher.user.fullName : undefined}
-                                                    onValueChange={(v) => { const t = teachers.find((x) => x.user.fullName === v); if (t) assign(cs.id, t.id); }}>
-                                                    <SelectTrigger className="w-56 h-9 text-xs"><SelectValue placeholder="Assign teacher" /></SelectTrigger>
-                                                    <SelectContent>
-                                                        {teachers.map((t) => (
-                                                            <SelectItem key={t.id} value={t.user.fullName}>{t.user.fullName}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                                </CardHeader>
+                                <CardContent className="p-6 space-y-5">
+                                    <div>
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-2">Sections</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {cls.sections.map((s) => (
+                                                <Badge key={s.id} variant="outline">{s.name}</Badge>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {sectionNames.map((secName) => (
+                                        <div key={secName}>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <p className="text-[10px] font-black text-primary uppercase tracking-wider">
+                                                    Section {secName} — Subjects & Teachers
+                                                </p>
+                                                <Button size="sm" variant="outline"
+                                                    onClick={() => { setAttachSubjectId(""); const sec = cls.sections.find((s) => s.name === secName); setDialog({ kind: "attach", classId: cls.id, sectionId: sec?.id }); }}
+                                                    className="font-black text-[10px] uppercase tracking-wider">
+                                                    <FaPlus size={10} /> Subject
+                                                </Button>
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </motion.div>
-                ))
+                                            <div className="space-y-2">
+                                                {bySection.get(secName)!.map((cs) => (
+                                                    <div key={cs.id} className="flex items-center justify-between gap-3 p-2 rounded-lg border border-border/60">
+                                                        <span className="text-sm font-semibold">{cs.subject.name}</span>
+                                                        <Select value={cs.teacher ? cs.teacher.user.fullName : undefined}
+                                                            onValueChange={(v) => { const t = teachers.find((x) => x.user.fullName === v); if (t) assign(cs.id, t.id); }}>
+                                                            <SelectTrigger className="w-56 h-9 text-xs"><SelectValue placeholder="Assign teacher" /></SelectTrigger>
+                                                            <SelectContent>
+                                                                {teachers.map((t) => (
+                                                                    <SelectItem key={t.id} value={t.user.fullName}>{t.user.fullName}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+                    );
+                })
             )}
 
             <Dialog open={!!dialog} onOpenChange={(o) => !o && setDialog(null)}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
                         <DialogTitle className="font-black uppercase tracking-tight">
-                            {dialog === "class" ? "New Class" : dialog === "subject" ? "New Subject" : dialog?.kind === "section" ? "Add Section" : "Attach Subject"}
+                            {dialog === "class" ? "New Class" : dialog === "subject" ? "New Subject" : dialog?.kind === "section" ? "Add Section" : "Attach Subject to Section"}
                         </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4">
@@ -206,12 +234,22 @@ export default function AdminClassesPage() {
                             <Input placeholder="Section name (e.g. A)" value={sectionName} onChange={(e) => setSectionName(e.target.value)} className="h-11" />
                         )}
                         {dialog && typeof dialog === "object" && dialog.kind === "attach" && (
-                            <Select value={attachSubjectId || undefined} onValueChange={setAttachSubjectId}>
-                                <SelectTrigger className="h-11"><SelectValue placeholder="Choose a subject" /></SelectTrigger>
-                                <SelectContent>
-                                    {subjects.map((s) => (<SelectItem key={s.id} value={s.id}>{s.name} ({s.code})</SelectItem>))}
-                                </SelectContent>
-                            </Select>
+                            <>
+                                <Select value={dialog.sectionId || undefined} onValueChange={(v) => setDialog({ ...(dialog as { kind: "attach"; classId: string; sectionId?: string }), sectionId: v })}>
+                                    <SelectTrigger className="h-11"><SelectValue placeholder="Choose a section" /></SelectTrigger>
+                                    <SelectContent>
+                                        {classes.find((c) => c.id === dialog.classId)?.sections.map((s) => (
+                                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <Select value={attachSubjectId || undefined} onValueChange={setAttachSubjectId}>
+                                    <SelectTrigger className="h-11"><SelectValue placeholder="Choose a subject" /></SelectTrigger>
+                                    <SelectContent>
+                                        {subjects.map((s) => (<SelectItem key={s.id} value={s.id}>{s.name} ({s.code})</SelectItem>))}
+                                    </SelectContent>
+                                </Select>
+                            </>
                         )}
                         <Button onClick={submitDialog} disabled={busy}
                             className="w-full h-11 font-black text-xs uppercase tracking-wider">

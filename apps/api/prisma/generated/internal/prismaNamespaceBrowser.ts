@@ -79,7 +79,9 @@ export const ModelName = {
   Question: 'Question',
   SourceDocument: 'SourceDocument',
   SourceChunk: 'SourceChunk',
-  SiteSetting: 'SiteSetting'
+  SiteSetting: 'SiteSetting',
+  ContactMessage: 'ContactMessage',
+  GalleryItem: 'GalleryItem'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -116,7 +118,17 @@ export const TeacherScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   employeeId: 'employeeId',
+  photoUrl: 'photoUrl',
   phone: 'phone',
+  emergencyPhone: 'emergencyPhone',
+  nid: 'nid',
+  bloodGroup: 'bloodGroup',
+  religion: 'religion',
+  qualification: 'qualification',
+  designation: 'designation',
+  department: 'department',
+  address: 'address',
+  joinDate: 'joinDate',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -129,8 +141,28 @@ export const StudentScalarFieldEnum = {
   userId: 'userId',
   admissionNo: 'admissionNo',
   fullName: 'fullName',
+  fullNameBn: 'fullNameBn',
+  photoUrl: 'photoUrl',
   dateOfBirth: 'dateOfBirth',
   gender: 'gender',
+  bloodGroup: 'bloodGroup',
+  religion: 'religion',
+  nationality: 'nationality',
+  birthCertNo: 'birthCertNo',
+  guardianName: 'guardianName',
+  guardianRelation: 'guardianRelation',
+  guardianPhone: 'guardianPhone',
+  guardianNid: 'guardianNid',
+  village: 'village',
+  road: 'road',
+  ward: 'ward',
+  postOffice: 'postOffice',
+  policeStation: 'policeStation',
+  upazila: 'upazila',
+  district: 'district',
+  postalCode: 'postalCode',
+  previousSchool: 'previousSchool',
+  admissionDate: 'admissionDate',
   classId: 'classId',
   sectionId: 'sectionId',
   parentId: 'parentId',
@@ -180,6 +212,7 @@ export type SubjectScalarFieldEnum = (typeof SubjectScalarFieldEnum)[keyof typeo
 export const ClassSubjectScalarFieldEnum = {
   id: 'id',
   classId: 'classId',
+  sectionId: 'sectionId',
   subjectId: 'subjectId',
   teacherId: 'teacherId'
 } as const
@@ -476,11 +509,38 @@ export const SiteSettingScalarFieldEnum = {
   youtubeUrl: 'youtubeUrl',
   linkedinUrl: 'linkedinUrl',
   websiteUrl: 'websiteUrl',
+  mapEmbedUrl: 'mapEmbedUrl',
   importantLinks: 'importantLinks',
   updatedAt: 'updatedAt'
 } as const
 
 export type SiteSettingScalarFieldEnum = (typeof SiteSettingScalarFieldEnum)[keyof typeof SiteSettingScalarFieldEnum]
+
+
+export const ContactMessageScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  email: 'email',
+  message: 'message',
+  read: 'read',
+  createdAt: 'createdAt'
+} as const
+
+export type ContactMessageScalarFieldEnum = (typeof ContactMessageScalarFieldEnum)[keyof typeof ContactMessageScalarFieldEnum]
+
+
+export const GalleryItemScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  titleBn: 'titleBn',
+  caption: 'caption',
+  url: 'url',
+  category: 'category',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt'
+} as const
+
+export type GalleryItemScalarFieldEnum = (typeof GalleryItemScalarFieldEnum)[keyof typeof GalleryItemScalarFieldEnum]
 
 
 export const SortOrder = {

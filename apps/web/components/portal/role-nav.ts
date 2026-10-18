@@ -17,6 +17,7 @@ import {
     FaBookOpen,
     FaListCheck,
     FaFolderOpen,
+    FaImages,
 } from "react-icons/fa6";
 
 export interface NavItem {
@@ -57,7 +58,10 @@ export const ADMIN_NAV: NavSection[] = [
     },
     {
         title: "Communication",
-        items: [{ label: "Notices", href: "/admin/notices", icon: FaBullhorn }],
+        items: [
+            { label: "Notices", href: "/admin/notices", icon: FaBullhorn },
+            { label: "Gallery", href: "/admin/gallery", icon: FaImages },
+        ],
     },
     {
         title: "AI",

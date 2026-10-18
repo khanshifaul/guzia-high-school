@@ -144,15 +144,53 @@ export class StudentsService {
         userId: user.id,
         admissionNo,
         fullName: dto.fullName,
+        fullNameBn: dto.fullNameBn,
+        photoUrl: dto.photoUrl,
         classId: dto.classId,
         sectionId: dto.sectionId,
         parentId: dto.parentId,
         rollNo: dto.rollNo,
         dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : undefined,
         gender: dto.gender,
+        bloodGroup: dto.bloodGroup,
+        religion: dto.religion,
+        nationality: dto.nationality,
+        birthCertNo: dto.birthCertNo,
+        guardianName: dto.guardianName,
+        guardianRelation: dto.guardianRelation,
+        guardianPhone: dto.guardianPhone,
+        guardianNid: dto.guardianNid,
+        village: dto.village,
+        road: dto.road,
+        ward: dto.ward,
+        postOffice: dto.postOffice,
+        policeStation: dto.policeStation,
+        upazila: dto.upazila,
+        district: dto.district,
+        postalCode: dto.postalCode,
+        previousSchool: dto.previousSchool,
+        admissionDate: dto.admissionDate ? new Date(dto.admissionDate) : undefined,
       },
       include: STUDENT_INCLUDE,
     });
+  }
+
+  /** Bulk import: create each row, collecting per-row errors (partial OK). */
+  async bulkCreate(students: CreateStudentDto[]) {
+    const created: { email: string }[] = [];
+    const errors: { index: number; email: string; reason: string }[] = [];
+
+    for (const [index, dto] of students.entries()) {
+      try {
+        await this.create(dto);
+        created.push({ email: dto.email });
+      } catch (err) {
+        const reason = err instanceof Error ? err.message : 'Failed to create';
+        errors.push({ index, email: dto.email, reason });
+      }
+    }
+
+    return { created: created.length, skipped: errors.length, errors };
   }
 
   async update(id: string, dto: UpdateStudentDto) {

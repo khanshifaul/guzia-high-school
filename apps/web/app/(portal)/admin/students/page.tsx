@@ -5,8 +5,9 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion } from "motion/react";
-import { FaUsers, FaPlus, FaMagnifyingGlass, FaSpinner, FaPen, FaBan } from "react-icons/fa6";
+import { FaUsers, FaPlus, FaMagnifyingGlass, FaSpinner, FaPen, FaBan, FaFileCsv } from "react-icons/fa6";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,15 +19,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { PageHeader } from "@/components/shared/page-header";
 import { api, RequestError } from "@/lib/api";
 
@@ -35,18 +28,13 @@ interface Student {
     class: { name: string }; section: { name: string } | null;
     user: { email: string; status: string } | null;
 }
-interface ClassOption { id: string; name: string; sections: { id: string; name: string }[] }
 
 export default function AdminStudentsPage() {
     const [students, setStudents] = React.useState<Student[]>([]);
-    const [classes, setClasses] = React.useState<ClassOption[]>([]);
     const [search, setSearch] = React.useState("");
     const [loading, setLoading] = React.useState(true);
     const [loadingList, setLoadingList] = React.useState(false);
 
-    const [open, setOpen] = React.useState(false);
-    const [form, setForm] = React.useState({ fullName: "", email: "", password: "password123", classId: "", sectionId: "", rollNo: "1" });
-    const [busy, setBusy] = React.useState(false);
     const [feedback, setFeedback] = React.useState<{ kind: "ok" | "err"; msg: string } | null>(null);
     const router = useRouter();
     const [editStudent, setEditStudent] = React.useState<Student | null>(null);
@@ -63,42 +51,13 @@ export default function AdminStudentsPage() {
 
     React.useEffect(() => {
         load("");
-        api<{ classes: ClassOption[] }>("/classes")
-            .then((p) => setClasses(p.classes))
-            .catch(() => setClasses([]))
-            .finally(() => setLoading(false));
+        setLoading(false);
     }, [load]);
 
     React.useEffect(() => {
         const t = setTimeout(() => load(search), 300);
         return () => clearTimeout(t);
     }, [search, load]);
-
-    async function create() {
-        setBusy(true);
-        setFeedback(null);
-        try {
-            await api("/students", {
-                method: "POST",
-                body: {
-                    fullName: form.fullName,
-                    email: form.email,
-                    password: form.password,
-                    classId: form.classId,
-                    sectionId: form.sectionId || undefined,
-                    rollNo: Number(form.rollNo),
-                },
-            });
-            setFeedback({ kind: "ok", msg: "Student created" });
-            setOpen(false);
-            setForm({ fullName: "", email: "", password: "password123", classId: "", sectionId: "", rollNo: "1" });
-            load(search);
-        } catch (err) {
-            setFeedback({ kind: "err", msg: err instanceof RequestError ? err.messages.join("; ") : "Create failed" });
-        } finally {
-            setBusy(false);
-        }
-    }
 
     function openEdit(s: Student) {
         setEditStudent(s);
@@ -139,33 +98,14 @@ export default function AdminStudentsPage() {
         <div className="space-y-6">
             <PageHeader title="Students" subtitle={`${students.length} enrolled`} icon={FaUsers}
                 actions={
-                    <Dialog open={open} onOpenChange={setOpen}>
-                        <DialogTrigger asChild>
+                    <div className="flex gap-2">
+                        <Link href="/admin/students/import">
+                            <Button variant="outline" className="font-black text-xs uppercase tracking-wider cursor-pointer"><FaFileCsv size={12} /> Import CSV</Button>
+                        </Link>
+                        <Link href="/admin/students/new">
                             <Button className="font-black text-xs uppercase tracking-wider"><FaPlus size={12} /> Add Student</Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-lg">
-                            <DialogHeader><DialogTitle className="font-black uppercase tracking-tight">Add Student</DialogTitle></DialogHeader>
-                            <div className="space-y-4">
-                                <Input placeholder="Full name" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} className="h-11" />
-                                <Input type="email" placeholder="Email (login)" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="h-11" />
-                                <Input placeholder="Temp password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="h-11" />
-                                <div className="grid grid-cols-3 gap-3">
-                                    <Select value={form.classId || undefined} onValueChange={(v) => setForm({ ...form, classId: v, sectionId: "" })}>
-                                        <SelectTrigger className="h-11"><SelectValue placeholder="Class" /></SelectTrigger>
-                                        <SelectContent>{classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                    <Select value={form.sectionId || undefined} onValueChange={(v) => setForm({ ...form, sectionId: v })}>
-                                        <SelectTrigger className="h-11"><SelectValue placeholder="Section" /></SelectTrigger>
-                                        <SelectContent>{classes.find((c) => c.id === form.classId)?.sections.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-                                    </Select>
-                                    <Input type="number" min={1} placeholder="Roll" value={form.rollNo} onChange={(e) => setForm({ ...form, rollNo: e.target.value })} className="h-11" />
-                                </div>
-                                <Button onClick={create} disabled={busy || !form.fullName || !form.email || !form.classId} className="w-full h-11 font-black text-xs uppercase tracking-wider">
-                                    {busy ? <><FaSpinner className="animate-spin" size={12} /> Creating…</> : "Create Student"}
-                                </Button>
-                            </div>
-                        </DialogContent>
-                    </Dialog>
+                        </Link>
+                    </div>
                 } />
 
             <div className="relative max-w-md">

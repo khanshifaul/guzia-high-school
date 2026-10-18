@@ -425,7 +425,9 @@ export const ModelName = {
   Question: 'Question',
   SourceDocument: 'SourceDocument',
   SourceChunk: 'SourceChunk',
-  SiteSetting: 'SiteSetting'
+  SiteSetting: 'SiteSetting',
+  ContactMessage: 'ContactMessage',
+  GalleryItem: 'GalleryItem'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -441,7 +443,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "teacher" | "student" | "parent" | "class" | "section" | "subject" | "classSubject" | "timetableSlot" | "attendanceRecord" | "exam" | "examMark" | "gradeBand" | "assignment" | "submission" | "feeHead" | "invoice" | "payment" | "paymentAllocation" | "notice" | "admissionApplication" | "atRiskScore" | "aiProviderConfig" | "teachingPlan" | "questionPaper" | "question" | "sourceDocument" | "sourceChunk" | "siteSetting"
+    modelProps: "user" | "teacher" | "student" | "parent" | "class" | "section" | "subject" | "classSubject" | "timetableSlot" | "attendanceRecord" | "exam" | "examMark" | "gradeBand" | "assignment" | "submission" | "feeHead" | "invoice" | "payment" | "paymentAllocation" | "notice" | "admissionApplication" | "atRiskScore" | "aiProviderConfig" | "teachingPlan" | "questionPaper" | "question" | "sourceDocument" | "sourceChunk" | "siteSetting" | "contactMessage" | "galleryItem"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2591,6 +2593,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ContactMessage: {
+      payload: Prisma.$ContactMessagePayload<ExtArgs>
+      fields: Prisma.ContactMessageFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ContactMessageFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactMessagePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ContactMessageFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactMessagePayload>
+        }
+        findFirst: {
+          args: Prisma.ContactMessageFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactMessagePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ContactMessageFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactMessagePayload>
+        }
+        findMany: {
+          args: Prisma.ContactMessageFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactMessagePayload>[]
+        }
+        create: {
+          args: Prisma.ContactMessageCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactMessagePayload>
+        }
+        createMany: {
+          args: Prisma.ContactMessageCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ContactMessageCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactMessagePayload>[]
+        }
+        delete: {
+          args: Prisma.ContactMessageDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactMessagePayload>
+        }
+        update: {
+          args: Prisma.ContactMessageUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactMessagePayload>
+        }
+        deleteMany: {
+          args: Prisma.ContactMessageDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ContactMessageUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ContactMessageUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactMessagePayload>[]
+        }
+        upsert: {
+          args: Prisma.ContactMessageUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactMessagePayload>
+        }
+        aggregate: {
+          args: Prisma.ContactMessageAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateContactMessage>
+        }
+        groupBy: {
+          args: Prisma.ContactMessageGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ContactMessageGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ContactMessageCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ContactMessageCountAggregateOutputType> | number
+        }
+      }
+    }
+    GalleryItem: {
+      payload: Prisma.$GalleryItemPayload<ExtArgs>
+      fields: Prisma.GalleryItemFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.GalleryItemFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GalleryItemPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.GalleryItemFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GalleryItemPayload>
+        }
+        findFirst: {
+          args: Prisma.GalleryItemFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GalleryItemPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.GalleryItemFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GalleryItemPayload>
+        }
+        findMany: {
+          args: Prisma.GalleryItemFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GalleryItemPayload>[]
+        }
+        create: {
+          args: Prisma.GalleryItemCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GalleryItemPayload>
+        }
+        createMany: {
+          args: Prisma.GalleryItemCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.GalleryItemCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GalleryItemPayload>[]
+        }
+        delete: {
+          args: Prisma.GalleryItemDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GalleryItemPayload>
+        }
+        update: {
+          args: Prisma.GalleryItemUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GalleryItemPayload>
+        }
+        deleteMany: {
+          args: Prisma.GalleryItemDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.GalleryItemUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.GalleryItemUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GalleryItemPayload>[]
+        }
+        upsert: {
+          args: Prisma.GalleryItemUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$GalleryItemPayload>
+        }
+        aggregate: {
+          args: Prisma.GalleryItemAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateGalleryItem>
+        }
+        groupBy: {
+          args: Prisma.GalleryItemGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GalleryItemGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.GalleryItemCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.GalleryItemCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -2648,7 +2798,17 @@ export const TeacherScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   employeeId: 'employeeId',
+  photoUrl: 'photoUrl',
   phone: 'phone',
+  emergencyPhone: 'emergencyPhone',
+  nid: 'nid',
+  bloodGroup: 'bloodGroup',
+  religion: 'religion',
+  qualification: 'qualification',
+  designation: 'designation',
+  department: 'department',
+  address: 'address',
+  joinDate: 'joinDate',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -2661,8 +2821,28 @@ export const StudentScalarFieldEnum = {
   userId: 'userId',
   admissionNo: 'admissionNo',
   fullName: 'fullName',
+  fullNameBn: 'fullNameBn',
+  photoUrl: 'photoUrl',
   dateOfBirth: 'dateOfBirth',
   gender: 'gender',
+  bloodGroup: 'bloodGroup',
+  religion: 'religion',
+  nationality: 'nationality',
+  birthCertNo: 'birthCertNo',
+  guardianName: 'guardianName',
+  guardianRelation: 'guardianRelation',
+  guardianPhone: 'guardianPhone',
+  guardianNid: 'guardianNid',
+  village: 'village',
+  road: 'road',
+  ward: 'ward',
+  postOffice: 'postOffice',
+  policeStation: 'policeStation',
+  upazila: 'upazila',
+  district: 'district',
+  postalCode: 'postalCode',
+  previousSchool: 'previousSchool',
+  admissionDate: 'admissionDate',
   classId: 'classId',
   sectionId: 'sectionId',
   parentId: 'parentId',
@@ -2712,6 +2892,7 @@ export type SubjectScalarFieldEnum = (typeof SubjectScalarFieldEnum)[keyof typeo
 export const ClassSubjectScalarFieldEnum = {
   id: 'id',
   classId: 'classId',
+  sectionId: 'sectionId',
   subjectId: 'subjectId',
   teacherId: 'teacherId'
 } as const
@@ -3008,11 +3189,38 @@ export const SiteSettingScalarFieldEnum = {
   youtubeUrl: 'youtubeUrl',
   linkedinUrl: 'linkedinUrl',
   websiteUrl: 'websiteUrl',
+  mapEmbedUrl: 'mapEmbedUrl',
   importantLinks: 'importantLinks',
   updatedAt: 'updatedAt'
 } as const
 
 export type SiteSettingScalarFieldEnum = (typeof SiteSettingScalarFieldEnum)[keyof typeof SiteSettingScalarFieldEnum]
+
+
+export const ContactMessageScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  email: 'email',
+  message: 'message',
+  read: 'read',
+  createdAt: 'createdAt'
+} as const
+
+export type ContactMessageScalarFieldEnum = (typeof ContactMessageScalarFieldEnum)[keyof typeof ContactMessageScalarFieldEnum]
+
+
+export const GalleryItemScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  titleBn: 'titleBn',
+  caption: 'caption',
+  url: 'url',
+  category: 'category',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt'
+} as const
+
+export type GalleryItemScalarFieldEnum = (typeof GalleryItemScalarFieldEnum)[keyof typeof GalleryItemScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -3507,6 +3715,8 @@ export type GlobalOmitConfig = {
   sourceDocument?: Prisma.SourceDocumentOmit
   sourceChunk?: Prisma.SourceChunkOmit
   siteSetting?: Prisma.SiteSettingOmit
+  contactMessage?: Prisma.ContactMessageOmit
+  galleryItem?: Prisma.GalleryItemOmit
 }
 
 /* Types for Logging */

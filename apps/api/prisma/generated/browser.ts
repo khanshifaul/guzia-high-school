@@ -162,3 +162,13 @@ export type SourceChunk = Prisma.SourceChunkModel
  * 
  */
 export type SiteSetting = Prisma.SiteSettingModel
+/**
+ * Model ContactMessage
+ * 
+ */
+export type ContactMessage = Prisma.ContactMessageModel
+/**
+ * Model GalleryItem
+ * 
+ */
+export type GalleryItem = Prisma.GalleryItemModel

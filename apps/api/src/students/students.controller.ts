@@ -13,7 +13,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { StudentsService } from './students.service';
-import { CreateStudentDto, UpdateStudentDto } from './dto';
+import { BulkCreateStudentsDto, CreateStudentDto, UpdateStudentDto } from './dto';
 
 @ApiTags('Students')
 @Controller('students')
@@ -42,6 +42,13 @@ export class StudentsController {
   @Post()
   create(@Body() dto: CreateStudentDto) {
     return this.service.create(dto);
+  }
+
+  @Roles('ADMIN')
+  @Post('bulk')
+  @ApiOperation({ summary: 'Bulk import students from parsed CSV rows' })
+  bulkCreate(@Body() dto: BulkCreateStudentsDto) {
+    return this.service.bulkCreate(dto.students);
   }
 
   @Roles('ADMIN')

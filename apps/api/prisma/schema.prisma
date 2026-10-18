@@ -105,7 +105,17 @@ model Teacher {
   userId     String           @unique
   user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   employeeId String           @unique
+  photoUrl   String?
   phone      String?
+  emergencyPhone String?
+  nid        String?
+  bloodGroup String?
+  religion   String?
+  qualification String?
+  designation String?
+  department String?
+  address    String?
+  joinDate   DateTime?
   subjects   ClassSubject[]
   assignments Assignment[]
   plans      TeachingPlan[]
@@ -121,8 +131,28 @@ model Student {
   user        User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
   admissionNo String            @unique
   fullName    String
+  fullNameBn  String?
+  photoUrl    String?
   dateOfBirth DateTime?
   gender      String?
+  bloodGroup  String?
+  religion    String?
+  nationality String?           @default("Bangladeshi")
+  birthCertNo String?
+  guardianName    String?
+  guardianRelation String?
+  guardianPhone   String?
+  guardianNid     String?
+  village     String?
+  road        String?
+  ward        String?
+  postOffice  String?
+  policeStation String?
+  upazila     String?
+  district    String?
+  postalCode  String?
+  previousSchool String?
+  admissionDate DateTime?
   classId     String
   class       Class             @relation(fields: [classId], references: [id])
   sectionId   String?
@@ -170,6 +200,7 @@ model Section {
   class          Class            @relation(fields: [classId], references: [id], onDelete: Cascade)
   students       Student[]
   timetableSlots TimetableSlot[]
+  classSubjects  ClassSubject[]
   @@unique([classId, name])
 }
 
@@ -189,11 +220,16 @@ model ClassSubject {
   id        String   @id @default(cuid())
   classId   String
   class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  sectionId String
+  section   Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   subjectId String
   subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   teacherId String?
   teacher   Teacher? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
-  @@unique([classId, subjectId])
+  // A subject is taught per section, and each section may have a different
+  // teacher for the same subject (e.g. Class 8-A Bangla = teacher1,
+  // Class 8-B Bangla = teacher2).
+  @@unique([classId, sectionId, subjectId])
 }
 
 model TimetableSlot {
@@ -471,7 +507,31 @@ model SiteSetting {
   youtubeUrl    String   @default("")
   linkedinUrl   String   @default("")
   websiteUrl    String   @default("")
+  // Google Maps embed iframe src for the /contact page (admin-controllable).
+  mapEmbedUrl   String   @default("https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14458.072901505664!2d89.30680657310677!3d25.05041884841201!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39fcfc81607202cf%3A0x3ebf373552deaa97!2sGuzia%20High%20School!5e0!3m2!1sen!2sbd!4v1792265333406!5m2!1sen!2sbd")
   // [{ label, labelBn, href }] — rendered in the footer Important Links bar.
   importantLinks Json     @default("[]")
   updatedAt     DateTime @updatedAt
+}
+
+// Public contact-form messages (from /contact page).
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// Campus gallery images (admin-managed, shown on the public site).
+model GalleryItem {
+  id        String   @id @default(cuid())
+  title     String
+  titleBn   String?
+  caption   String?
+  url       String
+  category  String?  // e.g. "campus", "events", "science-fair"
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
 }

@@ -134,7 +134,7 @@ const Search = React.forwardRef<HTMLInputElement, SearchProps>(
             <button
               type="button"
               onClick={handleClear}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground cursor-pointer"
               aria-label="Clear search"
             >
               <svg

@@ -9,6 +9,7 @@ import { FaGlobe, FaSpinner, FaPlus, FaTrash } from "react-icons/fa6";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
     Select,
     SelectContent,
@@ -39,6 +40,7 @@ interface SiteSettings {
     established: string; tagline: string; taglineBn: string; developedBy: string;
     developedByUrl: string; facebookUrl: string; twitterUrl: string;
     instagramUrl: string; youtubeUrl: string; linkedinUrl: string; websiteUrl: string;
+    mapEmbedUrl: string;
     importantLinks: ImportantLink[];
 }
 
@@ -62,6 +64,7 @@ const FIELDS: { key: keyof Omit<SiteSettings, "importantLinks">; label: string; 
     { key: "youtubeUrl", label: "YouTube URL" },
     { key: "linkedinUrl", label: "LinkedIn URL" },
     { key: "websiteUrl", label: "Website URL" },
+    { key: "mapEmbedUrl", label: "Google Maps embed URL" },
 ];
 
 export function SiteSettingsPanel() {
@@ -118,7 +121,7 @@ export function SiteSettingsPanel() {
 
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Education board</label>
-                    <Select value={settings.board} onValueChange={(v) => set("board", v)}>
+                    <Select value={settings.board} onValueChange={(v) => set("board", v)} searchable>
                         <SelectTrigger className="h-11 text-xs font-semibold"><SelectValue placeholder="Select board" /></SelectTrigger>
                         <SelectContent>
                             {BD_BOARDS.map((b) => (<SelectItem key={b} value={b}>{b}</SelectItem>))}

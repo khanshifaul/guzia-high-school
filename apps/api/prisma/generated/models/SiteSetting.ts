@@ -46,6 +46,7 @@ export type SiteSettingMinAggregateOutputType = {
   youtubeUrl: string | null
   linkedinUrl: string | null
   websiteUrl: string | null
+  mapEmbedUrl: string | null
   updatedAt: Date | null
 }
 
@@ -71,6 +72,7 @@ export type SiteSettingMaxAggregateOutputType = {
   youtubeUrl: string | null
   linkedinUrl: string | null
   websiteUrl: string | null
+  mapEmbedUrl: string | null
   updatedAt: Date | null
 }
 
@@ -96,6 +98,7 @@ export type SiteSettingCountAggregateOutputType = {
   youtubeUrl: number
   linkedinUrl: number
   websiteUrl: number
+  mapEmbedUrl: number
   importantLinks: number
   updatedAt: number
   _all: number
@@ -124,6 +127,7 @@ export type SiteSettingMinAggregateInputType = {
   youtubeUrl?: true
   linkedinUrl?: true
   websiteUrl?: true
+  mapEmbedUrl?: true
   updatedAt?: true
 }
 
@@ -149,6 +153,7 @@ export type SiteSettingMaxAggregateInputType = {
   youtubeUrl?: true
   linkedinUrl?: true
   websiteUrl?: true
+  mapEmbedUrl?: true
   updatedAt?: true
 }
 
@@ -174,6 +179,7 @@ export type SiteSettingCountAggregateInputType = {
   youtubeUrl?: true
   linkedinUrl?: true
   websiteUrl?: true
+  mapEmbedUrl?: true
   importantLinks?: true
   updatedAt?: true
   _all?: true
@@ -273,6 +279,7 @@ export type SiteSettingGroupByOutputType = {
   youtubeUrl: string
   linkedinUrl: string
   websiteUrl: string
+  mapEmbedUrl: string
   importantLinks: runtime.JsonValue
   updatedAt: Date
   _count: SiteSettingCountAggregateOutputType | null
@@ -320,6 +327,7 @@ export type SiteSettingWhereInput = {
   youtubeUrl?: Prisma.StringFilter<"SiteSetting"> | string
   linkedinUrl?: Prisma.StringFilter<"SiteSetting"> | string
   websiteUrl?: Prisma.StringFilter<"SiteSetting"> | string
+  mapEmbedUrl?: Prisma.StringFilter<"SiteSetting"> | string
   importantLinks?: Prisma.JsonFilter<"SiteSetting">
   updatedAt?: Prisma.DateTimeFilter<"SiteSetting"> | Date | string
 }
@@ -346,6 +354,7 @@ export type SiteSettingOrderByWithRelationInput = {
   youtubeUrl?: Prisma.SortOrder
   linkedinUrl?: Prisma.SortOrder
   websiteUrl?: Prisma.SortOrder
+  mapEmbedUrl?: Prisma.SortOrder
   importantLinks?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -375,6 +384,7 @@ export type SiteSettingWhereUniqueInput = Prisma.AtLeast<{
   youtubeUrl?: Prisma.StringFilter<"SiteSetting"> | string
   linkedinUrl?: Prisma.StringFilter<"SiteSetting"> | string
   websiteUrl?: Prisma.StringFilter<"SiteSetting"> | string
+  mapEmbedUrl?: Prisma.StringFilter<"SiteSetting"> | string
   importantLinks?: Prisma.JsonFilter<"SiteSetting">
   updatedAt?: Prisma.DateTimeFilter<"SiteSetting"> | Date | string
 }, "id">
@@ -401,6 +411,7 @@ export type SiteSettingOrderByWithAggregationInput = {
   youtubeUrl?: Prisma.SortOrder
   linkedinUrl?: Prisma.SortOrder
   websiteUrl?: Prisma.SortOrder
+  mapEmbedUrl?: Prisma.SortOrder
   importantLinks?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.SiteSettingCountOrderByAggregateInput
@@ -433,6 +444,7 @@ export type SiteSettingScalarWhereWithAggregatesInput = {
   youtubeUrl?: Prisma.StringWithAggregatesFilter<"SiteSetting"> | string
   linkedinUrl?: Prisma.StringWithAggregatesFilter<"SiteSetting"> | string
   websiteUrl?: Prisma.StringWithAggregatesFilter<"SiteSetting"> | string
+  mapEmbedUrl?: Prisma.StringWithAggregatesFilter<"SiteSetting"> | string
   importantLinks?: Prisma.JsonWithAggregatesFilter<"SiteSetting">
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"SiteSetting"> | Date | string
 }
@@ -459,6 +471,7 @@ export type SiteSettingCreateInput = {
   youtubeUrl?: string
   linkedinUrl?: string
   websiteUrl?: string
+  mapEmbedUrl?: string
   importantLinks?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Date | string
 }
@@ -485,6 +498,7 @@ export type SiteSettingUncheckedCreateInput = {
   youtubeUrl?: string
   linkedinUrl?: string
   websiteUrl?: string
+  mapEmbedUrl?: string
   importantLinks?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Date | string
 }
@@ -511,6 +525,7 @@ export type SiteSettingUpdateInput = {
   youtubeUrl?: Prisma.StringFieldUpdateOperationsInput | string
   linkedinUrl?: Prisma.StringFieldUpdateOperationsInput | string
   websiteUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  mapEmbedUrl?: Prisma.StringFieldUpdateOperationsInput | string
   importantLinks?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -537,6 +552,7 @@ export type SiteSettingUncheckedUpdateInput = {
   youtubeUrl?: Prisma.StringFieldUpdateOperationsInput | string
   linkedinUrl?: Prisma.StringFieldUpdateOperationsInput | string
   websiteUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  mapEmbedUrl?: Prisma.StringFieldUpdateOperationsInput | string
   importantLinks?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -563,6 +579,7 @@ export type SiteSettingCreateManyInput = {
   youtubeUrl?: string
   linkedinUrl?: string
   websiteUrl?: string
+  mapEmbedUrl?: string
   importantLinks?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Date | string
 }
@@ -589,6 +606,7 @@ export type SiteSettingUpdateManyMutationInput = {
   youtubeUrl?: Prisma.StringFieldUpdateOperationsInput | string
   linkedinUrl?: Prisma.StringFieldUpdateOperationsInput | string
   websiteUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  mapEmbedUrl?: Prisma.StringFieldUpdateOperationsInput | string
   importantLinks?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -615,6 +633,7 @@ export type SiteSettingUncheckedUpdateManyInput = {
   youtubeUrl?: Prisma.StringFieldUpdateOperationsInput | string
   linkedinUrl?: Prisma.StringFieldUpdateOperationsInput | string
   websiteUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  mapEmbedUrl?: Prisma.StringFieldUpdateOperationsInput | string
   importantLinks?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -641,6 +660,7 @@ export type SiteSettingCountOrderByAggregateInput = {
   youtubeUrl?: Prisma.SortOrder
   linkedinUrl?: Prisma.SortOrder
   websiteUrl?: Prisma.SortOrder
+  mapEmbedUrl?: Prisma.SortOrder
   importantLinks?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -667,6 +687,7 @@ export type SiteSettingMaxOrderByAggregateInput = {
   youtubeUrl?: Prisma.SortOrder
   linkedinUrl?: Prisma.SortOrder
   websiteUrl?: Prisma.SortOrder
+  mapEmbedUrl?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -692,6 +713,7 @@ export type SiteSettingMinOrderByAggregateInput = {
   youtubeUrl?: Prisma.SortOrder
   linkedinUrl?: Prisma.SortOrder
   websiteUrl?: Prisma.SortOrder
+  mapEmbedUrl?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -719,6 +741,7 @@ export type SiteSettingSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   youtubeUrl?: boolean
   linkedinUrl?: boolean
   websiteUrl?: boolean
+  mapEmbedUrl?: boolean
   importantLinks?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["siteSetting"]>
@@ -745,6 +768,7 @@ export type SiteSettingSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   youtubeUrl?: boolean
   linkedinUrl?: boolean
   websiteUrl?: boolean
+  mapEmbedUrl?: boolean
   importantLinks?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["siteSetting"]>
@@ -771,6 +795,7 @@ export type SiteSettingSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   youtubeUrl?: boolean
   linkedinUrl?: boolean
   websiteUrl?: boolean
+  mapEmbedUrl?: boolean
   importantLinks?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["siteSetting"]>
@@ -797,11 +822,12 @@ export type SiteSettingSelectScalar = {
   youtubeUrl?: boolean
   linkedinUrl?: boolean
   websiteUrl?: boolean
+  mapEmbedUrl?: boolean
   importantLinks?: boolean
   updatedAt?: boolean
 }
 
-export type SiteSettingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "schoolName" | "schoolNameBn" | "phone" | "hotline" | "email" | "eiin" | "board" | "address" | "addressBn" | "established" | "tagline" | "taglineBn" | "developedBy" | "developedByUrl" | "facebookUrl" | "twitterUrl" | "instagramUrl" | "youtubeUrl" | "linkedinUrl" | "websiteUrl" | "importantLinks" | "updatedAt", ExtArgs["result"]["siteSetting"]>
+export type SiteSettingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "schoolName" | "schoolNameBn" | "phone" | "hotline" | "email" | "eiin" | "board" | "address" | "addressBn" | "established" | "tagline" | "taglineBn" | "developedBy" | "developedByUrl" | "facebookUrl" | "twitterUrl" | "instagramUrl" | "youtubeUrl" | "linkedinUrl" | "websiteUrl" | "mapEmbedUrl" | "importantLinks" | "updatedAt", ExtArgs["result"]["siteSetting"]>
 
 export type $SiteSettingPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "SiteSetting"
@@ -828,6 +854,7 @@ export type $SiteSettingPayload<ExtArgs extends runtime.Types.Extensions.Interna
     youtubeUrl: string
     linkedinUrl: string
     websiteUrl: string
+    mapEmbedUrl: string
     importantLinks: runtime.JsonValue
     updatedAt: Date
   }, ExtArgs["result"]["siteSetting"]>
@@ -1274,6 +1301,7 @@ export interface SiteSettingFieldRefs {
   readonly youtubeUrl: Prisma.FieldRef<"SiteSetting", 'String'>
   readonly linkedinUrl: Prisma.FieldRef<"SiteSetting", 'String'>
   readonly websiteUrl: Prisma.FieldRef<"SiteSetting", 'String'>
+  readonly mapEmbedUrl: Prisma.FieldRef<"SiteSetting", 'String'>
   readonly importantLinks: Prisma.FieldRef<"SiteSetting", 'Json'>
   readonly updatedAt: Prisma.FieldRef<"SiteSetting", 'DateTime'>
 }

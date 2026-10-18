@@ -169,7 +169,7 @@ export default function AdminSettingsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Text model</label>
-                            <Select value={textModel || undefined} onValueChange={setTextModel}>
+                            <Select value={textModel || undefined} onValueChange={setTextModel} searchable>
                                 <SelectTrigger className="h-11 text-xs"><SelectValue placeholder={models.length ? "Select a model" : "Fetch models first"} /></SelectTrigger>
                                 <SelectContent>
                                     {models.map((m) => (<SelectItem key={m} value={m}>{m}</SelectItem>))}
@@ -178,7 +178,7 @@ export default function AdminSettingsPage() {
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Vision model (optional)</label>
-                            <Select value={visionModel} onValueChange={setVisionModel}>
+                            <Select value={visionModel} onValueChange={setVisionModel} searchable>
                                 <SelectTrigger className="h-11 text-xs"><SelectValue placeholder="None (text-only)" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value={NONE}>None (text-only)</SelectItem>

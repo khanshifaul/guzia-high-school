@@ -169,6 +169,7 @@ export type SectionWhereInput = {
   class?: Prisma.XOR<Prisma.ClassScalarRelationFilter, Prisma.ClassWhereInput>
   students?: Prisma.StudentListRelationFilter
   timetableSlots?: Prisma.TimetableSlotListRelationFilter
+  classSubjects?: Prisma.ClassSubjectListRelationFilter
 }
 
 export type SectionOrderByWithRelationInput = {
@@ -178,6 +179,7 @@ export type SectionOrderByWithRelationInput = {
   class?: Prisma.ClassOrderByWithRelationInput
   students?: Prisma.StudentOrderByRelationAggregateInput
   timetableSlots?: Prisma.TimetableSlotOrderByRelationAggregateInput
+  classSubjects?: Prisma.ClassSubjectOrderByRelationAggregateInput
 }
 
 export type SectionWhereUniqueInput = Prisma.AtLeast<{
@@ -191,6 +193,7 @@ export type SectionWhereUniqueInput = Prisma.AtLeast<{
   class?: Prisma.XOR<Prisma.ClassScalarRelationFilter, Prisma.ClassWhereInput>
   students?: Prisma.StudentListRelationFilter
   timetableSlots?: Prisma.TimetableSlotListRelationFilter
+  classSubjects?: Prisma.ClassSubjectListRelationFilter
 }, "id" | "classId_name">
 
 export type SectionOrderByWithAggregationInput = {
@@ -217,6 +220,7 @@ export type SectionCreateInput = {
   class: Prisma.ClassCreateNestedOneWithoutSectionsInput
   students?: Prisma.StudentCreateNestedManyWithoutSectionInput
   timetableSlots?: Prisma.TimetableSlotCreateNestedManyWithoutSectionInput
+  classSubjects?: Prisma.ClassSubjectCreateNestedManyWithoutSectionInput
 }
 
 export type SectionUncheckedCreateInput = {
@@ -225,6 +229,7 @@ export type SectionUncheckedCreateInput = {
   classId: string
   students?: Prisma.StudentUncheckedCreateNestedManyWithoutSectionInput
   timetableSlots?: Prisma.TimetableSlotUncheckedCreateNestedManyWithoutSectionInput
+  classSubjects?: Prisma.ClassSubjectUncheckedCreateNestedManyWithoutSectionInput
 }
 
 export type SectionUpdateInput = {
@@ -233,6 +238,7 @@ export type SectionUpdateInput = {
   class?: Prisma.ClassUpdateOneRequiredWithoutSectionsNestedInput
   students?: Prisma.StudentUpdateManyWithoutSectionNestedInput
   timetableSlots?: Prisma.TimetableSlotUpdateManyWithoutSectionNestedInput
+  classSubjects?: Prisma.ClassSubjectUpdateManyWithoutSectionNestedInput
 }
 
 export type SectionUncheckedUpdateInput = {
@@ -241,6 +247,7 @@ export type SectionUncheckedUpdateInput = {
   classId?: Prisma.StringFieldUpdateOperationsInput | string
   students?: Prisma.StudentUncheckedUpdateManyWithoutSectionNestedInput
   timetableSlots?: Prisma.TimetableSlotUncheckedUpdateManyWithoutSectionNestedInput
+  classSubjects?: Prisma.ClassSubjectUncheckedUpdateManyWithoutSectionNestedInput
 }
 
 export type SectionCreateManyInput = {
@@ -361,6 +368,20 @@ export type SectionUncheckedUpdateManyWithoutClassNestedInput = {
   deleteMany?: Prisma.SectionScalarWhereInput | Prisma.SectionScalarWhereInput[]
 }
 
+export type SectionCreateNestedOneWithoutClassSubjectsInput = {
+  create?: Prisma.XOR<Prisma.SectionCreateWithoutClassSubjectsInput, Prisma.SectionUncheckedCreateWithoutClassSubjectsInput>
+  connectOrCreate?: Prisma.SectionCreateOrConnectWithoutClassSubjectsInput
+  connect?: Prisma.SectionWhereUniqueInput
+}
+
+export type SectionUpdateOneRequiredWithoutClassSubjectsNestedInput = {
+  create?: Prisma.XOR<Prisma.SectionCreateWithoutClassSubjectsInput, Prisma.SectionUncheckedCreateWithoutClassSubjectsInput>
+  connectOrCreate?: Prisma.SectionCreateOrConnectWithoutClassSubjectsInput
+  upsert?: Prisma.SectionUpsertWithoutClassSubjectsInput
+  connect?: Prisma.SectionWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.SectionUpdateToOneWithWhereWithoutClassSubjectsInput, Prisma.SectionUpdateWithoutClassSubjectsInput>, Prisma.SectionUncheckedUpdateWithoutClassSubjectsInput>
+}
+
 export type SectionCreateNestedOneWithoutTimetableSlotsInput = {
   create?: Prisma.XOR<Prisma.SectionCreateWithoutTimetableSlotsInput, Prisma.SectionUncheckedCreateWithoutTimetableSlotsInput>
   connectOrCreate?: Prisma.SectionCreateOrConnectWithoutTimetableSlotsInput
@@ -380,6 +401,7 @@ export type SectionCreateWithoutStudentsInput = {
   name: string
   class: Prisma.ClassCreateNestedOneWithoutSectionsInput
   timetableSlots?: Prisma.TimetableSlotCreateNestedManyWithoutSectionInput
+  classSubjects?: Prisma.ClassSubjectCreateNestedManyWithoutSectionInput
 }
 
 export type SectionUncheckedCreateWithoutStudentsInput = {
@@ -387,6 +409,7 @@ export type SectionUncheckedCreateWithoutStudentsInput = {
   name: string
   classId: string
   timetableSlots?: Prisma.TimetableSlotUncheckedCreateNestedManyWithoutSectionInput
+  classSubjects?: Prisma.ClassSubjectUncheckedCreateNestedManyWithoutSectionInput
 }
 
 export type SectionCreateOrConnectWithoutStudentsInput = {
@@ -410,6 +433,7 @@ export type SectionUpdateWithoutStudentsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   class?: Prisma.ClassUpdateOneRequiredWithoutSectionsNestedInput
   timetableSlots?: Prisma.TimetableSlotUpdateManyWithoutSectionNestedInput
+  classSubjects?: Prisma.ClassSubjectUpdateManyWithoutSectionNestedInput
 }
 
 export type SectionUncheckedUpdateWithoutStudentsInput = {
@@ -417,6 +441,7 @@ export type SectionUncheckedUpdateWithoutStudentsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   classId?: Prisma.StringFieldUpdateOperationsInput | string
   timetableSlots?: Prisma.TimetableSlotUncheckedUpdateManyWithoutSectionNestedInput
+  classSubjects?: Prisma.ClassSubjectUncheckedUpdateManyWithoutSectionNestedInput
 }
 
 export type SectionCreateWithoutClassInput = {
@@ -424,6 +449,7 @@ export type SectionCreateWithoutClassInput = {
   name: string
   students?: Prisma.StudentCreateNestedManyWithoutSectionInput
   timetableSlots?: Prisma.TimetableSlotCreateNestedManyWithoutSectionInput
+  classSubjects?: Prisma.ClassSubjectCreateNestedManyWithoutSectionInput
 }
 
 export type SectionUncheckedCreateWithoutClassInput = {
@@ -431,6 +457,7 @@ export type SectionUncheckedCreateWithoutClassInput = {
   name: string
   students?: Prisma.StudentUncheckedCreateNestedManyWithoutSectionInput
   timetableSlots?: Prisma.TimetableSlotUncheckedCreateNestedManyWithoutSectionInput
+  classSubjects?: Prisma.ClassSubjectUncheckedCreateNestedManyWithoutSectionInput
 }
 
 export type SectionCreateOrConnectWithoutClassInput = {
@@ -468,11 +495,60 @@ export type SectionScalarWhereInput = {
   classId?: Prisma.StringFilter<"Section"> | string
 }
 
+export type SectionCreateWithoutClassSubjectsInput = {
+  id?: string
+  name: string
+  class: Prisma.ClassCreateNestedOneWithoutSectionsInput
+  students?: Prisma.StudentCreateNestedManyWithoutSectionInput
+  timetableSlots?: Prisma.TimetableSlotCreateNestedManyWithoutSectionInput
+}
+
+export type SectionUncheckedCreateWithoutClassSubjectsInput = {
+  id?: string
+  name: string
+  classId: string
+  students?: Prisma.StudentUncheckedCreateNestedManyWithoutSectionInput
+  timetableSlots?: Prisma.TimetableSlotUncheckedCreateNestedManyWithoutSectionInput
+}
+
+export type SectionCreateOrConnectWithoutClassSubjectsInput = {
+  where: Prisma.SectionWhereUniqueInput
+  create: Prisma.XOR<Prisma.SectionCreateWithoutClassSubjectsInput, Prisma.SectionUncheckedCreateWithoutClassSubjectsInput>
+}
+
+export type SectionUpsertWithoutClassSubjectsInput = {
+  update: Prisma.XOR<Prisma.SectionUpdateWithoutClassSubjectsInput, Prisma.SectionUncheckedUpdateWithoutClassSubjectsInput>
+  create: Prisma.XOR<Prisma.SectionCreateWithoutClassSubjectsInput, Prisma.SectionUncheckedCreateWithoutClassSubjectsInput>
+  where?: Prisma.SectionWhereInput
+}
+
+export type SectionUpdateToOneWithWhereWithoutClassSubjectsInput = {
+  where?: Prisma.SectionWhereInput
+  data: Prisma.XOR<Prisma.SectionUpdateWithoutClassSubjectsInput, Prisma.SectionUncheckedUpdateWithoutClassSubjectsInput>
+}
+
+export type SectionUpdateWithoutClassSubjectsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  class?: Prisma.ClassUpdateOneRequiredWithoutSectionsNestedInput
+  students?: Prisma.StudentUpdateManyWithoutSectionNestedInput
+  timetableSlots?: Prisma.TimetableSlotUpdateManyWithoutSectionNestedInput
+}
+
+export type SectionUncheckedUpdateWithoutClassSubjectsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  classId?: Prisma.StringFieldUpdateOperationsInput | string
+  students?: Prisma.StudentUncheckedUpdateManyWithoutSectionNestedInput
+  timetableSlots?: Prisma.TimetableSlotUncheckedUpdateManyWithoutSectionNestedInput
+}
+
 export type SectionCreateWithoutTimetableSlotsInput = {
   id?: string
   name: string
   class: Prisma.ClassCreateNestedOneWithoutSectionsInput
   students?: Prisma.StudentCreateNestedManyWithoutSectionInput
+  classSubjects?: Prisma.ClassSubjectCreateNestedManyWithoutSectionInput
 }
 
 export type SectionUncheckedCreateWithoutTimetableSlotsInput = {
@@ -480,6 +556,7 @@ export type SectionUncheckedCreateWithoutTimetableSlotsInput = {
   name: string
   classId: string
   students?: Prisma.StudentUncheckedCreateNestedManyWithoutSectionInput
+  classSubjects?: Prisma.ClassSubjectUncheckedCreateNestedManyWithoutSectionInput
 }
 
 export type SectionCreateOrConnectWithoutTimetableSlotsInput = {
@@ -503,6 +580,7 @@ export type SectionUpdateWithoutTimetableSlotsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   class?: Prisma.ClassUpdateOneRequiredWithoutSectionsNestedInput
   students?: Prisma.StudentUpdateManyWithoutSectionNestedInput
+  classSubjects?: Prisma.ClassSubjectUpdateManyWithoutSectionNestedInput
 }
 
 export type SectionUncheckedUpdateWithoutTimetableSlotsInput = {
@@ -510,6 +588,7 @@ export type SectionUncheckedUpdateWithoutTimetableSlotsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   classId?: Prisma.StringFieldUpdateOperationsInput | string
   students?: Prisma.StudentUncheckedUpdateManyWithoutSectionNestedInput
+  classSubjects?: Prisma.ClassSubjectUncheckedUpdateManyWithoutSectionNestedInput
 }
 
 export type SectionCreateManyClassInput = {
@@ -522,6 +601,7 @@ export type SectionUpdateWithoutClassInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   students?: Prisma.StudentUpdateManyWithoutSectionNestedInput
   timetableSlots?: Prisma.TimetableSlotUpdateManyWithoutSectionNestedInput
+  classSubjects?: Prisma.ClassSubjectUpdateManyWithoutSectionNestedInput
 }
 
 export type SectionUncheckedUpdateWithoutClassInput = {
@@ -529,6 +609,7 @@ export type SectionUncheckedUpdateWithoutClassInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   students?: Prisma.StudentUncheckedUpdateManyWithoutSectionNestedInput
   timetableSlots?: Prisma.TimetableSlotUncheckedUpdateManyWithoutSectionNestedInput
+  classSubjects?: Prisma.ClassSubjectUncheckedUpdateManyWithoutSectionNestedInput
 }
 
 export type SectionUncheckedUpdateManyWithoutClassInput = {
@@ -544,11 +625,13 @@ export type SectionUncheckedUpdateManyWithoutClassInput = {
 export type SectionCountOutputType = {
   students: number
   timetableSlots: number
+  classSubjects: number
 }
 
 export type SectionCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   students?: boolean | SectionCountOutputTypeCountStudentsArgs
   timetableSlots?: boolean | SectionCountOutputTypeCountTimetableSlotsArgs
+  classSubjects?: boolean | SectionCountOutputTypeCountClassSubjectsArgs
 }
 
 /**
@@ -575,6 +658,13 @@ export type SectionCountOutputTypeCountTimetableSlotsArgs<ExtArgs extends runtim
   where?: Prisma.TimetableSlotWhereInput
 }
 
+/**
+ * SectionCountOutputType without action
+ */
+export type SectionCountOutputTypeCountClassSubjectsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ClassSubjectWhereInput
+}
+
 
 export type SectionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -583,6 +673,7 @@ export type SectionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   class?: boolean | Prisma.ClassDefaultArgs<ExtArgs>
   students?: boolean | Prisma.Section$studentsArgs<ExtArgs>
   timetableSlots?: boolean | Prisma.Section$timetableSlotsArgs<ExtArgs>
+  classSubjects?: boolean | Prisma.Section$classSubjectsArgs<ExtArgs>
   _count?: boolean | Prisma.SectionCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["section"]>
 
@@ -611,6 +702,7 @@ export type SectionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   class?: boolean | Prisma.ClassDefaultArgs<ExtArgs>
   students?: boolean | Prisma.Section$studentsArgs<ExtArgs>
   timetableSlots?: boolean | Prisma.Section$timetableSlotsArgs<ExtArgs>
+  classSubjects?: boolean | Prisma.Section$classSubjectsArgs<ExtArgs>
   _count?: boolean | Prisma.SectionCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type SectionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -626,6 +718,7 @@ export type $SectionPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     class: Prisma.$ClassPayload<ExtArgs>
     students: Prisma.$StudentPayload<ExtArgs>[]
     timetableSlots: Prisma.$TimetableSlotPayload<ExtArgs>[]
+    classSubjects: Prisma.$ClassSubjectPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1028,6 +1121,7 @@ export interface Prisma__SectionClient<T, Null = never, ExtArgs extends runtime.
   class<T extends Prisma.ClassDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ClassDefaultArgs<ExtArgs>>): Prisma.Prisma__ClassClient<runtime.Types.Result.GetResult<Prisma.$ClassPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   students<T extends Prisma.Section$studentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Section$studentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StudentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   timetableSlots<T extends Prisma.Section$timetableSlotsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Section$timetableSlotsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TimetableSlotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  classSubjects<T extends Prisma.Section$classSubjectsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Section$classSubjectsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ClassSubjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1506,6 +1600,30 @@ export type Section$timetableSlotsArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   distinct?: Prisma.TimetableSlotScalarFieldEnum | Prisma.TimetableSlotScalarFieldEnum[]
+}
+
+/**
+ * Section.classSubjects
+ */
+export type Section$classSubjectsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ClassSubject
+   */
+  select?: Prisma.ClassSubjectSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ClassSubject
+   */
+  omit?: Prisma.ClassSubjectOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ClassSubjectInclude<ExtArgs> | null
+  where?: Prisma.ClassSubjectWhereInput
+  orderBy?: Prisma.ClassSubjectOrderByWithRelationInput | Prisma.ClassSubjectOrderByWithRelationInput[]
+  cursor?: Prisma.ClassSubjectWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ClassSubjectScalarFieldEnum | Prisma.ClassSubjectScalarFieldEnum[]
 }
 
 /**

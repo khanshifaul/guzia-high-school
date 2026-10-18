@@ -4,6 +4,8 @@
 // On success, redirect to the caller's ?callbackUrl or the role home.
 
 import * as React from "react";
+import { Suspense } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
 import { FaGraduationCap, FaExclamation, FaSpinner } from "react-icons/fa6";
@@ -28,7 +30,7 @@ const DEMO = [
     { label: "Parent", email: "parent01@guziahs.edu" },
 ];
 
-export default function LoginPage() {
+function LoginInner() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [email, setEmail] = React.useState("");
@@ -63,14 +65,17 @@ export default function LoginPage() {
                 <Card className="border-border/50 shadow-xl">
                     <div className="h-1.5 bg-gradient-brand w-full rounded-t-xl" />
                     <CardContent className="p-6 pt-6">
-                        <div className="mx-auto bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-4">
+                        <Link href="/" className="mx-auto bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mb-4 hover:bg-primary/20 transition-colors cursor-pointer" aria-label="Back to homepage">
                             <FaGraduationCap className="text-3xl text-primary" />
-                        </div>
+                        </Link>
                         <h1 className="text-2xl font-black uppercase tracking-tight text-foreground text-center">
-                            Guzia High School
+                            <Link href="/" className="hover:text-primary transition-colors">Guzia High School</Link>
                         </h1>
                         <p className="text-muted-foreground text-xs font-semibold mt-1 text-center tracking-[0.2em] uppercase">
                             Management Portal
+                        </p>
+                        <p className="text-center mt-3">
+                            <Link href="/" className="text-xs font-semibold text-primary hover:underline cursor-pointer">← Back to home</Link>
                         </p>
 
                         <form onSubmit={onSubmit} className="space-y-5 mt-6">
@@ -142,7 +147,7 @@ export default function LoginPage() {
 
                         <div className="mt-6 pt-4 border-t border-border/60">
                             <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider text-center mb-2">
-                                Demo logins · password123
+                                Demo logins (click to fill)
                             </p>
                             <div className="flex flex-wrap gap-1.5 justify-center">
                                 {DEMO.map((d) => (
@@ -164,5 +169,13 @@ export default function LoginPage() {
                 </Card>
             </motion.div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-muted/30" />}>
+            <LoginInner />
+        </Suspense>
     );
 }

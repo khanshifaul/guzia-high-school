@@ -53,6 +53,16 @@ export class TeachersService {
                 userId: user.id,
                 employeeId: `T-${String(count + 1).padStart(3, '0')}`,
                 phone: dto.phone,
+                photoUrl: dto.photoUrl,
+                emergencyPhone: dto.emergencyPhone,
+                nid: dto.nid,
+                bloodGroup: dto.bloodGroup,
+                religion: dto.religion,
+                qualification: dto.qualification,
+                designation: dto.designation,
+                department: dto.department,
+                address: dto.address,
+                joinDate: dto.joinDate ? new Date(dto.joinDate) : undefined,
             },
             include: { user: { select: { email: true, fullName: true } } },
         });
@@ -72,7 +82,19 @@ export class TeachersService {
             }
             return tx.teacher.update({
                 where: { id },
-                data: { phone: dto.phone },
+                data: {
+                    phone: dto.phone,
+                    photoUrl: dto.photoUrl,
+                    emergencyPhone: dto.emergencyPhone,
+                    nid: dto.nid,
+                    bloodGroup: dto.bloodGroup,
+                    religion: dto.religion,
+                    qualification: dto.qualification,
+                    designation: dto.designation,
+                    department: dto.department,
+                    address: dto.address,
+                    joinDate: dto.joinDate ? new Date(dto.joinDate) : undefined,
+                },
                 include: { user: { select: { id: true, email: true, fullName: true, status: true } } },
             });
         });

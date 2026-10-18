@@ -1,0 +1,33 @@
+-- AlterTable: expand Student with personal/guardian/address fields
+ALTER TABLE "Student" ADD COLUMN "fullNameBn" TEXT,
+ADD COLUMN "photoUrl" TEXT,
+ADD COLUMN "bloodGroup" TEXT,
+ADD COLUMN "religion" TEXT,
+ADD COLUMN "nationality" TEXT DEFAULT 'Bangladeshi',
+ADD COLUMN "birthCertNo" TEXT,
+ADD COLUMN "guardianName" TEXT,
+ADD COLUMN "guardianRelation" TEXT,
+ADD COLUMN "guardianPhone" TEXT,
+ADD COLUMN "guardianNid" TEXT,
+ADD COLUMN "village" TEXT,
+ADD COLUMN "road" TEXT,
+ADD COLUMN "ward" TEXT,
+ADD COLUMN "postOffice" TEXT,
+ADD COLUMN "policeStation" TEXT,
+ADD COLUMN "upazila" TEXT,
+ADD COLUMN "district" TEXT,
+ADD COLUMN "postalCode" TEXT,
+ADD COLUMN "previousSchool" TEXT,
+ADD COLUMN "admissionDate" TIMESTAMP(3);
+
+-- AlterTable: expand Teacher with profile/contact/qualification fields
+ALTER TABLE "Teacher" ADD COLUMN "photoUrl" TEXT,
+ADD COLUMN "emergencyPhone" TEXT,
+ADD COLUMN "nid" TEXT,
+ADD COLUMN "bloodGroup" TEXT,
+ADD COLUMN "religion" TEXT,
+ADD COLUMN "qualification" TEXT,
+ADD COLUMN "designation" TEXT,
+ADD COLUMN "department" TEXT,
+ADD COLUMN "address" TEXT,
+ADD COLUMN "joinDate" TIMESTAMP(3);

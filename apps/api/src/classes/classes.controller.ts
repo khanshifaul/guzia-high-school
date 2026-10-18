@@ -69,9 +69,13 @@ export class ClassesController {
   }
 
   @Roles('ADMIN')
-  @Post(':id/subjects/:subjectId')
-  attachSubject(@Param('id') id: string, @Param('subjectId') subjectId: string) {
-    return this.service.attachSubject(id, subjectId);
+  @Post(':id/sections/:sectionId/subjects/:subjectId')
+  attachSubject(
+    @Param('id') id: string,
+    @Param('sectionId') sectionId: string,
+    @Param('subjectId') subjectId: string,
+  ) {
+    return this.service.attachSubject(id, sectionId, subjectId);
   }
 
   @Roles('ADMIN')

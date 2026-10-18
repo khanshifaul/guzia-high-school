@@ -17,8 +17,8 @@ export function NoticeTicker() {
     const [notices, setNotices] = React.useState<Notice[]>([]);
 
     React.useEffect(() => {
-        // Public landing; the notices API requires auth, so fall back silently.
-        fetch("/api/notices", { credentials: "include" })
+        // Public global notices (audience: null) for the ticker.
+        fetch("/api/notices/public", { credentials: "include" })
             .then((r) => (r.ok ? r.json() : null))
             .then((p) => {
                 if (Array.isArray(p?.data)) setNotices(p.data.slice(0, 6));
@@ -39,12 +39,12 @@ export function NoticeTicker() {
                         {[...notices, ...notices].map((n, i) => (
                             <Link
                                 key={`${n.id}-${i}`}
-                                href="/login"
+                                href="/news"
                                 className="inline-flex items-center gap-2 mx-6 text-xs font-semibold hover:underline"
                             >
-                                <span className="opacity-60">•</span>
+                                <span className="opacity-90">•</span>
                                 {n.title}
-                                <span className="opacity-60 text-[10px]">
+                                <span className="opacity-90 text-[10px]">
                                     {new Date(n.createdAt).toLocaleDateString("en-GB")}
                                 </span>
                             </Link>

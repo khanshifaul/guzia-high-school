@@ -12,21 +12,23 @@ import {
 } from "react-icons/fa";
 import { useLanguage } from "@/lib/language-context";
 import { useSiteConfig } from "@/lib/site-config";
+import { EmergencyHotlines } from "@/components/public/emergency-hotlines";
 
 const navLinks = [
     { href: "/", labelEn: "Home", labelBn: "হোম" },
-    { href: "/#programs", labelEn: "Academics", labelBn: "একাডেমিক" },
+    { href: "/about", labelEn: "About Us", labelBn: "আমাদের সম্পর্কে" },
+    { href: "/academics", labelEn: "Academics", labelBn: "একাডেমিক" },
     { href: "/admission", labelEn: "Admissions", labelBn: "ভর্তি" },
-    { href: "/#notices", labelEn: "Notices", labelBn: "বিজ্ঞপ্তি" },
-    { href: "/#facilities", labelEn: "Facilities", labelBn: "সুবিধা" },
-    { href: "/#contact", labelEn: "Contact", labelBn: "যোগাযোগ" },
+    { href: "/news", labelEn: "News", labelBn: "সংবাদ" },
+    { href: "/gallery", labelEn: "Gallery", labelBn: "গ্যালারি" },
+    { href: "/contact", labelEn: "Contact", labelBn: "যোগাযোগ" },
 ];
 
 const resourceLinks = [
-    { href: "/#programs", labelEn: "Curriculum", labelBn: "পাঠ্যক্রম" },
-    { href: "/#programs", labelEn: "Faculty", labelBn: "শিক্ষকবৃন্দ" },
-    { href: "/#facilities", labelEn: "Laboratories", labelBn: "ল্যাবরেটরি" },
-    { href: "/#facilities", labelEn: "Library", labelBn: "লাইব্রেরি" },
+    { href: "/academics", labelEn: "Curriculum", labelBn: "পাঠ্যক্রম" },
+    { href: "/academics", labelEn: "Faculty", labelBn: "শিক্ষকবৃন্দ" },
+    { href: "/about", labelEn: "Our Achievements", labelBn: "সাফল্য" },
+    { href: "/pages", labelEn: "Privacy Policy", labelBn: "গোপনীয়তা নীতি" },
     { href: "/login", labelEn: "Portal Login", labelBn: "পোর্টাল লগইন" },
 ];
 
@@ -77,9 +79,9 @@ export function Footer() {
 
                     {/* Quick Links */}
                     <div>
-                        <h3 className="font-bold text-xs uppercase tracking-wider text-foreground mb-4">
+                        <h2 className="font-bold text-xs uppercase tracking-wider text-foreground mb-4">
                             {t("Quick Links", "দ্রুত লিংক")}
-                        </h3>
+                        </h2>
                         <ul className="space-y-2 text-xs font-semibold text-muted-foreground">
                             {navLinks.map((link) => (
                                 <li key={link.href}>
@@ -91,9 +93,9 @@ export function Footer() {
 
                     {/* Resources */}
                     <div>
-                        <h3 className="font-bold text-xs uppercase tracking-wider text-foreground mb-4">
+                        <h2 className="font-bold text-xs uppercase tracking-wider text-foreground mb-4">
                             {t("Resources", "রিসোর্স")}
-                        </h3>
+                        </h2>
                         <ul className="space-y-2 text-xs font-semibold text-muted-foreground">
                             {resourceLinks.map((link) => (
                                 <li key={link.labelEn}>
@@ -105,9 +107,9 @@ export function Footer() {
 
                     {/* Contact */}
                     <div>
-                        <h3 className="font-bold text-xs uppercase tracking-wider text-foreground mb-4">
+                        <h2 className="font-bold text-xs uppercase tracking-wider text-foreground mb-4">
                             {t("Contact", "যোগাযোগ")}
-                        </h3>
+                        </h2>
                         <ul className="space-y-2 text-xs font-semibold text-muted-foreground">
                             <li className="flex items-start gap-2"><FaMapMarkerAlt className="text-primary mt-0.5 shrink-0" size={11} /> {language === "bn" ? cfg.addressBn : cfg.address}</li>
                             <li className="flex items-center gap-2"><FaPhone className="text-primary shrink-0" size={11} /> {cfg.phone}</li>
@@ -122,9 +124,9 @@ export function Footer() {
                 {/* Important Links */}
                 {cfg.importantLinks.length > 0 ? (
                     <div className="border-t mt-10 pt-6">
-                        <h3 className="font-bold text-xs uppercase tracking-wider text-foreground mb-2">
+                        <h2 className="font-bold text-xs uppercase tracking-wider text-foreground mb-2">
                             {t("Important Links", "গুরুত্বপূর্ণ লিংক")}
-                        </h3>
+                        </h2>
                         <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs font-semibold text-muted-foreground">
                             {cfg.importantLinks.map((l) => (
                                 <a key={l.href + l.label} href={l.href} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
@@ -134,6 +136,11 @@ export function Footer() {
                         </div>
                     </div>
                 ) : null}
+
+                {/* Emergency Hotlines */}
+                <div className="border-t mt-8 pt-6">
+                    <EmergencyHotlines />
+                </div>
 
                 <div className="border-t mt-8 pt-6 flex flex-col md:flex-row items-center justify-between text-xs text-muted-foreground">
                     <p>© {new Date().getFullYear()} {language === "bn" ? cfg.schoolNameBn : cfg.schoolName}. {t("All rights reserved.", "সর্বস্বত্ব সংরক্ষিত।")}</p>

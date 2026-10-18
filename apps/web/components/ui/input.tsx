@@ -94,7 +94,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                     <button
                         type="button"
                         onClick={() => setIsVisible(!isVisible)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none"
                     >
                         {isVisible ? (
                             <FiEyeOff className="h-4 w-4" aria-hidden="true" />
@@ -110,7 +110,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                     <button
                         type="button"
                         onClick={handleClear}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none"
                     >
                         <FiX className="h-4 w-4" aria-hidden="true" />
                         <span className="sr-only">Clear search</span>

@@ -16,6 +16,7 @@ export class ClassesService {
         subjects: {
           include: {
             subject: true,
+            section: true,
             teacher: { include: { user: { select: { fullName: true } } } },
           },
         },
@@ -41,6 +42,7 @@ export class ClassesService {
         subjects: {
           include: {
             subject: true,
+            section: true,
             teacher: { include: { user: { select: { fullName: true } } } },
           },
         },
@@ -111,15 +113,18 @@ export class ClassesService {
     return { deleted: true };
   }
 
-  /** Attach a subject to a class (creates the ClassSubject link). */
-  async attachSubject(classId: string, subjectId: string) {
+  /** Attach a subject to a class SECTION (creates the ClassSubject link). */
+  async attachSubject(classId: string, sectionId: string, subjectId: string) {
     await this.requireClass(classId);
+    const section = await this.prisma.section.findUnique({ where: { id: sectionId } });
+    if (!section || section.classId !== classId) throw new NotFoundException('Section not found in this class');
     const subject = await this.prisma.subject.findUnique({ where: { id: subjectId } });
     if (!subject) throw new NotFoundException('Subject not found');
     return this.prisma.classSubject.upsert({
-      where: { classId_subjectId: { classId, subjectId } },
-      create: { classId, subjectId },
+      where: { classId_sectionId_subjectId: { classId, sectionId, subjectId } },
+      create: { classId, sectionId, subjectId },
       update: {},
+      include: { section: true, subject: true },
     });
   }
 

@@ -32,6 +32,7 @@ export interface SiteConfig {
     youtubeUrl: string;
     linkedinUrl: string;
     websiteUrl: string;
+    mapEmbedUrl: string;
     importantLinks: ImportantLink[];
 }
 
@@ -56,6 +57,8 @@ const FALLBACK: SiteConfig = {
     youtubeUrl: "",
     linkedinUrl: "",
     websiteUrl: "",
+    mapEmbedUrl:
+        "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14458.072901505664!2d89.30680657310677!3d25.05041884841201!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39fcfc81607202cf%3A0x3ebf373552deaa97!2sGuzia%20High%20School!5e0!3m2!1sen!2sbd!4v1792265333406!5m2!1sen!2sbd",
     importantLinks: [],
 };
 
