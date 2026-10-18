@@ -7,6 +7,7 @@
     "dev:api": "bun --filter '@guzia/api' dev",
     "dev:web": "bun --filter '@guzia/web' dev",
     "build": "bun --filter '@guzia/*' build",
+    "start": "bun --filter '@guzia/*' start",
     "test": "bun --filter '@guzia/api' test && bun --filter '@guzia/web' test",
     "lint": "oxlint apps",
     "db:migrate": "bun --filter '@guzia/api' db:migrate",
