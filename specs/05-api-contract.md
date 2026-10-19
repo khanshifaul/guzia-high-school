@@ -74,7 +74,7 @@ List endpoints accept `?page=1&limit=20` (where applicable) and return
 | GET `/exams/:id/report-card/:studentId` | self-scope | subject rows + letter/point per canonical bands + exam GPA |
 | GET `/results/me` | STUDENT | published exams only: per-subject rows + GPA + CGPA |
 | GET `/results/child/:studentId` | PARENT | same shape |
-| GET/PUT `/grade-bands` | GET all; PUT ADMIN | PUT replaces full band set (validated: contiguous, non-overlapping, 0–100) |
+| GET/PUT `/exams/grade-bands` | GET all; PUT ADMIN | GET returns the current bands (for the admin editor). PUT replaces the full band set (validated: contiguous, non-overlapping, 0–100) |
 
 ### assignments
 | Method | Path | Roles | Notes |

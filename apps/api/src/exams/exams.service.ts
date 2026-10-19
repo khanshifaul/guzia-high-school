@@ -152,6 +152,14 @@ export class ExamsService {
         return { exams: perExam, cgpa: computeCgpa(perExam.map((e) => e.gpa)) };
     }
 
+
+    /** The current grade bands, for the admin editor. */
+    async bands() {
+        return this.prisma.gradeBand.findMany({
+            select: { id: true, minPercent: true, maxPercent: true, letter: true, point: true },
+            orderBy: { minPercent: 'desc' },
+        });
+    }
     /** Replace the full grade-band set (validated contiguous, 0–100). */
     async replaceBands(bands: Band[]) {
         if (bands.length === 0) throw new BadRequestException('At least one band is required');

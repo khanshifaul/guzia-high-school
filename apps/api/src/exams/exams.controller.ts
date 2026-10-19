@@ -33,6 +33,13 @@ export class ExamsController {
         return this.service.findAll(classId);
     }
 
+    @Roles('ADMIN')
+    @Get('grade-bands')
+    @ApiOperation({ summary: 'The current grade bands (for the admin editor)' })
+    bands() {
+        return this.service.bands();
+    }
+
     @Roles('ADMIN', 'TEACHER')
     @Get(':id')
     findOne(@Param('id') id: string) {
@@ -84,4 +91,6 @@ export class ExamsController {
     replaceBands(@Body() bands: Band[]) {
         return this.service.replaceBands(bands);
     }
+
+
 }

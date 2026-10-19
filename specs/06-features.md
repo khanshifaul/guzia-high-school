@@ -15,7 +15,7 @@ drawer sidebar). Bilingual labels throughout.
 | `teachers` (+`/new`, `/[id]`) | `/teachers` | CRUD + class-subject assignment display |
 | `classes` | `/classes`, `/subjects`, `/class-subjects` | manage sections, subjects, teacher assignments |
 | `admissions` | `/admissions`, review | queue of SUBMITTED (count badge in sidebar); detail view of 4-step data; Approve (confirm-modal → creates student, shows generated creds once) / Reject (note) |
-| `grades` | `/exams`, `/grade-bands` | exams CRUD + publish toggle; band editor (replace-set) |
+| `grades` | `/exams`, `/exams/grade-bands` | **New exam** dialog (name, class, start/end date) → POST `/exams`; exams list with publish toggle; **canonical grade-scale editor** reading the live bands from GET `/exams/grade-bands` — editable min % / max % / letter / point rows, add/remove a band, "Save scale" PUTs the whole set and shows the server's reason when it is rejected (not contiguous / not 0–100) |
 | `attendance` | `/attendance` | pick class/section/date → matrix view (students × last 10 days) |
 | `fees` | `/fee-heads`, `/invoices/generate`, `/payments` | fee heads CRUD; generate invoices (head × class/students × due date); **record payment** page: student picker → outstanding list → amount → waterfalls live preview → submit |
 | `notices` | `/notices` | CRUD, audience select |
@@ -75,7 +75,7 @@ cgpa(publishedExamGPAs[])      = mean                                    (round 
 isPass(marks, total)           = marks >= 33
 ```
 Report-card response embeds computed band per subject. No other code path computes
-grades. PUT `/grade-bands` validates coverage 0–100, no overlaps, descending.
+grades. PUT `/exams/grade-bands` validates coverage 0–100, no overlaps, descending.
 
 ### 2. Weighted attendance % — `attendance/attendance.util.ts` (School-management pattern)
 ```
