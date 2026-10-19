@@ -77,15 +77,11 @@ enum TestMode {
   OFFLINE
   ONLINE
 }
-PUT 449-454=:
-  title          String
-  durationMinutes Int
-  totalMarks     Int
-  mode           TestMode @default(OFFLINE)
-  startAt        DateTime?
-  endAt          DateTime?
-  status         PaperStatus @default(DRAFT)
-  questions      Question[]
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  GRADED
+}
 
 enum SourceKind {
   PDF
@@ -186,6 +182,7 @@ model Student {
   invoices    Invoice[]
   payments    Payment[]
   riskScores  AtRiskScore[]
+  testAttempts TestAttempt[]
   @@unique([classId, rollNo])
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
@@ -461,8 +458,12 @@ model QuestionPaper {
   title          String
   durationMinutes Int
   totalMarks     Int
+  mode           TestMode @default(OFFLINE)
+  startAt        DateTime?
+  endAt          DateTime?
   status         PaperStatus @default(DRAFT)
   questions      Question[]
+  attempts       TestAttempt[]
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 }
@@ -479,6 +480,35 @@ model Question {
   difficulty  String
   marks       Int
   order       Int
+  answers     StudentAnswer[]
+}
+
+model TestAttempt {
+  id          String        @id @default(cuid())
+  paperId     String
+  paper       QuestionPaper @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  status      AttemptStatus @default(IN_PROGRESS)
+  startedAt   DateTime      @default(now())
+  submittedAt DateTime?
+  totalScore  Int?
+  answers     StudentAnswer[]
+  @@unique([paperId, studentId])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model StudentAnswer {
+  id         String      @id @default(cuid())
+  attemptId  String
+  attempt    TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answer     String
+  score      Int?
+  autoGraded Boolean?
+  @@unique([attemptId, questionId])
 }
 
 model SourceDocument {

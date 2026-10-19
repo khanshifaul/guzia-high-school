@@ -7,6 +7,16 @@ Auth: httpOnly cookie `ghs_token` (JWT, 7d) set by `/auth/login`; all routes exc
 `RolesGuard`. Resource ownership enforced in services (student/parent can only read
 their own rows — ids come from the token, **never** from the query string).
 
+**Student-scoped endpoints** (`GET /students/:id`, `/fees/ledger/:studentId`,
+`/attendance/student/:studentId`, `/exams/results/student/:studentId`,
+`/exams/:id/report-card/:studentId`) all take a student id in the path. A role
+check is not sufficient, so every one of them calls
+`StudentAccessService.assertCanViewStudent` first: ADMIN sees any student,
+TEACHER the students of a class they are assigned to teach, STUDENT only
+themselves, PARENT only their own children. Anything else → 403. The rule
+lives in one place (`src/common/access/student-access.service.ts`) so it cannot
+drift between modules.
+
 Errors (global `HttpExceptionFilter`): `{ statusCode, message: string[], error }`.
 Validation failures → 400 with class-validator messages array. Unauthorized → 401,
 role mismatch → 403, missing row → 404, unique violation → 409.
@@ -105,6 +115,30 @@ List endpoints accept `?page=1&limit=20` (where applicable) and return
 | POST `/ai/provider-config/test` | ADMIN | body = form values (may be unsaved) → `{ok, latencyMs, reply}` or `{ok:false, error}`; 5/min |
 
 Teacher-toolkit AI endpoints (plans/tests/sources): see specs/10 for the full table.
+
+Lesson plans (see specs/10 Feature A):
+
+| Method | Path | Roles | Notes |
+|---|---|---|---|
+| GET `/ai/plans` | TEACHER | the teacher's own plans, newest first |
+| GET `/ai/plans/:id` | TEACHER | one plan with its weeks; 404 if not the teacher's |
+| POST `/ai/plans/generate` | TEACHER | `{classId, subjectId, type, startDate, weeks?, topicsHint?}` → a DRAFT plan; 400 if `weeks` is outside 1–52 |
+| PATCH `/ai/plans/:id` | TEACHER | `{title?, weeks?, status?}`; setting `ACTIVE` archives the teacher's other ACTIVE plan for the same class/subject/type |
+| PATCH `/ai/plans/:id/weeks/:week` | TEACHER | edit one week's `topics`/`objective`/`assessment`; the other weeks are untouched |
+| PATCH `/ai/plans/:id/weeks/:week/status` | TEACHER | `{status: "PLANNED"\|"DONE"}` — drives the plan's progress % |
+| POST `/ai/plans/:id/weeks/:week/regenerate` | TEACHER | re-ask the AI for that week only, using the neighbouring weeks as context |
+| DELETE `/ai/plans/:id` | TEACHER | delete the plan |
+
+Online test delivery (test papers with `mode: ONLINE`; see specs/10 Feature B):
+
+| Method | Path | Roles | Notes |
+|---|---|---|---|
+| GET `/ai/tests/online/available` | STUDENT | online papers open to the student's class, with that student's attempt state |
+| POST `/ai/tests/:id/attempts` | STUDENT | start (or resume) an attempt; 409 if already submitted, 400 outside `[startAt, endAt]` |
+| POST `/ai/tests/attempts/:attemptId/answers` | STUDENT | save one answer; MCQ auto-scored, written answers left for the teacher |
+| POST `/ai/tests/attempts/:attemptId/submit` | STUDENT | submit the attempt; sets `totalScore` from the auto-graded answers |
+| GET `/ai/tests/:id/attempts` | TEACHER | every attempt on the teacher's own paper, with per-question answers |
+| POST `/ai/tests/answers/:answerId/grade` | TEACHER | score a written answer; 400 if the score exceeds the question's marks |
 
 ### health
 | GET `/health` **public** | — | `{ok: true}` (compose healthcheck / demo sanity) |

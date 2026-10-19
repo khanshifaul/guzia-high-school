@@ -56,6 +56,7 @@ const PROFILE_URL: Record<SessionUser["role"], string> = {
 export function PortalSidebar({ children }: { children: React.ReactNode }) {
     const { user, loading } = useSession();
     const router = useRouter();
+    const pathname = usePathname();
 
     // Session gate: pending → spinner; none → /login with callback.
     React.useEffect(() => {
@@ -73,12 +74,26 @@ export function PortalSidebar({ children }: { children: React.ReactNode }) {
         );
     }
 
+    // Print routes render the document alone — no sidebar, no header. The
+    // printed sheet is the whole page, so the portal chrome must not be in
+    // the print output at all.
+    if (isPrintRoute(pathname)) {
+        return <>{children}</>;
+    }
+
     return (
         <SidebarProvider>
             <PortalSidebarInner user={user} />
             <SidebarInsetShell>{children}</SidebarInsetShell>
         </SidebarProvider>
     );
+}
+
+/** Routes that render a print-only document. Mirrors the print-page
+ *  convention: a path segment ending in `print`. */
+function isPrintRoute(pathname: string | null): boolean {
+    if (!pathname) return false;
+    return pathname.split("/").some((segment) => segment === "print" || segment.endsWith("-print"));
 }
 
 function PortalSidebarInner({ user }: { user: SessionUser }) {

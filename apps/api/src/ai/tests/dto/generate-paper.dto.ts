@@ -1,6 +1,7 @@
 // src/ai/tests/dto/generate-paper.dto.ts
-import { IsArray, IsInt, IsString, Max, Min } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsArray, IsDateString, IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { TestMode } from 'prisma/generated/client';
 
 export class GeneratePaperDto {
   @ApiProperty()
@@ -45,4 +46,19 @@ export class GeneratePaperDto {
   @Min(10)
   @Max(300)
   durationMinutes: number;
+
+  @ApiPropertyOptional({ enum: TestMode, example: 'OFFLINE', default: 'OFFLINE' })
+  @IsEnum(TestMode)
+  @IsOptional()
+  mode?: TestMode;
+
+  @ApiPropertyOptional({ example: '2026-11-01T09:00:00Z' })
+  @IsDateString()
+  @IsOptional()
+  startAt?: string;
+
+  @ApiPropertyOptional({ example: '2026-11-01T12:00:00Z' })
+  @IsDateString()
+  @IsOptional()
+  endAt?: string;
 }

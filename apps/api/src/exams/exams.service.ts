@@ -18,7 +18,9 @@ export class ExamsService {
         return this.prisma.exam.findMany({
             where: classId ? { classId } : {},
             include: {
-                class: true,
+                // The teacher marks-entry page picks the subject from the exam's
+                // class, so the subject list must travel with the list response.
+                class: { include: { subjects: { include: { subject: true } } } },
                 _count: { select: { marks: true } },
             },
             orderBy: { startDate: 'desc' },

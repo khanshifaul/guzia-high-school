@@ -26,6 +26,13 @@ export class PlansController {
     }
 
     @Roles('TEACHER')
+    @Get(':id')
+    @ApiOperation({ summary: 'One plan with its weeks' })
+    findOne(@Param('id') id: string, @User() user: { id: string }) {
+        return this.service.findOne(id, user.id);
+    }
+
+    @Roles('TEACHER')
     @Patch(':id')
     update(
         @Param('id') id: string,
@@ -46,6 +53,30 @@ export class PlansController {
         return this.service.setWeekStatus(id, Number(week), status, user.id);
     }
 
+    @Roles('TEACHER')
+    @Patch(':id/weeks/:week')
+    @ApiOperation({ summary: "Edit one week's topics, objective and assessment" })
+    updateWeek(
+        @Param('id') id: string,
+        @Param('week') week: string,
+        @Body() patch: { topics?: string[]; objective?: string; assessment?: string | null },
+        @User() user: { id: string },
+    ) {
+        return this.service.updateWeek(id, Number(week), patch, user.id);
+    }
+
+
+    @Roles('TEACHER')
+    @Post(':id/weeks/:week/regenerate')
+    @RateLimit('ai:generate', 60_000, 10)
+    @ApiOperation({ summary: 'Re-ask the AI for one week, using neighbouring weeks as context' })
+    regenerateWeek(
+        @Param('id') id: string,
+        @Param('week') week: string,
+        @User() user: { id: string },
+    ) {
+        return this.service.regenerateWeek(id, Number(week), user.id);
+    }
     @Roles('TEACHER')
     @Delete(':id')
     remove(@Param('id') id: string, @User() user: { id: string }) {

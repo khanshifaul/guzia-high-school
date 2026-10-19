@@ -44,6 +44,9 @@ export type QuestionPaperMinAggregateOutputType = {
   title: string | null
   durationMinutes: number | null
   totalMarks: number | null
+  mode: $Enums.TestMode | null
+  startAt: Date | null
+  endAt: Date | null
   status: $Enums.PaperStatus | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -57,6 +60,9 @@ export type QuestionPaperMaxAggregateOutputType = {
   title: string | null
   durationMinutes: number | null
   totalMarks: number | null
+  mode: $Enums.TestMode | null
+  startAt: Date | null
+  endAt: Date | null
   status: $Enums.PaperStatus | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -70,6 +76,9 @@ export type QuestionPaperCountAggregateOutputType = {
   title: number
   durationMinutes: number
   totalMarks: number
+  mode: number
+  startAt: number
+  endAt: number
   status: number
   createdAt: number
   updatedAt: number
@@ -95,6 +104,9 @@ export type QuestionPaperMinAggregateInputType = {
   title?: true
   durationMinutes?: true
   totalMarks?: true
+  mode?: true
+  startAt?: true
+  endAt?: true
   status?: true
   createdAt?: true
   updatedAt?: true
@@ -108,6 +120,9 @@ export type QuestionPaperMaxAggregateInputType = {
   title?: true
   durationMinutes?: true
   totalMarks?: true
+  mode?: true
+  startAt?: true
+  endAt?: true
   status?: true
   createdAt?: true
   updatedAt?: true
@@ -121,6 +136,9 @@ export type QuestionPaperCountAggregateInputType = {
   title?: true
   durationMinutes?: true
   totalMarks?: true
+  mode?: true
+  startAt?: true
+  endAt?: true
   status?: true
   createdAt?: true
   updatedAt?: true
@@ -221,6 +239,9 @@ export type QuestionPaperGroupByOutputType = {
   title: string
   durationMinutes: number
   totalMarks: number
+  mode: $Enums.TestMode
+  startAt: Date | null
+  endAt: Date | null
   status: $Enums.PaperStatus
   createdAt: Date
   updatedAt: Date
@@ -257,6 +278,9 @@ export type QuestionPaperWhereInput = {
   title?: Prisma.StringFilter<"QuestionPaper"> | string
   durationMinutes?: Prisma.IntFilter<"QuestionPaper"> | number
   totalMarks?: Prisma.IntFilter<"QuestionPaper"> | number
+  mode?: Prisma.EnumTestModeFilter<"QuestionPaper"> | $Enums.TestMode
+  startAt?: Prisma.DateTimeNullableFilter<"QuestionPaper"> | Date | string | null
+  endAt?: Prisma.DateTimeNullableFilter<"QuestionPaper"> | Date | string | null
   status?: Prisma.EnumPaperStatusFilter<"QuestionPaper"> | $Enums.PaperStatus
   createdAt?: Prisma.DateTimeFilter<"QuestionPaper"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"QuestionPaper"> | Date | string
@@ -264,6 +288,7 @@ export type QuestionPaperWhereInput = {
   class?: Prisma.XOR<Prisma.ClassScalarRelationFilter, Prisma.ClassWhereInput>
   subject?: Prisma.XOR<Prisma.SubjectScalarRelationFilter, Prisma.SubjectWhereInput>
   questions?: Prisma.QuestionListRelationFilter
+  attempts?: Prisma.TestAttemptListRelationFilter
 }
 
 export type QuestionPaperOrderByWithRelationInput = {
@@ -274,6 +299,9 @@ export type QuestionPaperOrderByWithRelationInput = {
   title?: Prisma.SortOrder
   durationMinutes?: Prisma.SortOrder
   totalMarks?: Prisma.SortOrder
+  mode?: Prisma.SortOrder
+  startAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  endAt?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -281,6 +309,7 @@ export type QuestionPaperOrderByWithRelationInput = {
   class?: Prisma.ClassOrderByWithRelationInput
   subject?: Prisma.SubjectOrderByWithRelationInput
   questions?: Prisma.QuestionOrderByRelationAggregateInput
+  attempts?: Prisma.TestAttemptOrderByRelationAggregateInput
 }
 
 export type QuestionPaperWhereUniqueInput = Prisma.AtLeast<{
@@ -294,6 +323,9 @@ export type QuestionPaperWhereUniqueInput = Prisma.AtLeast<{
   title?: Prisma.StringFilter<"QuestionPaper"> | string
   durationMinutes?: Prisma.IntFilter<"QuestionPaper"> | number
   totalMarks?: Prisma.IntFilter<"QuestionPaper"> | number
+  mode?: Prisma.EnumTestModeFilter<"QuestionPaper"> | $Enums.TestMode
+  startAt?: Prisma.DateTimeNullableFilter<"QuestionPaper"> | Date | string | null
+  endAt?: Prisma.DateTimeNullableFilter<"QuestionPaper"> | Date | string | null
   status?: Prisma.EnumPaperStatusFilter<"QuestionPaper"> | $Enums.PaperStatus
   createdAt?: Prisma.DateTimeFilter<"QuestionPaper"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"QuestionPaper"> | Date | string
@@ -301,6 +333,7 @@ export type QuestionPaperWhereUniqueInput = Prisma.AtLeast<{
   class?: Prisma.XOR<Prisma.ClassScalarRelationFilter, Prisma.ClassWhereInput>
   subject?: Prisma.XOR<Prisma.SubjectScalarRelationFilter, Prisma.SubjectWhereInput>
   questions?: Prisma.QuestionListRelationFilter
+  attempts?: Prisma.TestAttemptListRelationFilter
 }, "id">
 
 export type QuestionPaperOrderByWithAggregationInput = {
@@ -311,6 +344,9 @@ export type QuestionPaperOrderByWithAggregationInput = {
   title?: Prisma.SortOrder
   durationMinutes?: Prisma.SortOrder
   totalMarks?: Prisma.SortOrder
+  mode?: Prisma.SortOrder
+  startAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  endAt?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -332,6 +368,9 @@ export type QuestionPaperScalarWhereWithAggregatesInput = {
   title?: Prisma.StringWithAggregatesFilter<"QuestionPaper"> | string
   durationMinutes?: Prisma.IntWithAggregatesFilter<"QuestionPaper"> | number
   totalMarks?: Prisma.IntWithAggregatesFilter<"QuestionPaper"> | number
+  mode?: Prisma.EnumTestModeWithAggregatesFilter<"QuestionPaper"> | $Enums.TestMode
+  startAt?: Prisma.DateTimeNullableWithAggregatesFilter<"QuestionPaper"> | Date | string | null
+  endAt?: Prisma.DateTimeNullableWithAggregatesFilter<"QuestionPaper"> | Date | string | null
   status?: Prisma.EnumPaperStatusWithAggregatesFilter<"QuestionPaper"> | $Enums.PaperStatus
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"QuestionPaper"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"QuestionPaper"> | Date | string
@@ -342,6 +381,9 @@ export type QuestionPaperCreateInput = {
   title: string
   durationMinutes: number
   totalMarks: number
+  mode?: $Enums.TestMode
+  startAt?: Date | string | null
+  endAt?: Date | string | null
   status?: $Enums.PaperStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -349,6 +391,7 @@ export type QuestionPaperCreateInput = {
   class: Prisma.ClassCreateNestedOneWithoutPapersInput
   subject: Prisma.SubjectCreateNestedOneWithoutPapersInput
   questions?: Prisma.QuestionCreateNestedManyWithoutPaperInput
+  attempts?: Prisma.TestAttemptCreateNestedManyWithoutPaperInput
 }
 
 export type QuestionPaperUncheckedCreateInput = {
@@ -359,10 +402,14 @@ export type QuestionPaperUncheckedCreateInput = {
   title: string
   durationMinutes: number
   totalMarks: number
+  mode?: $Enums.TestMode
+  startAt?: Date | string | null
+  endAt?: Date | string | null
   status?: $Enums.PaperStatus
   createdAt?: Date | string
   updatedAt?: Date | string
   questions?: Prisma.QuestionUncheckedCreateNestedManyWithoutPaperInput
+  attempts?: Prisma.TestAttemptUncheckedCreateNestedManyWithoutPaperInput
 }
 
 export type QuestionPaperUpdateInput = {
@@ -370,6 +417,9 @@ export type QuestionPaperUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   totalMarks?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumTestModeFieldUpdateOperationsInput | $Enums.TestMode
+  startAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumPaperStatusFieldUpdateOperationsInput | $Enums.PaperStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -377,6 +427,7 @@ export type QuestionPaperUpdateInput = {
   class?: Prisma.ClassUpdateOneRequiredWithoutPapersNestedInput
   subject?: Prisma.SubjectUpdateOneRequiredWithoutPapersNestedInput
   questions?: Prisma.QuestionUpdateManyWithoutPaperNestedInput
+  attempts?: Prisma.TestAttemptUpdateManyWithoutPaperNestedInput
 }
 
 export type QuestionPaperUncheckedUpdateInput = {
@@ -387,10 +438,14 @@ export type QuestionPaperUncheckedUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   totalMarks?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumTestModeFieldUpdateOperationsInput | $Enums.TestMode
+  startAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumPaperStatusFieldUpdateOperationsInput | $Enums.PaperStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   questions?: Prisma.QuestionUncheckedUpdateManyWithoutPaperNestedInput
+  attempts?: Prisma.TestAttemptUncheckedUpdateManyWithoutPaperNestedInput
 }
 
 export type QuestionPaperCreateManyInput = {
@@ -401,6 +456,9 @@ export type QuestionPaperCreateManyInput = {
   title: string
   durationMinutes: number
   totalMarks: number
+  mode?: $Enums.TestMode
+  startAt?: Date | string | null
+  endAt?: Date | string | null
   status?: $Enums.PaperStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -411,6 +469,9 @@ export type QuestionPaperUpdateManyMutationInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   totalMarks?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumTestModeFieldUpdateOperationsInput | $Enums.TestMode
+  startAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumPaperStatusFieldUpdateOperationsInput | $Enums.PaperStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -424,6 +485,9 @@ export type QuestionPaperUncheckedUpdateManyInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   totalMarks?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumTestModeFieldUpdateOperationsInput | $Enums.TestMode
+  startAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumPaperStatusFieldUpdateOperationsInput | $Enums.PaperStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -447,6 +511,9 @@ export type QuestionPaperCountOrderByAggregateInput = {
   title?: Prisma.SortOrder
   durationMinutes?: Prisma.SortOrder
   totalMarks?: Prisma.SortOrder
+  mode?: Prisma.SortOrder
+  startAt?: Prisma.SortOrder
+  endAt?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -465,6 +532,9 @@ export type QuestionPaperMaxOrderByAggregateInput = {
   title?: Prisma.SortOrder
   durationMinutes?: Prisma.SortOrder
   totalMarks?: Prisma.SortOrder
+  mode?: Prisma.SortOrder
+  startAt?: Prisma.SortOrder
+  endAt?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -478,6 +548,9 @@ export type QuestionPaperMinOrderByAggregateInput = {
   title?: Prisma.SortOrder
   durationMinutes?: Prisma.SortOrder
   totalMarks?: Prisma.SortOrder
+  mode?: Prisma.SortOrder
+  startAt?: Prisma.SortOrder
+  endAt?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -619,6 +692,10 @@ export type QuestionPaperUncheckedUpdateManyWithoutSubjectNestedInput = {
   deleteMany?: Prisma.QuestionPaperScalarWhereInput | Prisma.QuestionPaperScalarWhereInput[]
 }
 
+export type EnumTestModeFieldUpdateOperationsInput = {
+  set?: $Enums.TestMode
+}
+
 export type EnumPaperStatusFieldUpdateOperationsInput = {
   set?: $Enums.PaperStatus
 }
@@ -637,17 +714,35 @@ export type QuestionPaperUpdateOneRequiredWithoutQuestionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.QuestionPaperUpdateToOneWithWhereWithoutQuestionsInput, Prisma.QuestionPaperUpdateWithoutQuestionsInput>, Prisma.QuestionPaperUncheckedUpdateWithoutQuestionsInput>
 }
 
+export type QuestionPaperCreateNestedOneWithoutAttemptsInput = {
+  create?: Prisma.XOR<Prisma.QuestionPaperCreateWithoutAttemptsInput, Prisma.QuestionPaperUncheckedCreateWithoutAttemptsInput>
+  connectOrCreate?: Prisma.QuestionPaperCreateOrConnectWithoutAttemptsInput
+  connect?: Prisma.QuestionPaperWhereUniqueInput
+}
+
+export type QuestionPaperUpdateOneRequiredWithoutAttemptsNestedInput = {
+  create?: Prisma.XOR<Prisma.QuestionPaperCreateWithoutAttemptsInput, Prisma.QuestionPaperUncheckedCreateWithoutAttemptsInput>
+  connectOrCreate?: Prisma.QuestionPaperCreateOrConnectWithoutAttemptsInput
+  upsert?: Prisma.QuestionPaperUpsertWithoutAttemptsInput
+  connect?: Prisma.QuestionPaperWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.QuestionPaperUpdateToOneWithWhereWithoutAttemptsInput, Prisma.QuestionPaperUpdateWithoutAttemptsInput>, Prisma.QuestionPaperUncheckedUpdateWithoutAttemptsInput>
+}
+
 export type QuestionPaperCreateWithoutTeacherInput = {
   id?: string
   title: string
   durationMinutes: number
   totalMarks: number
+  mode?: $Enums.TestMode
+  startAt?: Date | string | null
+  endAt?: Date | string | null
   status?: $Enums.PaperStatus
   createdAt?: Date | string
   updatedAt?: Date | string
   class: Prisma.ClassCreateNestedOneWithoutPapersInput
   subject: Prisma.SubjectCreateNestedOneWithoutPapersInput
   questions?: Prisma.QuestionCreateNestedManyWithoutPaperInput
+  attempts?: Prisma.TestAttemptCreateNestedManyWithoutPaperInput
 }
 
 export type QuestionPaperUncheckedCreateWithoutTeacherInput = {
@@ -657,10 +752,14 @@ export type QuestionPaperUncheckedCreateWithoutTeacherInput = {
   title: string
   durationMinutes: number
   totalMarks: number
+  mode?: $Enums.TestMode
+  startAt?: Date | string | null
+  endAt?: Date | string | null
   status?: $Enums.PaperStatus
   createdAt?: Date | string
   updatedAt?: Date | string
   questions?: Prisma.QuestionUncheckedCreateNestedManyWithoutPaperInput
+  attempts?: Prisma.TestAttemptUncheckedCreateNestedManyWithoutPaperInput
 }
 
 export type QuestionPaperCreateOrConnectWithoutTeacherInput = {
@@ -700,6 +799,9 @@ export type QuestionPaperScalarWhereInput = {
   title?: Prisma.StringFilter<"QuestionPaper"> | string
   durationMinutes?: Prisma.IntFilter<"QuestionPaper"> | number
   totalMarks?: Prisma.IntFilter<"QuestionPaper"> | number
+  mode?: Prisma.EnumTestModeFilter<"QuestionPaper"> | $Enums.TestMode
+  startAt?: Prisma.DateTimeNullableFilter<"QuestionPaper"> | Date | string | null
+  endAt?: Prisma.DateTimeNullableFilter<"QuestionPaper"> | Date | string | null
   status?: Prisma.EnumPaperStatusFilter<"QuestionPaper"> | $Enums.PaperStatus
   createdAt?: Prisma.DateTimeFilter<"QuestionPaper"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"QuestionPaper"> | Date | string
@@ -710,12 +812,16 @@ export type QuestionPaperCreateWithoutClassInput = {
   title: string
   durationMinutes: number
   totalMarks: number
+  mode?: $Enums.TestMode
+  startAt?: Date | string | null
+  endAt?: Date | string | null
   status?: $Enums.PaperStatus
   createdAt?: Date | string
   updatedAt?: Date | string
   teacher: Prisma.TeacherCreateNestedOneWithoutPapersInput
   subject: Prisma.SubjectCreateNestedOneWithoutPapersInput
   questions?: Prisma.QuestionCreateNestedManyWithoutPaperInput
+  attempts?: Prisma.TestAttemptCreateNestedManyWithoutPaperInput
 }
 
 export type QuestionPaperUncheckedCreateWithoutClassInput = {
@@ -725,10 +831,14 @@ export type QuestionPaperUncheckedCreateWithoutClassInput = {
   title: string
   durationMinutes: number
   totalMarks: number
+  mode?: $Enums.TestMode
+  startAt?: Date | string | null
+  endAt?: Date | string | null
   status?: $Enums.PaperStatus
   createdAt?: Date | string
   updatedAt?: Date | string
   questions?: Prisma.QuestionUncheckedCreateNestedManyWithoutPaperInput
+  attempts?: Prisma.TestAttemptUncheckedCreateNestedManyWithoutPaperInput
 }
 
 export type QuestionPaperCreateOrConnectWithoutClassInput = {
@@ -762,12 +872,16 @@ export type QuestionPaperCreateWithoutSubjectInput = {
   title: string
   durationMinutes: number
   totalMarks: number
+  mode?: $Enums.TestMode
+  startAt?: Date | string | null
+  endAt?: Date | string | null
   status?: $Enums.PaperStatus
   createdAt?: Date | string
   updatedAt?: Date | string
   teacher: Prisma.TeacherCreateNestedOneWithoutPapersInput
   class: Prisma.ClassCreateNestedOneWithoutPapersInput
   questions?: Prisma.QuestionCreateNestedManyWithoutPaperInput
+  attempts?: Prisma.TestAttemptCreateNestedManyWithoutPaperInput
 }
 
 export type QuestionPaperUncheckedCreateWithoutSubjectInput = {
@@ -777,10 +891,14 @@ export type QuestionPaperUncheckedCreateWithoutSubjectInput = {
   title: string
   durationMinutes: number
   totalMarks: number
+  mode?: $Enums.TestMode
+  startAt?: Date | string | null
+  endAt?: Date | string | null
   status?: $Enums.PaperStatus
   createdAt?: Date | string
   updatedAt?: Date | string
   questions?: Prisma.QuestionUncheckedCreateNestedManyWithoutPaperInput
+  attempts?: Prisma.TestAttemptUncheckedCreateNestedManyWithoutPaperInput
 }
 
 export type QuestionPaperCreateOrConnectWithoutSubjectInput = {
@@ -814,12 +932,16 @@ export type QuestionPaperCreateWithoutQuestionsInput = {
   title: string
   durationMinutes: number
   totalMarks: number
+  mode?: $Enums.TestMode
+  startAt?: Date | string | null
+  endAt?: Date | string | null
   status?: $Enums.PaperStatus
   createdAt?: Date | string
   updatedAt?: Date | string
   teacher: Prisma.TeacherCreateNestedOneWithoutPapersInput
   class: Prisma.ClassCreateNestedOneWithoutPapersInput
   subject: Prisma.SubjectCreateNestedOneWithoutPapersInput
+  attempts?: Prisma.TestAttemptCreateNestedManyWithoutPaperInput
 }
 
 export type QuestionPaperUncheckedCreateWithoutQuestionsInput = {
@@ -830,9 +952,13 @@ export type QuestionPaperUncheckedCreateWithoutQuestionsInput = {
   title: string
   durationMinutes: number
   totalMarks: number
+  mode?: $Enums.TestMode
+  startAt?: Date | string | null
+  endAt?: Date | string | null
   status?: $Enums.PaperStatus
   createdAt?: Date | string
   updatedAt?: Date | string
+  attempts?: Prisma.TestAttemptUncheckedCreateNestedManyWithoutPaperInput
 }
 
 export type QuestionPaperCreateOrConnectWithoutQuestionsInput = {
@@ -856,12 +982,16 @@ export type QuestionPaperUpdateWithoutQuestionsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   totalMarks?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumTestModeFieldUpdateOperationsInput | $Enums.TestMode
+  startAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumPaperStatusFieldUpdateOperationsInput | $Enums.PaperStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   teacher?: Prisma.TeacherUpdateOneRequiredWithoutPapersNestedInput
   class?: Prisma.ClassUpdateOneRequiredWithoutPapersNestedInput
   subject?: Prisma.SubjectUpdateOneRequiredWithoutPapersNestedInput
+  attempts?: Prisma.TestAttemptUpdateManyWithoutPaperNestedInput
 }
 
 export type QuestionPaperUncheckedUpdateWithoutQuestionsInput = {
@@ -872,9 +1002,97 @@ export type QuestionPaperUncheckedUpdateWithoutQuestionsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   totalMarks?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumTestModeFieldUpdateOperationsInput | $Enums.TestMode
+  startAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumPaperStatusFieldUpdateOperationsInput | $Enums.PaperStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  attempts?: Prisma.TestAttemptUncheckedUpdateManyWithoutPaperNestedInput
+}
+
+export type QuestionPaperCreateWithoutAttemptsInput = {
+  id?: string
+  title: string
+  durationMinutes: number
+  totalMarks: number
+  mode?: $Enums.TestMode
+  startAt?: Date | string | null
+  endAt?: Date | string | null
+  status?: $Enums.PaperStatus
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  teacher: Prisma.TeacherCreateNestedOneWithoutPapersInput
+  class: Prisma.ClassCreateNestedOneWithoutPapersInput
+  subject: Prisma.SubjectCreateNestedOneWithoutPapersInput
+  questions?: Prisma.QuestionCreateNestedManyWithoutPaperInput
+}
+
+export type QuestionPaperUncheckedCreateWithoutAttemptsInput = {
+  id?: string
+  teacherId: string
+  classId: string
+  subjectId: string
+  title: string
+  durationMinutes: number
+  totalMarks: number
+  mode?: $Enums.TestMode
+  startAt?: Date | string | null
+  endAt?: Date | string | null
+  status?: $Enums.PaperStatus
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  questions?: Prisma.QuestionUncheckedCreateNestedManyWithoutPaperInput
+}
+
+export type QuestionPaperCreateOrConnectWithoutAttemptsInput = {
+  where: Prisma.QuestionPaperWhereUniqueInput
+  create: Prisma.XOR<Prisma.QuestionPaperCreateWithoutAttemptsInput, Prisma.QuestionPaperUncheckedCreateWithoutAttemptsInput>
+}
+
+export type QuestionPaperUpsertWithoutAttemptsInput = {
+  update: Prisma.XOR<Prisma.QuestionPaperUpdateWithoutAttemptsInput, Prisma.QuestionPaperUncheckedUpdateWithoutAttemptsInput>
+  create: Prisma.XOR<Prisma.QuestionPaperCreateWithoutAttemptsInput, Prisma.QuestionPaperUncheckedCreateWithoutAttemptsInput>
+  where?: Prisma.QuestionPaperWhereInput
+}
+
+export type QuestionPaperUpdateToOneWithWhereWithoutAttemptsInput = {
+  where?: Prisma.QuestionPaperWhereInput
+  data: Prisma.XOR<Prisma.QuestionPaperUpdateWithoutAttemptsInput, Prisma.QuestionPaperUncheckedUpdateWithoutAttemptsInput>
+}
+
+export type QuestionPaperUpdateWithoutAttemptsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  totalMarks?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumTestModeFieldUpdateOperationsInput | $Enums.TestMode
+  startAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.EnumPaperStatusFieldUpdateOperationsInput | $Enums.PaperStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  teacher?: Prisma.TeacherUpdateOneRequiredWithoutPapersNestedInput
+  class?: Prisma.ClassUpdateOneRequiredWithoutPapersNestedInput
+  subject?: Prisma.SubjectUpdateOneRequiredWithoutPapersNestedInput
+  questions?: Prisma.QuestionUpdateManyWithoutPaperNestedInput
+}
+
+export type QuestionPaperUncheckedUpdateWithoutAttemptsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  teacherId?: Prisma.StringFieldUpdateOperationsInput | string
+  classId?: Prisma.StringFieldUpdateOperationsInput | string
+  subjectId?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
+  totalMarks?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumTestModeFieldUpdateOperationsInput | $Enums.TestMode
+  startAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  status?: Prisma.EnumPaperStatusFieldUpdateOperationsInput | $Enums.PaperStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  questions?: Prisma.QuestionUncheckedUpdateManyWithoutPaperNestedInput
 }
 
 export type QuestionPaperCreateManyTeacherInput = {
@@ -884,6 +1102,9 @@ export type QuestionPaperCreateManyTeacherInput = {
   title: string
   durationMinutes: number
   totalMarks: number
+  mode?: $Enums.TestMode
+  startAt?: Date | string | null
+  endAt?: Date | string | null
   status?: $Enums.PaperStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -894,12 +1115,16 @@ export type QuestionPaperUpdateWithoutTeacherInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   totalMarks?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumTestModeFieldUpdateOperationsInput | $Enums.TestMode
+  startAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumPaperStatusFieldUpdateOperationsInput | $Enums.PaperStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   class?: Prisma.ClassUpdateOneRequiredWithoutPapersNestedInput
   subject?: Prisma.SubjectUpdateOneRequiredWithoutPapersNestedInput
   questions?: Prisma.QuestionUpdateManyWithoutPaperNestedInput
+  attempts?: Prisma.TestAttemptUpdateManyWithoutPaperNestedInput
 }
 
 export type QuestionPaperUncheckedUpdateWithoutTeacherInput = {
@@ -909,10 +1134,14 @@ export type QuestionPaperUncheckedUpdateWithoutTeacherInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   totalMarks?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumTestModeFieldUpdateOperationsInput | $Enums.TestMode
+  startAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumPaperStatusFieldUpdateOperationsInput | $Enums.PaperStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   questions?: Prisma.QuestionUncheckedUpdateManyWithoutPaperNestedInput
+  attempts?: Prisma.TestAttemptUncheckedUpdateManyWithoutPaperNestedInput
 }
 
 export type QuestionPaperUncheckedUpdateManyWithoutTeacherInput = {
@@ -922,6 +1151,9 @@ export type QuestionPaperUncheckedUpdateManyWithoutTeacherInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   totalMarks?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumTestModeFieldUpdateOperationsInput | $Enums.TestMode
+  startAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumPaperStatusFieldUpdateOperationsInput | $Enums.PaperStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -934,6 +1166,9 @@ export type QuestionPaperCreateManyClassInput = {
   title: string
   durationMinutes: number
   totalMarks: number
+  mode?: $Enums.TestMode
+  startAt?: Date | string | null
+  endAt?: Date | string | null
   status?: $Enums.PaperStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -944,12 +1179,16 @@ export type QuestionPaperUpdateWithoutClassInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   totalMarks?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumTestModeFieldUpdateOperationsInput | $Enums.TestMode
+  startAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumPaperStatusFieldUpdateOperationsInput | $Enums.PaperStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   teacher?: Prisma.TeacherUpdateOneRequiredWithoutPapersNestedInput
   subject?: Prisma.SubjectUpdateOneRequiredWithoutPapersNestedInput
   questions?: Prisma.QuestionUpdateManyWithoutPaperNestedInput
+  attempts?: Prisma.TestAttemptUpdateManyWithoutPaperNestedInput
 }
 
 export type QuestionPaperUncheckedUpdateWithoutClassInput = {
@@ -959,10 +1198,14 @@ export type QuestionPaperUncheckedUpdateWithoutClassInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   totalMarks?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumTestModeFieldUpdateOperationsInput | $Enums.TestMode
+  startAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumPaperStatusFieldUpdateOperationsInput | $Enums.PaperStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   questions?: Prisma.QuestionUncheckedUpdateManyWithoutPaperNestedInput
+  attempts?: Prisma.TestAttemptUncheckedUpdateManyWithoutPaperNestedInput
 }
 
 export type QuestionPaperUncheckedUpdateManyWithoutClassInput = {
@@ -972,6 +1215,9 @@ export type QuestionPaperUncheckedUpdateManyWithoutClassInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   totalMarks?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumTestModeFieldUpdateOperationsInput | $Enums.TestMode
+  startAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumPaperStatusFieldUpdateOperationsInput | $Enums.PaperStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -984,6 +1230,9 @@ export type QuestionPaperCreateManySubjectInput = {
   title: string
   durationMinutes: number
   totalMarks: number
+  mode?: $Enums.TestMode
+  startAt?: Date | string | null
+  endAt?: Date | string | null
   status?: $Enums.PaperStatus
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -994,12 +1243,16 @@ export type QuestionPaperUpdateWithoutSubjectInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   totalMarks?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumTestModeFieldUpdateOperationsInput | $Enums.TestMode
+  startAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumPaperStatusFieldUpdateOperationsInput | $Enums.PaperStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   teacher?: Prisma.TeacherUpdateOneRequiredWithoutPapersNestedInput
   class?: Prisma.ClassUpdateOneRequiredWithoutPapersNestedInput
   questions?: Prisma.QuestionUpdateManyWithoutPaperNestedInput
+  attempts?: Prisma.TestAttemptUpdateManyWithoutPaperNestedInput
 }
 
 export type QuestionPaperUncheckedUpdateWithoutSubjectInput = {
@@ -1009,10 +1262,14 @@ export type QuestionPaperUncheckedUpdateWithoutSubjectInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   totalMarks?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumTestModeFieldUpdateOperationsInput | $Enums.TestMode
+  startAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumPaperStatusFieldUpdateOperationsInput | $Enums.PaperStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   questions?: Prisma.QuestionUncheckedUpdateManyWithoutPaperNestedInput
+  attempts?: Prisma.TestAttemptUncheckedUpdateManyWithoutPaperNestedInput
 }
 
 export type QuestionPaperUncheckedUpdateManyWithoutSubjectInput = {
@@ -1022,6 +1279,9 @@ export type QuestionPaperUncheckedUpdateManyWithoutSubjectInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   durationMinutes?: Prisma.IntFieldUpdateOperationsInput | number
   totalMarks?: Prisma.IntFieldUpdateOperationsInput | number
+  mode?: Prisma.EnumTestModeFieldUpdateOperationsInput | $Enums.TestMode
+  startAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  endAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumPaperStatusFieldUpdateOperationsInput | $Enums.PaperStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1034,10 +1294,12 @@ export type QuestionPaperUncheckedUpdateManyWithoutSubjectInput = {
 
 export type QuestionPaperCountOutputType = {
   questions: number
+  attempts: number
 }
 
 export type QuestionPaperCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   questions?: boolean | QuestionPaperCountOutputTypeCountQuestionsArgs
+  attempts?: boolean | QuestionPaperCountOutputTypeCountAttemptsArgs
 }
 
 /**
@@ -1057,6 +1319,13 @@ export type QuestionPaperCountOutputTypeCountQuestionsArgs<ExtArgs extends runti
   where?: Prisma.QuestionWhereInput
 }
 
+/**
+ * QuestionPaperCountOutputType without action
+ */
+export type QuestionPaperCountOutputTypeCountAttemptsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TestAttemptWhereInput
+}
+
 
 export type QuestionPaperSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1066,6 +1335,9 @@ export type QuestionPaperSelect<ExtArgs extends runtime.Types.Extensions.Interna
   title?: boolean
   durationMinutes?: boolean
   totalMarks?: boolean
+  mode?: boolean
+  startAt?: boolean
+  endAt?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1073,6 +1345,7 @@ export type QuestionPaperSelect<ExtArgs extends runtime.Types.Extensions.Interna
   class?: boolean | Prisma.ClassDefaultArgs<ExtArgs>
   subject?: boolean | Prisma.SubjectDefaultArgs<ExtArgs>
   questions?: boolean | Prisma.QuestionPaper$questionsArgs<ExtArgs>
+  attempts?: boolean | Prisma.QuestionPaper$attemptsArgs<ExtArgs>
   _count?: boolean | Prisma.QuestionPaperCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["questionPaper"]>
 
@@ -1084,6 +1357,9 @@ export type QuestionPaperSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   title?: boolean
   durationMinutes?: boolean
   totalMarks?: boolean
+  mode?: boolean
+  startAt?: boolean
+  endAt?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1100,6 +1376,9 @@ export type QuestionPaperSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   title?: boolean
   durationMinutes?: boolean
   totalMarks?: boolean
+  mode?: boolean
+  startAt?: boolean
+  endAt?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1116,17 +1395,21 @@ export type QuestionPaperSelectScalar = {
   title?: boolean
   durationMinutes?: boolean
   totalMarks?: boolean
+  mode?: boolean
+  startAt?: boolean
+  endAt?: boolean
   status?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type QuestionPaperOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "teacherId" | "classId" | "subjectId" | "title" | "durationMinutes" | "totalMarks" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["questionPaper"]>
+export type QuestionPaperOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "teacherId" | "classId" | "subjectId" | "title" | "durationMinutes" | "totalMarks" | "mode" | "startAt" | "endAt" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["questionPaper"]>
 export type QuestionPaperInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   teacher?: boolean | Prisma.TeacherDefaultArgs<ExtArgs>
   class?: boolean | Prisma.ClassDefaultArgs<ExtArgs>
   subject?: boolean | Prisma.SubjectDefaultArgs<ExtArgs>
   questions?: boolean | Prisma.QuestionPaper$questionsArgs<ExtArgs>
+  attempts?: boolean | Prisma.QuestionPaper$attemptsArgs<ExtArgs>
   _count?: boolean | Prisma.QuestionPaperCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type QuestionPaperIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1147,6 +1430,7 @@ export type $QuestionPaperPayload<ExtArgs extends runtime.Types.Extensions.Inter
     class: Prisma.$ClassPayload<ExtArgs>
     subject: Prisma.$SubjectPayload<ExtArgs>
     questions: Prisma.$QuestionPayload<ExtArgs>[]
+    attempts: Prisma.$TestAttemptPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1156,6 +1440,9 @@ export type $QuestionPaperPayload<ExtArgs extends runtime.Types.Extensions.Inter
     title: string
     durationMinutes: number
     totalMarks: number
+    mode: $Enums.TestMode
+    startAt: Date | null
+    endAt: Date | null
     status: $Enums.PaperStatus
     createdAt: Date
     updatedAt: Date
@@ -1557,6 +1844,7 @@ export interface Prisma__QuestionPaperClient<T, Null = never, ExtArgs extends ru
   class<T extends Prisma.ClassDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ClassDefaultArgs<ExtArgs>>): Prisma.Prisma__ClassClient<runtime.Types.Result.GetResult<Prisma.$ClassPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   subject<T extends Prisma.SubjectDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SubjectDefaultArgs<ExtArgs>>): Prisma.Prisma__SubjectClient<runtime.Types.Result.GetResult<Prisma.$SubjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   questions<T extends Prisma.QuestionPaper$questionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.QuestionPaper$questionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$QuestionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  attempts<T extends Prisma.QuestionPaper$attemptsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.QuestionPaper$attemptsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TestAttemptPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1593,6 +1881,9 @@ export interface QuestionPaperFieldRefs {
   readonly title: Prisma.FieldRef<"QuestionPaper", 'String'>
   readonly durationMinutes: Prisma.FieldRef<"QuestionPaper", 'Int'>
   readonly totalMarks: Prisma.FieldRef<"QuestionPaper", 'Int'>
+  readonly mode: Prisma.FieldRef<"QuestionPaper", 'TestMode'>
+  readonly startAt: Prisma.FieldRef<"QuestionPaper", 'DateTime'>
+  readonly endAt: Prisma.FieldRef<"QuestionPaper", 'DateTime'>
   readonly status: Prisma.FieldRef<"QuestionPaper", 'PaperStatus'>
   readonly createdAt: Prisma.FieldRef<"QuestionPaper", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"QuestionPaper", 'DateTime'>
@@ -2018,6 +2309,30 @@ export type QuestionPaper$questionsArgs<ExtArgs extends runtime.Types.Extensions
   take?: number
   skip?: number
   distinct?: Prisma.QuestionScalarFieldEnum | Prisma.QuestionScalarFieldEnum[]
+}
+
+/**
+ * QuestionPaper.attempts
+ */
+export type QuestionPaper$attemptsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TestAttempt
+   */
+  select?: Prisma.TestAttemptSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TestAttempt
+   */
+  omit?: Prisma.TestAttemptOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TestAttemptInclude<ExtArgs> | null
+  where?: Prisma.TestAttemptWhereInput
+  orderBy?: Prisma.TestAttemptOrderByWithRelationInput | Prisma.TestAttemptOrderByWithRelationInput[]
+  cursor?: Prisma.TestAttemptWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TestAttemptScalarFieldEnum | Prisma.TestAttemptScalarFieldEnum[]
 }
 
 /**

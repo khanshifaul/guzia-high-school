@@ -19,6 +19,7 @@ import {
     FaFileLines,
     FaFolderOpen,
     FaImages,
+    FaFilePen,
 } from "react-icons/fa6";
 
 export interface NavItem {
@@ -113,6 +114,7 @@ export const STUDENT_NAV: NavSection[] = [
             { label: "Attendance", href: "/student/attendance", icon: FaCalendarDays },
             { label: "Grades", href: "/student/grades", icon: FaGraduationCap },
             { label: "Assignments", href: "/student/assignments", icon: FaListCheck },
+            { label: "Online Tests", href: "/student/tests", icon: FaFilePen },
             { label: "Admissions", href: "/student/admissions", icon: FaFileLines },
             { label: "Fees", href: "/student/fees", icon: FaMoneyBillWave },
         ],

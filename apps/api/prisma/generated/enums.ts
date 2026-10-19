@@ -108,6 +108,23 @@ export const PaperStatus = {
 export type PaperStatus = (typeof PaperStatus)[keyof typeof PaperStatus]
 
 
+export const TestMode = {
+  OFFLINE: 'OFFLINE',
+  ONLINE: 'ONLINE'
+} as const
+
+export type TestMode = (typeof TestMode)[keyof typeof TestMode]
+
+
+export const AttemptStatus = {
+  IN_PROGRESS: 'IN_PROGRESS',
+  SUBMITTED: 'SUBMITTED',
+  GRADED: 'GRADED'
+} as const
+
+export type AttemptStatus = (typeof AttemptStatus)[keyof typeof AttemptStatus]
+
+
 export const SourceKind = {
   PDF: 'PDF',
   IMAGE: 'IMAGE'

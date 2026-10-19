@@ -77,6 +77,8 @@ export const ModelName = {
   TeachingPlan: 'TeachingPlan',
   QuestionPaper: 'QuestionPaper',
   Question: 'Question',
+  TestAttempt: 'TestAttempt',
+  StudentAnswer: 'StudentAnswer',
   SourceDocument: 'SourceDocument',
   SourceChunk: 'SourceChunk',
   SiteSetting: 'SiteSetting',
@@ -438,6 +440,9 @@ export const QuestionPaperScalarFieldEnum = {
   title: 'title',
   durationMinutes: 'durationMinutes',
   totalMarks: 'totalMarks',
+  mode: 'mode',
+  startAt: 'startAt',
+  endAt: 'endAt',
   status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -460,6 +465,33 @@ export const QuestionScalarFieldEnum = {
 } as const
 
 export type QuestionScalarFieldEnum = (typeof QuestionScalarFieldEnum)[keyof typeof QuestionScalarFieldEnum]
+
+
+export const TestAttemptScalarFieldEnum = {
+  id: 'id',
+  paperId: 'paperId',
+  studentId: 'studentId',
+  status: 'status',
+  startedAt: 'startedAt',
+  submittedAt: 'submittedAt',
+  totalScore: 'totalScore',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TestAttemptScalarFieldEnum = (typeof TestAttemptScalarFieldEnum)[keyof typeof TestAttemptScalarFieldEnum]
+
+
+export const StudentAnswerScalarFieldEnum = {
+  id: 'id',
+  attemptId: 'attemptId',
+  questionId: 'questionId',
+  answer: 'answer',
+  score: 'score',
+  autoGraded: 'autoGraded'
+} as const
+
+export type StudentAnswerScalarFieldEnum = (typeof StudentAnswerScalarFieldEnum)[keyof typeof StudentAnswerScalarFieldEnum]
 
 
 export const SourceDocumentScalarFieldEnum = {

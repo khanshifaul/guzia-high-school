@@ -183,3 +183,51 @@ body {
 .bg-gradient-brand {
     background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
 }
+
+/* ---------------------------------------------------------------------
+   Print — A4 documents (test papers, receipts).
+   The print routes render the document without the portal chrome, so
+   these rules only have to size the page and control pagination.
+   --------------------------------------------------------------------- */
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 12mm;
+    }
+
+    html,
+    body {
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Keep the document's own colours (the answer key is colour-coded). */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* A question, a table row or a card must not split across pages. */
+    .break-inside-avoid {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    /* Section headings stay with the questions that follow them. */
+    h1,
+    h2,
+    h3 {
+        break-after: avoid;
+        page-break-after: avoid;
+    }
+
+    /* Long tables repeat their header on each page. */
+    thead {
+        display: table-header-group;
+    }
+
+    tfoot {
+        display: table-footer-group;
+    }
+}

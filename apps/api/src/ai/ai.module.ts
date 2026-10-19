@@ -57,5 +57,7 @@ export class AiModule implements OnModuleInit {
         // spec 10 rate limits: 10 generation req/min, 5 uploads/min per user.
         this.limiter.registerLimit('ai:generate', 60_000, 10);
         this.limiter.registerLimit('ai:upload', 60_000, 5);
+        // Answer autosave during an online test — many calls per attempt.
+        this.limiter.registerLimit('ai:attempt', 60_000, 120);
     }
 }

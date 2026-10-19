@@ -170,6 +170,16 @@ export type QuestionPaper = Prisma.QuestionPaperModel
  */
 export type Question = Prisma.QuestionModel
 /**
+ * Model TestAttempt
+ * 
+ */
+export type TestAttempt = Prisma.TestAttemptModel
+/**
+ * Model StudentAnswer
+ * 
+ */
+export type StudentAnswer = Prisma.StudentAnswerModel
+/**
  * Model SourceDocument
  * 
  */

@@ -111,10 +111,16 @@ enum PlanStatus { DRAFT ACTIVE ARCHIVED }
 - **Regenerate one week** (`POST /ai/plans/:id/weeks/:n/regenerate`): re-asks the LLM
   for that week's topics given neighboring weeks as context; other weeks (incl. teacher
   edits) untouched. Full regenerate = new DRAFT, never clobbers ACTIVE silently.
+- Week dates are computed by the **server** from `startDate`, advancing 7 days
+  at a time and skipping Fridays (BD weekend) — the LLM never supplies dates.
+- Editing one week (`PATCH /ai/plans/:id/weeks/:n`) changes only that week; its
+  `status` and `startAt` are left alone.
 
-**UX pages:** `teacher/plans` (cards: class/subject, type, progress bar, status),
-`plans/new` (form-card → generate → spinner → editable grid: week rows with topic
-inputs, objective, DONE checkbox), `plans/[id]` (edit, per-week regenerate, activate).
+**UX pages:** `teacher/plans` (list of plan cards: class/subject, type, start
+date, progress bar, status, first topics), `plans/new` (full-page form — no
+modal — → generate → the plan appears in the list), `plans/[id]` (the plan on
+its own page: the editable week grid with topic/objective/assessment inputs, a
+DONE checkbox per week, per-week AI regenerate, and activate).
 
 **Limitations (README + model card):** model may mis-order official NCTB chapter
 sequence or invent pacing — teacher must verify against the textbook (UI shows this
@@ -124,8 +130,19 @@ warning on every generated plan); no per-student differentiation; assumes 5-day 
 
 **Flow:** teacher picks class + subject, topics (multi-select from their ACTIVE plan's
 flattened topics, or free text), blueprint: question mix (MCQ ×N, short ×N, long ×N),
-total marks, duration, difficulty mix (easy/medium/hard %) → generate → editable paper
-with answer key → save → print view.
+total marks, duration, difficulty mix (easy/medium/hard %) → **delivery mode**
+(print/offline vs online) → generate → editable paper with answer key → save → print view.
+
+**Delivery modes** — every paper carries a `mode`:
+
+| Mode | Meaning | Extra fields |
+|---|---|---|
+| `OFFLINE` (default) | Paper handed out in class; students write on paper. | — |
+| `ONLINE` | Students answer in the portal inside a time window. | `startAt`, `endAt` (both required) |
+
+`ONLINE` generation is rejected with 400 unless both dates are present and
+`startAt < endAt`. A student may only start an attempt while the current time is
+inside `[startAt, endAt]`; attempts are scoped to the student's enrolled class.
 
 **LLM contract:**
 ```json
@@ -153,7 +170,11 @@ model QuestionPaper {
   durationMinutes Int
   totalMarks Int
   status    PaperStatus @default(DRAFT)  // DRAFT | FINAL
+  mode      TestMode    @default(OFFLINE) // OFFLINE | ONLINE
+  startAt   DateTime?                    // ONLINE only
+  endAt     DateTime?                    // ONLINE only
   questions Question[]
+  attempts  TestAttempt[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -169,9 +190,36 @@ model Question {
   difficulty String                   // easy | medium | hard
   marks    Int
   order    Int
+  answers  StudentAnswer[]
+}
+model TestAttempt {
+  id          String   @id @default(cuid())
+  paperId     String
+  paper       QuestionPaper @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  status      AttemptStatus @default(IN_PROGRESS)  // IN_PROGRESS | SUBMITTED | GRADED
+  startedAt   DateTime @default(now())
+  submittedAt DateTime?
+  totalScore  Int?
+  answers     StudentAnswer[]
+  @@unique([paperId, studentId])
+}
+model StudentAnswer {
+  id         String  @id @default(cuid())
+  attemptId  String
+  attempt    TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answer     String
+  score      Int?
+  autoGraded Boolean?
+  @@unique([attemptId, questionId])
 }
 enum QuestionType { MCQ SHORT LONG }
 enum PaperStatus  { DRAFT FINAL }
+enum TestMode     { OFFLINE ONLINE }
+enum AttemptStatus { IN_PROGRESS SUBMITTED GRADED }
 ```
 
 **Business rules:** marks-sum validation (above); FINAL papers are immutable except
@@ -179,10 +227,39 @@ delete (print view stable); every generated paper carries an `aiGenerated=true` 
 "review before use" banner; teacher edits count toward a stored `editedByTeacher Bool`
 (shown in review as the human-in-the-loop story).
 
-**UX pages:** `teacher/tests` (list, status, print), `tests/new` (blueprint form-card →
-generate → grouped editable question list, answer-key toggle, per-question delete/add
-manual), `tests/[id]` (print-friendly view via `window.print()`, answer key section).
+**Online delivery — attempts & auto-grading** (`ai/tests/grading.util.ts` is the single
+canonical implementation; the server does the comparing, never the LLM):
 
+- A student has **one attempt per paper** (`@@unique([paperId, studentId])`); re-opening
+  an in-progress attempt resumes it, re-opening a submitted one is a 409.
+- **MCQ is auto-graded**: the chosen option letter must equal the model answer
+  (case/whitespace-insensitive) → full marks, else zero. The answer is stored with
+  `autoGraded: true`.
+- **SHORT / LONG are not auto-gradable**: the answer is stored with `score: null` and
+  `autoGraded: false` for the teacher to score.
+- Submitting sets `status: SUBMITTED` and `totalScore` = sum of the auto-graded scores.
+- The teacher scores a written answer with `POST /ai/tests/answers/:id/grade`; the score
+  may not exceed the question's maximum marks. The attempt becomes `GRADED` only once
+  **every** answer carries a score; until then it stays `SUBMITTED`.
+
+**UX pages:** `teacher/tests` (list, status, mode badge), `tests/new` (full-page
+blueprint form — no modal), `tests/[id]` (the paper on its own page — A4 preview
+with the school letterhead, answer-key toggle, detachable answer sheet),
+`tests/[id]/print` (the print route), `tests/[id]/attempts` (teacher grading
+view: per-attempt per-question scores), `student/tests` (list of open online
+tests → attempt view with autosave → submit).
+
+**Printing** follows the zylosync invoice pattern: the paper is rendered by
+one shared component (`components/shared/test-paper.tsx`) as an A4 sheet
+(210 × 297mm), and `/teacher/tests/[id]/print` renders it on a dedicated route
+where the portal layout emits **no sidebar and no header** — the sheet is the
+whole page. The print route's toolbar is `print:hidden`; `@page { size: A4 }`
+plus `break-inside: avoid` keep a question from splitting across pages.
+`?answers=1` adds the answer key, `?sheet=1` adds the detachable answer sheet.
+
+**Numbering and marks are the server's.** The LLM sometimes bakes "1." or
+"[2 marks]" into the question text; `normaliseQuestionText` strips both on the
+way in, so a printed question never reads "1. 1. [2 marks] …".
 **Limitations:** questions can be off-blueprint in difficulty feel (teacher judges);
 no item-response statistics; explanations can be wrong — answer key must be checked;
  Bengali-medium question phrasing quality depends on model (prompt requests
@@ -259,7 +336,8 @@ page); long books >50 pages chunk heavily — demo uses a single chapter.
   requesting teacher's own rows (ids from token). Admin can read all.
 - Upload: mime allowlist (pdf, png, jpeg), size caps, filename strip, no executable
   types, files never publicly served (read back via authenticated endpoint only).
-- Rate limit (in-memory, per user): 10 generation req/min, 5 uploads/min → 429.
+- Rate limit (in-memory, per user): 10 generation req/min, 5 uploads/min,
+  120 answer-autosave req/min (online test attempts) → 429.
   Single-instance limitation documented.
 - Provider config: ADMIN-only; API key **write-only** (PUT blank = keep stored),
   masked `sk-…last4` in GET, AES-256-GCM at rest (`AI_CONFIG_SECRET`), decrypted only
@@ -292,6 +370,12 @@ POST /ai/plans/generate · GET /ai/plans · PATCH /ai/plans/:id
 POST /ai/plans/:id/weeks/:n/regenerate · PATCH /ai/plans/:id/weeks/:n/status
 POST /ai/tests/generate · GET /ai/tests/:id · PATCH /ai/tests/:id
 POST /ai/tests/:id/questions · PATCH/DELETE /ai/tests/:id/questions/:qid
+GET /ai/tests/online/available                          # student: open online tests
+POST /ai/tests/:id/attempts                              # student: start/resume
+POST /ai/tests/attempts/:attemptId/answers               # student: save one answer
+POST /ai/tests/attempts/:attemptId/submit                # student: submit
+GET /ai/tests/:id/attempts                               # teacher: attempts on a paper
+POST /ai/tests/answers/:answerId/grade                   # teacher: score a written answer
 POST /ai/sources (multipart) · GET /ai/sources · GET /ai/sources/:id
 POST /ai/sources/:id/summarize · POST /ai/sources/:id/ask · POST /ai/sources/:id/to-test
 ```

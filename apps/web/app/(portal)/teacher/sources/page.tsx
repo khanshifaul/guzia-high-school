@@ -349,7 +349,8 @@ export default function TeacherSourcesPage() {
     function useFor(target: "plans" | "tests") {
         const topics = detail?.summary?.keyTopics ?? [];
         const q = topics.length ? `?topics=${encodeURIComponent(topics.join(", "))}` : "";
-        router.push(`/teacher/${target}${q}`);
+        // Both are drafted on their own page.
+        router.push(target === "tests" ? `/teacher/tests/new${q}` : `/teacher/plans/new${q}`);
     }
 
     if (loading) return <div className="space-y-6"><PageHeader title="Sources" icon={FaFolderOpen} /><Skeleton className="h-32" /></div>;
