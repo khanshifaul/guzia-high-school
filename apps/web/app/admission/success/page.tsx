@@ -106,11 +106,23 @@ export default function AdmissionSuccessPage() {
                         variant="outline"
                         onClick={() => {
                             sessionStorage.removeItem("admissionReceipt");
+                            sessionStorage.removeItem("admissionPrintData");
                             window.location.replace("/admission");
                         }}
                         className="font-black text-xs uppercase tracking-wider"
                     >
                         New Application
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => {
+                            // The full printable application form is rebuilt
+                            // from the values the applicant typed.
+                            window.location.replace("/admission?print=1");
+                        }}
+                        className="font-black text-xs uppercase tracking-wider"
+                    >
+                        View Full Form
                     </Button>
                 </div>
             </main>

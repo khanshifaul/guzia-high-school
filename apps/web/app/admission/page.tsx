@@ -131,6 +131,24 @@ export default function AdmissionPage() {
     const [step, setStep] = React.useState(0);
     const [errors, setErrors] = React.useState<Record<string, string>>({});
 
+    // The printable form can be reopened from the success screen: the
+    // values the applicant typed ride along in sessionStorage next to the
+    // receipt, so /admission?print=1 rebuilds the form from them.
+    React.useEffect(() => {
+        if (typeof window === "undefined") return;
+        if (!new URLSearchParams(window.location.search).has("print")) return;
+        try {
+            const rawReceipt = sessionStorage.getItem("admissionReceipt");
+            const rawPrint = sessionStorage.getItem("admissionPrintData");
+            if (rawReceipt) setReceipt(JSON.parse(rawReceipt) as Receipt);
+            if (!rawPrint) return;
+            const print = JSON.parse(rawPrint) as { form: FormState; files: Files };
+            setForm({ ...EMPTY, ...print.form });
+            setFiles(print.files ?? {});
+        } catch {
+            // A corrupt entry means there is nothing to print.
+        }
+    }, []);
     const tn = (en: string, bn: string) => t(en, bn);
 
     // The age is derived from the date of birth, never typed in. This is a
@@ -270,6 +288,12 @@ export default function AdmissionPage() {
         try {
             const res = await api<Receipt>("/admissions", { method: "POST", body });
             sessionStorage.setItem("admissionReceipt", JSON.stringify(res));
+            // The printable form is built from the values the applicant
+            // typed, so they travel with the receipt. The success screen
+            // can send the applicant back to /admission?print=1 to see and
+            // print the full form.
+            sessionStorage.setItem("admissionPrintData", JSON.stringify({ form, files }));
+            setReceipt(res);
             router.replace("/admission/success");
         } catch (err) {
             setError(err instanceof RequestError ? err.messages.join("; ") : "Submission failed. Please try again.");
@@ -761,6 +785,8 @@ export default function AdmissionPage() {
                                     </label>
                                     {errors.declarationAccepted ? (
                                         <p className="text-[11px] font-semibold text-destructive -mt-4">{errors.declarationAccepted}</p>
+                                    ) : !form.declarationAccepted ? (
+                                        <p className="text-[11px] text-muted-foreground -mt-4">{tn("Please accept the declaration to submit.", "জমা দিতে ঘোষণাটি গ্রহণ করুন।")}</p>
                                     ) : null}
                                 </div>
                             ) : null}
