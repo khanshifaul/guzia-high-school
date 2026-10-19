@@ -159,6 +159,23 @@ Online test delivery (test papers with `mode: ONLINE`; see specs/10 Feature B):
 | GET `/ai/materials/:id` | TEACHER | one material with its content, plus `className` / `subjectName` / `sourceName` for the printed header |
 | DELETE `/ai/materials/:id` | TEACHER | delete one of the teacher's own materials |
 
+### workspaces (teacher Studio)
+A workspace is the teacher's container: pointers to library sources plus ONE
+conversation. Attaching never re-uploads or re-embeds. All routes are
+TEACHER-scoped and ownership-checked; an unknown id is a 404.
+
+| Method | Path | Notes |
+|---|---|---|
+| GET `/workspaces` | the teacher's workspaces, newest first: `sourceCount`, `chatCount`, `lastMessage`, `hasProcessing`; auto-creates "My workspace" with their existing sources attached on first call (deterministic id, race-safe) |
+| POST `/workspaces` | `{title?, classId?, subjectId?}` |
+| GET `/workspaces/:id` | the workspace + attached `sources[]` + ordered `messages[]` |
+| PATCH `/workspaces/:id` | `{title?, classId?, subjectId?}` (an empty string clears class/subject) |
+| DELETE `/workspaces/:id` | deletes the workspace and its conversation; the sources stay in the library |
+| POST `/workspaces/:id/sources` | `{sourceIds: string[]}` — attach by pointer; ids not in the teacher's library are refused |
+| DELETE `/workspaces/:id/sources/:sourceId` | detach the pointer, keep the source |
+| POST `/workspaces/:id/messages` | `{question}` (1–500 chars), 10/min → `{userMessage, message, citations}`; retrieval is scoped to the workspace's ready sources, the prompt/citation verification is the canonical sources ask, and both turns are persisted |
+| DELETE `/workspaces/:id/messages` | clear the conversation, keep the workspace |
+
 ### site-settings (public site info + admission options)
 | Method | Path | Roles | Notes |
 |---|---|---|---|

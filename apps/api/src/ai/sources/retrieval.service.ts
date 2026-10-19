@@ -38,7 +38,13 @@ export class RetrievalService {
     async retrieve(
         teacherId: string,
         question: string,
-        opts: { classId?: string; subjectId?: string; sourceId?: string; topK?: number } = {},
+        opts: {
+            classId?: string;
+            subjectId?: string;
+            sourceId?: string;
+            workspaceId?: string;
+            topK?: number;
+        } = {},
     ): Promise<RetrievedChunk[]> {
         const topK = opts.topK ?? DEFAULT_TOP_K;
         const embedding = await this.embeddings.embedOne(question);
@@ -46,6 +52,7 @@ export class RetrievalService {
         const classId = opts.classId ?? null;
         const subjectId = opts.subjectId ?? null;
         const sourceId = opts.sourceId ?? null;
+        const workspaceId = opts.workspaceId ?? null;
 
         return this.prisma.$queryRaw<RetrievedChunk[]>`
             SELECT c.id AS "chunkId", d.id AS "sourceId", d.filename, c.page, c.content,
@@ -57,6 +64,10 @@ export class RetrievalService {
               AND (${classId}::text IS NULL OR d."classId" = ${classId})
               AND (${subjectId}::text IS NULL OR d."subjectId" = ${subjectId})
               AND (${sourceId}::text IS NULL OR d.id = ${sourceId})
+              AND (${workspaceId}::text IS NULL OR EXISTS (
+                  SELECT 1 FROM "WorkspaceSource" ws
+                  WHERE ws."sourceId" = d.id AND ws."workspaceId" = ${workspaceId}
+              ))
             ORDER BY c.embedding <=> ${vector}::vector
             LIMIT CAST(${topK} AS integer)
         `;

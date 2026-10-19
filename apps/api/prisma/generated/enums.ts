@@ -149,3 +149,11 @@ export const MaterialKind = {
 } as const
 
 export type MaterialKind = (typeof MaterialKind)[keyof typeof MaterialKind]
+
+
+export const MessageRole = {
+  USER: 'USER',
+  ASSISTANT: 'ASSISTANT'
+} as const
+
+export type MessageRole = (typeof MessageRole)[keyof typeof MessageRole]

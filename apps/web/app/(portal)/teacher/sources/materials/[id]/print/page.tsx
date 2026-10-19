@@ -42,6 +42,9 @@ interface Material {
 export default function StudyMaterialPrintPage() {
     const params = useParams<{ id: string }>();
     const search = useSearchParams();
+    // Back to the workspace this material was generated from, if known.
+    const workspaceId = search.get("workspaceId");
+    const backHref = workspaceId ? `/teacher/studio/${workspaceId}?view=materials` : "/teacher/studio?view=materials";
     const materialId = params?.id as string;
     const site = useSiteConfig();
 
@@ -94,7 +97,7 @@ export default function StudyMaterialPrintPage() {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-muted/10 p-8 text-center">
                 <p className="text-sm text-muted-foreground">{error ?? "Not found."}</p>
-                <Link href="/teacher/studio?view=materials">
+                <Link href={backHref}>
                     <Button variant="outline">
                         <FaArrowLeft size={12} /> Back to sources
                     </Button>
@@ -121,7 +124,7 @@ export default function StudyMaterialPrintPage() {
                         <Button onClick={() => window.print()} className="font-black text-xs uppercase tracking-wider">
                             <FaPrint size={13} /> Print
                         </Button>
-                        <Link href="/teacher/studio?view=materials">
+                        <Link href={backHref}>
                             <Button variant="outline" className="font-black text-xs uppercase tracking-wider">
                                 <FaArrowLeft size={12} /> Back
                             </Button>

@@ -37,6 +37,7 @@ import { EmbeddingsService } from './embeddings/embeddings.service';
         TestsService,
         SourcesService,
         RetrievalService,
+        SourcesService,
         EmbeddingsService,
         MaterialsService,
         RateLimiterService,
@@ -48,6 +49,7 @@ import { EmbeddingsService } from './embeddings/embeddings.service';
         RateLimiterService,
         EmbeddingsService,
         RetrievalService,
+        SourcesService,
     ],
 })
 export class AiModule implements OnModuleInit {

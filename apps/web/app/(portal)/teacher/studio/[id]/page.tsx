@@ -1,0 +1,411 @@
+"use client";
+
+// app/(portal)/teacher/studio/[id]/page.tsx — the conversation workspace.
+// Sources on the left, the conversation in the middle, generated artifacts on
+// the right. The ChatThread is implicit: one conversation per workspace.
+import * as React from "react";
+import Link from "next/link";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { FaArrowLeft, FaPaperclip, FaPen, FaSpinner, FaTrash, FaXmark } from "react-icons/fa6";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Composer } from "@/components/teacher/studio/composer";
+import { MessageBubble } from "@/components/teacher/studio/message-bubble";
+import { SourceRow } from "@/components/teacher/studio/source-row";
+import { AttachSheet } from "@/components/teacher/studio/attach-sheet";
+import { StudioPane, type StudioView } from "@/components/teacher/studio/studio-pane";
+import { api, RequestError } from "@/lib/api";
+import { workspaceScope, type ChatMessage, type Citation, type StudioSource, type WorkspaceDetail } from "@/lib/studio";
+
+const RATE_LIMIT_COOLDOWN_MS = 10_000;
+
+function WorkspaceSkeleton() {
+    return (
+        <div className="space-y-4">
+            <Skeleton className="h-14" />
+            <div className="grid grid-cols-1 xl:grid-cols-[260px_minmax(0,1fr)_340px] gap-4">
+                <Skeleton className="h-80" />
+                <Skeleton className="h-80" />
+                <Skeleton className="h-80" />
+            </div>
+        </div>
+    );
+}
+
+export default function WorkspacePage() {
+    // useSearchParams needs a boundary; the fallback mirrors the layout.
+    return (
+        <React.Suspense fallback={<WorkspaceSkeleton />}>
+            <WorkspaceView />
+        </React.Suspense>
+    );
+}
+
+function WorkspaceView() {
+    const params = useParams<{ id: string }>();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const workspaceId = params.id;
+
+    const [detail, setDetail] = React.useState<WorkspaceDetail | null>(null);
+    const [loading, setLoading] = React.useState(true);
+    const [missing, setMissing] = React.useState(false);
+    const [error, setError] = React.useState<string | null>(null);
+
+    const [question, setQuestion] = React.useState("");
+    const [asking, setAsking] = React.useState(false);
+    const [pending, setPending] = React.useState<string | null>(null);
+    const [cooling, setCooling] = React.useState(false);
+
+    const [attachOpen, setAttachOpen] = React.useState(false);
+    const [editingTitle, setEditingTitle] = React.useState(false);
+    const [titleDraft, setTitleDraft] = React.useState("");
+    const [clearing, setClearing] = React.useState(false);
+    const [cited, setCited] = React.useState<{ citation: Citation; text: string } | null>(null);
+
+    const [view, setView] = React.useState<StudioView>("tests");
+    const listRef = React.useRef<HTMLDivElement>(null);
+
+    const load = React.useCallback(() => {
+        setLoading(true);
+        setMissing(false);
+        api<WorkspaceDetail>(`/workspaces/${workspaceId}`)
+            .then((payload) => {
+                setDetail(payload);
+                setTitleDraft(payload.title);
+            })
+            .catch((err) => {
+                if (err instanceof RequestError && err.statusCode === 404) setMissing(true);
+                else setError(err instanceof RequestError ? err.messages.join("; ") : "Could not load this workspace");
+            })
+            .finally(() => setLoading(false));
+    }, [workspaceId]);
+
+    React.useEffect(() => {
+        load();
+    }, [load]);
+
+    // The tab is URL state, so a reload keeps it.
+    React.useEffect(() => {
+        const requested = searchParams.get("view");
+        if (requested === "tests" || requested === "plans" || requested === "materials") setView(requested);
+    }, [searchParams]);
+
+    const messages = detail?.messages ?? [];
+    const readies = detail?.sources.filter((source) => source.status === "READY") ?? [];
+    const topics = [...messages].reverse().find((message) => message.role === "USER")?.content ?? "";
+
+    React.useEffect(() => {
+        const element = listRef.current;
+        if (element) element.scrollTop = element.scrollHeight;
+    }, [messages.length, asking, pending]);
+
+    async function saveTitle() {
+        if (!detail) return;
+        const next = titleDraft.trim();
+        setEditingTitle(false);
+        if (!next || next === detail.title) {
+            setTitleDraft(detail.title);
+            return;
+        }
+        try {
+            await api(`/workspaces/${detail.id}`, { method: "PATCH", body: { title: next } });
+            setDetail({ ...detail, title: next });
+        } catch (err) {
+            setError(err instanceof RequestError ? err.messages.join("; ") : "Could not rename");
+            setTitleDraft(detail.title);
+        }
+    }
+
+    async function send() {
+        const text = question.trim();
+        if (!text || asking || !detail) return;
+        setAsking(true);
+        setQuestion("");
+        setPending(text);
+        setError(null);
+        try {
+            const result = await api<{ userMessage: ChatMessage; message: ChatMessage }>(
+                `/workspaces/${detail.id}/messages`,
+                { method: "POST", body: { question: text } },
+            );
+            setDetail((current) =>
+                current ? { ...current, messages: [...current.messages, result.userMessage, result.message] } : current,
+            );
+        } catch (err) {
+            if (err instanceof RequestError && err.statusCode === 429) {
+                setCooling(true);
+                setError("Too many requests — try again shortly.");
+                window.setTimeout(() => setCooling(false), RATE_LIMIT_COOLDOWN_MS);
+            } else {
+                setError(err instanceof RequestError ? err.messages.join("; ") : "Could not ask that question");
+            }
+            setQuestion(text);
+        } finally {
+            setAsking(false);
+            setPending(null);
+        }
+    }
+
+    async function clearConversation() {
+        if (!detail) return;
+        if (!window.confirm("Clear this conversation? The workspace and its sources stay.")) return;
+        setClearing(true);
+        try {
+            await api(`/workspaces/${detail.id}/messages`, { method: "DELETE" });
+            setDetail({ ...detail, messages: [] });
+        } catch (err) {
+            setError(err instanceof RequestError ? err.messages.join("; ") : "Could not clear the conversation");
+        } finally {
+            setClearing(false);
+        }
+    }
+
+    async function detach(source: StudioSource) {
+        if (!detail) return;
+        try {
+            await api(`/workspaces/${detail.id}/sources/${source.id}`, { method: "DELETE" });
+            setDetail({ ...detail, sources: detail.sources.filter((item) => item.id !== source.id) });
+        } catch (err) {
+            setError(err instanceof RequestError ? err.messages.join("; ") : "Could not detach");
+        }
+    }
+
+    async function openCitation(citation: Citation) {
+        if (!citation.sourceId) {
+            setCited({ citation, text: citation.snippet });
+            return;
+        }
+        try {
+            const source = await api<{ chunks: { page: number | null; content: string }[] }>(
+                `/ai/sources/${citation.sourceId}`,
+            );
+            const chunk = source.chunks.find((item) => item.page === citation.page) ?? source.chunks[0];
+            setCited({ citation, text: chunk?.content ?? citation.snippet });
+        } catch {
+            setCited({ citation, text: citation.snippet });
+        }
+    }
+
+    function makeArtifact(target: "tests" | "plans") {
+        const query = new URLSearchParams({ workspaceId });
+        if (topics) query.set("topics", topics.slice(0, 300));
+        router.push(`/teacher/${target}/new?${query.toString()}`);
+    }
+
+    if (loading) {
+        return (
+            <div className="space-y-4 p-0">
+                <WorkspaceSkeleton />
+            </div>
+        );
+    }
+
+    if (missing) {
+        return (
+            <EmptyState
+                title="Workspace not found"
+                description="It may have been deleted, or it belongs to another teacher."
+                action={<Link href="/teacher/studio"><Button variant="outline">Back to Studio</Button></Link>}
+            />
+        );
+    }
+
+    if (!detail) {
+        return (
+            <EmptyState
+                title="Could not load this workspace"
+                description={error ?? "Try again in a moment."}
+                action={<Button variant="outline" onClick={load}>Retry</Button>}
+            />
+        );
+    }
+
+    const canAsk = readies.length > 0 && !cooling;
+
+    return (
+        <div className="space-y-3">
+            {/* Title row — this workspace's header, no PageHeader. */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-b border-border/60 pb-3">
+                <Link href="/teacher/studio" aria-label="Back to Studio" className="text-muted-foreground hover:text-foreground">
+                    <FaArrowLeft size={13} />
+                </Link>
+                <div className="min-w-0 flex-1">
+                    {editingTitle ? (
+                        <Input
+                            autoFocus
+                            value={titleDraft}
+                            onChange={(event) => setTitleDraft(event.target.value)}
+                            onBlur={() => void saveTitle()}
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter") void saveTitle();
+                                if (event.key === "Escape") {
+                                    setTitleDraft(detail.title);
+                                    setEditingTitle(false);
+                                }
+                            }}
+                            className="h-9 max-w-sm text-base font-black"
+                        />
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setTitleDraft(detail.title);
+                                setEditingTitle(true);
+                            }}
+                            className="group flex items-center gap-2 text-left cursor-pointer"
+                        >
+                            <span className="truncate text-lg font-black uppercase tracking-tight">{detail.title}</span>
+                            <FaPen size={10} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </button>
+                    )}
+                    <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mt-0.5">
+                        Workspace · {workspaceScope(detail) || "no class or subject"} · {detail.sources.length} source
+                        {detail.sources.length === 1 ? "" : "s"}
+                    </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    {messages.length > 0 ? (
+                        <Button variant="outline" size="sm" onClick={() => void clearConversation()} disabled={clearing}
+                            className="font-black text-[10px] uppercase tracking-wider">
+                            {clearing ? <FaSpinner className="animate-spin" size={10} /> : <FaTrash size={10} />} Clear chat
+                        </Button>
+                    ) : null}
+                    <Button size="sm" onClick={() => setAttachOpen(true)} className="font-black text-[10px] uppercase tracking-wider">
+                        <FaPaperclip size={10} /> Attach source
+                    </Button>
+                </div>
+            </div>
+
+            {error ? (
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-destructive/20 bg-destructive/10 p-2.5 text-[11px] font-bold text-destructive">
+                    <span>{error}</span>
+                    <button type="button" onClick={() => setError(null)} aria-label="Dismiss"><FaXmark size={10} /></button>
+                </div>
+            ) : null}
+
+            <div className="grid grid-cols-1 xl:grid-cols-[260px_minmax(0,1fr)_340px] gap-4 items-start">
+                {/* Sources */}
+                <aside className="rounded-xl border border-border/60 bg-card">
+                    <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Sources</span>
+                        <span className="text-[10px] text-muted-foreground">{detail.sources.length}</span>
+                    </div>
+                    <div className="space-y-1.5 p-2">
+                        {detail.sources.length === 0 ? (
+                            <p className="px-1 py-6 text-center text-[11px] text-muted-foreground">
+                                Attach a source to start asking.
+                            </p>
+                        ) : (
+                            detail.sources.map((source) => (
+                                <SourceRow key={source.id} source={source} onDetach={() => void detach(source)} />
+                            ))
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => setAttachOpen(true)}
+                            className="w-full rounded-lg border border-dashed border-border/70 px-2 py-2 text-[11px] text-muted-foreground hover:border-primary/40 hover:text-foreground transition-colors"
+                        >
+                            + attach from library
+                        </button>
+                    </div>
+                </aside>
+
+                {/* Conversation */}
+                <section className="flex min-h-[520px] flex-col rounded-xl border border-border/60 bg-card">
+                    <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto p-3" style={{ maxHeight: "58vh" }}>
+                        {messages.length === 0 && !asking ? (
+                            <div className="flex h-full flex-col items-center justify-center gap-2 py-10 text-center">
+                                <p className="text-sm font-semibold">Ask your sources anything</p>
+                                <p className="max-w-xs text-xs text-muted-foreground">
+                                    Answers cite the file and page they came from.
+                                    {readies.length === 0 ? " Attach a source to begin." : ""}
+                                </p>
+                            </div>
+                        ) : (
+                            messages.map((message) => (
+                                <MessageBubble
+                                    key={message.id}
+                                    message={message}
+                                    onCitation={(index) => {
+                                        const citation = message.citations?.[index];
+                                        if (citation) void openCitation(citation);
+                                    }}
+                                    onMakePaper={message.role === "ASSISTANT" ? () => makeArtifact("tests") : undefined}
+                                    onMakePlan={message.role === "ASSISTANT" ? () => makeArtifact("plans") : undefined}
+                                />
+                            ))
+                        )}
+                        {asking && pending ? (
+                            <>
+                                <div className="flex justify-end">
+                                    <div className="max-w-[88%] rounded-2xl rounded-br-sm bg-primary/70 px-3.5 py-2.5 text-sm text-primary-foreground">
+                                        <p className="whitespace-pre-wrap">{pending}</p>
+                                    </div>
+                                </div>
+                                <div className="flex justify-start">
+                                    <div className="flex items-center gap-2 rounded-2xl rounded-bl-sm border border-border/60 bg-muted/60 px-3.5 py-2.5 text-[11px] text-muted-foreground">
+                                        <FaSpinner className="animate-spin text-primary" size={11} /> Retrieving and writing…
+                                    </div>
+                                </div>
+                            </>
+                        ) : null}
+                    </div>
+                    <Composer
+                        value={question}
+                        onChange={setQuestion}
+                        onSend={() => void send()}
+                        busy={asking}
+                        disabled={!canAsk}
+                        hint={readies.length === 0
+                            ? "Attach a ready source to start asking…"
+                            : cooling
+                                ? "Too many requests — try again shortly."
+                                : undefined}
+                    />
+                </section>
+
+                {/* Studio */}
+                <aside className="rounded-xl border border-border/60 bg-card">
+                    <div className="border-b border-border/60 px-3 py-2">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Studio</span>
+                    </div>
+                    <StudioPane
+                        workspaceId={detail.id}
+                        classId={detail.classId}
+                        subjectId={detail.subjectId}
+                        view={view}
+                        onViewChange={(next) => {
+                            setView(next);
+                            router.replace(`/teacher/studio/${detail.id}?view=${next}`);
+                        }}
+                        topics={topics.slice(0, 300)}
+                    />
+                </aside>
+            </div>
+
+            <AttachSheet
+                open={attachOpen}
+                onOpenChange={setAttachOpen}
+                workspaceId={detail.id}
+                attachedIds={detail.sources.map((source) => source.id)}
+                onAttached={load}
+            />
+
+            {/* A citation opens the cited page's text. */}
+            <Dialog open={cited !== null} onOpenChange={(open) => (open ? null : setCited(null))}>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="font-black uppercase tracking-tight text-sm">
+                            {cited?.citation.filename ?? "Source"} · p.{cited?.citation.page ?? "?"}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <p className="whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">{cited?.text}</p>
+                </DialogContent>
+            </Dialog>
+        </div>
+    );
+}

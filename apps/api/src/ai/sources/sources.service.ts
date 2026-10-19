@@ -11,6 +11,7 @@ import {
     type OnModuleInit,
 } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
+import { resolveTeacherId } from '../../common/access/teacher-access.util';
 import { Prisma } from 'prisma/generated/client';
 import { UploadService } from '../../upload/upload.service';
 import { LlmService, type LlmTurn } from '../llm/llm.service';
@@ -60,7 +61,7 @@ export class SourcesService implements OnModuleInit {
     }
 
     async list(userId: string) {
-        const teacherId = await this.resolveTeacherId(userId);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
         const docs = await this.prisma.sourceDocument.findMany({
             where: { teacherId },
             orderBy: { createdAt: 'desc' },
@@ -91,6 +92,16 @@ export class SourcesService implements OnModuleInit {
         const classById = new Map(classes.map((c) => [c.id, c]));
         const subjectById = new Map(subjects.map((s) => [s.id, s]));
 
+        // How many workspaces point at each source (the library shows it).
+        const usage = docs.length
+            ? await this.prisma.workspaceSource.groupBy({
+                  by: ['sourceId'],
+                  where: { sourceId: { in: docs.map((d) => d.id) } },
+                  _count: { _all: true },
+              })
+            : [];
+        const usedIn = new Map(usage.map((row) => [row.sourceId, row._count._all]));
+
         return docs.map((d) => ({
             id: d.id,
             filename: d.filename,
@@ -100,6 +111,7 @@ export class SourcesService implements OnModuleInit {
             createdAt: d.createdAt,
             class: d.classId ? classById.get(d.classId) ?? null : null,
             subject: d.subjectId ? subjectById.get(d.subjectId) ?? null : null,
+            usedIn: usedIn.get(d.id) ?? 0,
         }));
     }
 
@@ -117,7 +129,7 @@ export class SourcesService implements OnModuleInit {
         classId?: string | null;
         subjectId?: string | null;
     }) {
-        const teacherId = await this.resolveTeacherId(opts.userId);
+        const teacherId = await resolveTeacherId(this.prisma, opts.userId);
         const fullText = opts.pages.map((p) => p.text).join('\n');
         if (!fullText.trim()) {
             throw new BadRequestException(
@@ -327,7 +339,7 @@ export class SourcesService implements OnModuleInit {
             );
         }
 
-        const teacherId = await this.resolveTeacherId(userId);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
 
         // Store the original file (R2 or local disk). This is the only part
         // that must finish before the request returns, so the link is valid.
@@ -401,7 +413,7 @@ export class SourcesService implements OnModuleInit {
 
     /** Delete a source, its chunks (cascade) and the stored original file. */
     async remove(userId: string, id: string) {
-        const teacherId = await this.resolveTeacherId(userId);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
         const doc = await this.prisma.sourceDocument.findUnique({ where: { id } });
         if (!doc || doc.teacherId !== teacherId) throw new NotFoundException('Source not found');
 
@@ -416,7 +428,7 @@ export class SourcesService implements OnModuleInit {
     }
 
     async get(id: string, userId: string) {
-        const teacherId = await this.resolveTeacherId(userId);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
         const doc = await this.prisma.sourceDocument.findUnique({
             where: { id },
             include: { chunks: { orderBy: { page: 'asc' } } },
@@ -444,7 +456,7 @@ export class SourcesService implements OnModuleInit {
             throw new BadRequestException('Document is not ready yet');
         }
 
-        const teacherId = await this.resolveTeacherId(userId);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
         const top = await this.retrieval.retrieve(teacherId, question, { sourceId: id, topK: 4 });
         if (top.length === 0) {
             return {
@@ -484,16 +496,33 @@ export class SourcesService implements OnModuleInit {
         classId?: string,
         subjectId?: string,
         history: LlmTurn[] = [],
+        workspaceId?: string,
     ): Promise<{
         answer: string;
         citations: { sourceId: string; filename: string; page: number | null; snippet: string }[];
     }> {
-        const teacherId = await this.resolveTeacherId(userId);
-        const top = await this.retrieval.retrieve(teacherId, question, { classId, subjectId });
+        const teacherId = await resolveTeacherId(this.prisma, userId);
+        const top = await this.retrieval.retrieve(teacherId, question, {
+            classId,
+            subjectId,
+            workspaceId,
+        });
 
         if (top.length === 0) {
+            // Distinguish "nothing matched" from "nothing is ready yet", so a
+            // freshly attached source is not mistaken for a model failure.
+            const processing = await this.prisma.sourceDocument.count({
+                where: {
+                    teacherId,
+                    status: 'PROCESSING',
+                    ...(workspaceId ? { workspaceSources: { some: { workspaceId } } } : {}),
+                },
+            });
             return {
-                answer: 'I could not find relevant content in your sources for that question.',
+                answer:
+                    processing > 0
+                        ? `I could not find that in the ready sources yet. ${processing} source(s) are still processing — try again in a moment.`
+                        : 'I could not find relevant content in your sources for that question.',
                 citations: [],
             };
         }
@@ -521,7 +550,7 @@ export class SourcesService implements OnModuleInit {
 
     /** Backfill embeddings for chunks ingested before pgvector was wired up. */
     async reindex(userId: string) {
-        const teacherId = await this.resolveTeacherId(userId);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
         return this.retrieval.backfillMissing(teacherId);
     }
 
@@ -623,11 +652,6 @@ export class SourcesService implements OnModuleInit {
     }
 
     /** JWT carries the User id; the FK references the Teacher row. Resolve it. */
-    private async resolveTeacherId(userId: string): Promise<string> {
-        const teacher = await this.prisma.teacher.findUnique({ where: { userId } });
-        if (!teacher) throw new NotFoundException('No teacher profile for this user');
-        return teacher.id;
-    }
 }
 
 /** Strip HTML to readable text (drops scripts/styles, tags and entities). */

@@ -9,6 +9,7 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
+import { resolveTeacherId } from '../../common/access/teacher-access.util';
 import { Prisma, TestMode } from 'prisma/generated/client';
 import { LlmService } from '../llm/llm.service';
 import { z } from 'zod';
@@ -95,7 +96,7 @@ export class TestsService {
     ) {}
 
     async list(userId: string) {
-        const teacherId = await this.resolveTeacherId(userId);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
         return this.prisma.questionPaper.findMany({
             where: { teacherId },
             include: { class: true, subject: true, _count: { select: { questions: true } } },
@@ -104,7 +105,7 @@ export class TestsService {
     }
 
     async generate(dto: GeneratePaperDto, userId: string) {
-        const teacherId = await this.resolveTeacherId(userId);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
         const cls = await this.prisma.class.findUnique({ where: { id: dto.classId } });
         if (!cls) throw new NotFoundException('Class not found');
         const subject = await this.prisma.subject.findUnique({ where: { id: dto.subjectId } });
@@ -219,7 +220,7 @@ export class TestsService {
 
 
     async findOne(id: string, userId: string) {
-        const teacherId = await this.resolveTeacherId(userId);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
         const paper = await this.prisma.questionPaper.findUnique({
             where: { id },
             include: {
@@ -234,7 +235,7 @@ export class TestsService {
     }
 
     async remove(id: string, userId: string) {
-        const teacherId = await this.resolveTeacherId(userId);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
         const paper = await this.prisma.questionPaper.findUnique({ where: { id } });
         if (!paper || paper.teacherId !== teacherId) throw new NotFoundException('Paper not found');
         await this.prisma.questionPaper.delete({ where: { id } });
@@ -364,7 +365,7 @@ export class TestsService {
 
     /** All attempts on a paper (teacher's grading view). */
     async listAttempts(paperId: string, userId: string) {
-        const teacherId = await this.resolveTeacherId(userId);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
         const paper = await this.prisma.questionPaper.findUnique({ where: { id: paperId } });
         if (!paper || paper.teacherId !== teacherId) throw new NotFoundException('Paper not found');
 
@@ -380,7 +381,7 @@ export class TestsService {
 
     /** Teacher awards a score for a written answer (MCQ answers are auto-graded). */
     async gradeAnswer(answerId: string, userId: string, dto: GradeAnswerDto) {
-        const teacherId = await this.resolveTeacherId(userId);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
         const answer = await this.prisma.studentAnswer.findUnique({
             where: { id: answerId },
             include: { attempt: { include: { paper: true } } },
@@ -440,9 +441,4 @@ export class TestsService {
     }
 
     /** JWT carries the User id; the FK references the Teacher row. Resolve it. */
-    private async resolveTeacherId(userId: string): Promise<string> {
-        const teacher = await this.prisma.teacher.findUnique({ where: { userId } });
-        if (!teacher) throw new NotFoundException('No teacher profile for this user');
-        return teacher.id;
-    }
 }

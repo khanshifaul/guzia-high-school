@@ -214,3 +214,23 @@ export type GalleryItem = Prisma.GalleryItemModel
  * 
  */
 export type StudyMaterial = Prisma.StudyMaterialModel
+/**
+ * Model Workspace
+ * 
+ */
+export type Workspace = Prisma.WorkspaceModel
+/**
+ * Model WorkspaceSource
+ * 
+ */
+export type WorkspaceSource = Prisma.WorkspaceSourceModel
+/**
+ * Model ChatThread
+ * 
+ */
+export type ChatThread = Prisma.ChatThreadModel
+/**
+ * Model ChatMessage
+ * 
+ */
+export type ChatMessage = Prisma.ChatMessageModel

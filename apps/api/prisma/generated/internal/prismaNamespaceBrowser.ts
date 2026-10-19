@@ -85,7 +85,11 @@ export const ModelName = {
   SiteSetting: 'SiteSetting',
   ContactMessage: 'ContactMessage',
   GalleryItem: 'GalleryItem',
-  StudyMaterial: 'StudyMaterial'
+  StudyMaterial: 'StudyMaterial',
+  Workspace: 'Workspace',
+  WorkspaceSource: 'WorkspaceSource',
+  ChatThread: 'ChatThread',
+  ChatMessage: 'ChatMessage'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -600,6 +604,51 @@ export const StudyMaterialScalarFieldEnum = {
 } as const
 
 export type StudyMaterialScalarFieldEnum = (typeof StudyMaterialScalarFieldEnum)[keyof typeof StudyMaterialScalarFieldEnum]
+
+
+export const WorkspaceScalarFieldEnum = {
+  id: 'id',
+  ownerId: 'ownerId',
+  title: 'title',
+  classId: 'classId',
+  subjectId: 'subjectId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type WorkspaceScalarFieldEnum = (typeof WorkspaceScalarFieldEnum)[keyof typeof WorkspaceScalarFieldEnum]
+
+
+export const WorkspaceSourceScalarFieldEnum = {
+  workspaceId: 'workspaceId',
+  sourceId: 'sourceId',
+  addedAt: 'addedAt'
+} as const
+
+export type WorkspaceSourceScalarFieldEnum = (typeof WorkspaceSourceScalarFieldEnum)[keyof typeof WorkspaceSourceScalarFieldEnum]
+
+
+export const ChatThreadScalarFieldEnum = {
+  id: 'id',
+  workspaceId: 'workspaceId',
+  ownerId: 'ownerId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ChatThreadScalarFieldEnum = (typeof ChatThreadScalarFieldEnum)[keyof typeof ChatThreadScalarFieldEnum]
+
+
+export const ChatMessageScalarFieldEnum = {
+  id: 'id',
+  threadId: 'threadId',
+  role: 'role',
+  content: 'content',
+  citations: 'citations',
+  createdAt: 'createdAt'
+} as const
+
+export type ChatMessageScalarFieldEnum = (typeof ChatMessageScalarFieldEnum)[keyof typeof ChatMessageScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -20,6 +20,7 @@ import { NoticesModule } from './notices/notices.module';
 import { AiModule } from './ai/ai.module';
 import { UploadModule } from './upload/upload.module';
 import { SiteSettingsModule } from './site-settings/site-settings.module';
+import { WorkspacesModule } from './workspaces/workspaces.module';
 import { EmailModule } from './email/email.module';
 import { ContactModule } from './contact/contact.module';
 import { GalleryModule } from './gallery/gallery.module';
@@ -54,6 +55,7 @@ import { TeacherDashboardModule } from './teacher-dashboard/teacher-dashboard.mo
     AiModule,
     UploadModule,
     SiteSettingsModule,
+    WorkspacesModule,
     EmailModule,
     ContactModule,
     GalleryModule,
