@@ -45,7 +45,6 @@ import { api, RequestError } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import {
     ADMISSION_STEPS,
-    ADMISSION_TYPES,
     BLOOD_GROUPS,
     CLASSES,
     GENDERS,
@@ -56,8 +55,10 @@ import {
     STEP_FIELDS,
     academicStepSchema,
     admissionSchema,
+    classHasGroups,
     fieldErrors,
     guardianStepSchema,
+    previousClassOptions,
     reviewStepSchema,
     stepForField,
     studentStepSchema,
@@ -69,7 +70,6 @@ const ADMISSION_TYPE_BN: Record<string, string> = { day: "দিবা (Day)", r
 const QUOTA_BN: Record<string, string> = { general: "সাধারণ", "freedom-fighter": "মুক্তিযোদ্ধা", employee: "কর্মচারী", "staff-child": "স্টাফ সন্তান", sibling: "ভাই/বোন", tribal: "উপজাতি" };
 const GENDER_BN: Record<string, string> = { male: "পুরুষ", female: "নারী", other: "অন্যান্য" };
 const RELATION_BN: Record<string, string> = { father: "পিতা", mother: "মাতা", guardian: "অভিভাবক" };
-const PREVIOUS_CLASSES = ["Playgroup", "Nursery", "KG", "Class 1", "Class 2", "Class 3", "Class 4", "Class 5", "Class 6", "Class 7", "Class 8", "Class 9"];
 
 /** Every field the wizard collects, in one flat record. */
 interface FormState {
@@ -84,7 +84,7 @@ interface FormState {
     permanentSameAsPresent: boolean;
     permanentVillage: string; permanentRoad: string; permanentWard: string; permanentPostOffice: string;
     permanentPoliceStation: string; permanentUpazila: string; permanentDistrict: string; permanentPostalCode: string;
-    classWanted: string; section: string; group: string; admissionType: string;
+    classWanted: string; group: string; admissionType: string; shift: string;
     previousSchool: string; previousClass: string; previousResult: string; tcNumber: string; tcDate: string; previousSchoolPhone: string;
     quota: string; declarationAccepted: boolean; note: string;
     /** The hidden spam trap. It must stay empty; the server refuses a filled one. */
@@ -92,7 +92,7 @@ interface FormState {
 }
 interface Files { photoUrl?: string; birthCertUrl?: string; testimonialUrl?: string }
 interface Receipt extends Files {
-    id: string; username: string; password: string; studentName: string; classWanted: string; emailSent: boolean;
+    id: string; studentName: string; classWanted: string; emailSent: boolean;
 }
 
 const EMPTY: FormState = {
@@ -107,16 +107,47 @@ const EMPTY: FormState = {
     permanentSameAsPresent: true,
     permanentVillage: "", permanentRoad: "", permanentWard: "", permanentPostOffice: "",
     permanentPoliceStation: "", permanentUpazila: "", permanentDistrict: "", permanentPostalCode: "",
-    classWanted: "", section: "", group: "", admissionType: "day",
+    classWanted: "", group: "", admissionType: "day", shift: "",
     previousSchool: "", previousClass: "", previousResult: "", tcNumber: "", tcDate: "", previousSchoolPhone: "",
     quota: "general", declarationAccepted: false, note: "", website: "",
 };
 
-const UPLOAD_META: Record<keyof Files, { label: string; icon: typeof FaImage; accept: string }> = {
-    photoUrl: { label: "Student Photo", icon: FaImage, accept: "image/*" },
-    birthCertUrl: { label: "Birth Certificate", icon: FaFileLines, accept: "image/*,application/pdf" },
-    testimonialUrl: { label: "Testimonial / Transfer Certificate", icon: FaAward, accept: "image/*,application/pdf" },
+const UPLOAD_META: Record<keyof Files, { label: string; icon: typeof FaImage; accept: string; kind: string; hint?: string }> = {
+    photoUrl: { label: "Student Photo", icon: FaImage, accept: "image/*", kind: "photo", hint: "Exactly 300×300 px, max 1 MB" },
+    birthCertUrl: { label: "Birth Certificate", icon: FaFileLines, accept: "image/*,application/pdf", kind: "birthCert" },
+    testimonialUrl: { label: "Testimonial / Transfer Certificate", icon: FaAward, accept: "image/*,application/pdf", kind: "testimonial" },
 };
+
+/** The photo is printed on the ID card, so it has a fixed shape and size. */
+const PHOTO_MAX_BYTES = 1024 * 1024;
+const PHOTO_SIZE = 300;
+
+/** Why this photo breaks the rule, or null when it is fine (mirrors the API). */
+async function photoProblem(file: File): Promise<string | null> {
+    if (!file.type.startsWith("image/")) return "The photo must be an image.";
+    if (file.size > PHOTO_MAX_BYTES) return "The photo must be 1 MB or smaller.";
+    try {
+        const bitmap = await createImageBitmap(file);
+        const { width, height } = bitmap;
+        bitmap.close();
+        if (width !== PHOTO_SIZE || height !== PHOTO_SIZE) {
+            return `The photo must be exactly ${PHOTO_SIZE}×${PHOTO_SIZE} px (yours is ${width}×${height}).`;
+        }
+        return null;
+    } catch {
+        return "That image could not be read.";
+    }
+}
+
+/** The API's error envelope carries the useful sentence in `message`. */
+function uploadErrorMessage(data: unknown): string {
+    if (data && typeof data === "object" && "message" in data) {
+        const raw = data.message;
+        if (Array.isArray(raw)) return raw.map(String).join("; ");
+        if (typeof raw === "string") return raw;
+    }
+    return "Upload failed";
+}
 
 export default function AdmissionPage() {
     const { t, language } = useLanguage();
@@ -125,6 +156,7 @@ export default function AdmissionPage() {
     const [form, setForm] = React.useState<FormState>(EMPTY);
     const [files, setFiles] = React.useState<Files>({});
     const [uploading, setUploading] = React.useState<keyof Files | null>(null);
+    const [uploadErrors, setUploadErrors] = React.useState<Partial<Record<keyof Files, string>>>({});
     const [busy, setBusy] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
     const [receipt, setReceipt] = React.useState<Receipt | null>(null);
@@ -151,6 +183,23 @@ export default function AdmissionPage() {
     }, []);
     const tn = (en: string, bn: string) => t(en, bn);
 
+    // The site settings decide which admission types and shifts this school
+    // offers. Narrow the answer if the admin has removed the current one.
+    React.useEffect(() => {
+        setForm((f) => {
+            const admissionType = cfg.admissionTypes.includes(f.admissionType)
+                ? f.admissionType
+                : (cfg.admissionTypes[0] ?? "");
+            const shift = cfg.shifts.length === 0
+                ? ""
+                : cfg.shifts.includes(f.shift)
+                    ? f.shift
+                    : (cfg.shifts.length === 1 ? cfg.shifts[0] : "");
+            if (admissionType === f.admissionType && shift === f.shift) return f;
+            return { ...f, admissionType, shift };
+        });
+    }, [cfg.admissionTypes, cfg.shifts]);
+
     // The age is derived from the date of birth, never typed in. This is a
     // preview for the applicant; the server recomputes the age on submit
     // (apps/api/src/common/age.util.ts) and stores that one.
@@ -171,20 +220,43 @@ export default function AdmissionPage() {
         clearError(k);
         setForm((f) => ({ ...f, [k]: v }));
     };
+    // The group exists only in Class 9-10 and the previous class must be below
+    // the class applied for, so a class change drops now-invalid answers.
+    const pickClass = (value: string) => {
+        clearError("classWanted");
+        clearError("group");
+        clearError("previousClass");
+        setForm((f) => ({
+            ...f,
+            classWanted: value,
+            group: classHasGroups(value) ? f.group : "",
+            previousClass: previousClassOptions(value).includes(f.previousClass) ? f.previousClass : "",
+        }));
+    };
 
     async function uploadFile(kind: keyof Files, file: File) {
+        setUploadErrors((prev) => ({ ...prev, [kind]: undefined }));
+        if (kind === "photoUrl") {
+            const problem = await photoProblem(file);
+            if (problem) {
+                setUploadErrors((prev) => ({ ...prev, [kind]: problem }));
+                return;
+            }
+        }
         setUploading(kind);
         setError(null);
         try {
             const fd = new FormData();
             fd.append("file", file);
-            fd.append("folder", "admissions");
-            const res = await fetch("/api/upload", { method: "POST", body: fd, credentials: "include" });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data?.message?.[0] ?? "Upload failed");
-            setFiles((f) => ({ ...f, [kind]: data.url }));
+            fd.append("kind", UPLOAD_META[kind].kind);
+            const res = await fetch("/api/admissions/upload", { method: "POST", body: fd, credentials: "include" });
+            const data: unknown = await res.json().catch(() => null);
+            if (!res.ok) throw new Error(uploadErrorMessage(data));
+            const url = data && typeof data === "object" && "url" in data ? String(data.url) : "";
+            if (!url) throw new Error("Upload failed");
+            setFiles((f) => ({ ...f, [kind]: url }));
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Upload failed");
+            setUploadErrors((prev) => ({ ...prev, [kind]: err instanceof Error ? err.message : "Upload failed" }));
         } finally {
             setUploading(null);
         }
@@ -266,7 +338,7 @@ export default function AdmissionPage() {
             "guardianRelation", "localGuardianProfession", "guardianNid", "emergencyPhone",
             "presentVillage", "presentRoad", "presentWard", "presentPostOffice", "presentPoliceStation",
             "presentUpazila", "presentDistrict", "presentPostalCode",
-            "section", "group", "admissionType", "previousSchool", "previousClass", "previousResult",
+            "group", "admissionType", "shift", "previousSchool", "previousClass", "previousResult",
             "tcNumber", "tcDate", "previousSchoolPhone", "quota", "note",
         ];
         for (const k of opt) {
@@ -399,14 +471,9 @@ export default function AdmissionPage() {
                                     </div>
                                 ) : null}
                                 <div className="mt-6 p-4 rounded-xl border-2 border-dashed border-primary/40 bg-primary/5">
-                                    <p className="text-[10px] font-black text-primary uppercase tracking-wider mb-3">{tn("Portal Login Credentials", "পোর্টাল লগইন পরিচয়পত্র")}</p>
-                                    <table className="w-full text-sm border-collapse">
-                                        <tbody>
-                                            <tr className="border-b border-border/60"><td className="py-2 pr-4 font-bold text-muted-foreground w-32">{tn("Username", "ব্যবহারকারী নাম")}</td><td className="py-2 font-mono font-bold">{receipt.username}</td></tr>
-                                            <tr><td className="py-2 pr-4 font-bold text-muted-foreground">{tn("Password", "পাসওয়ার্ড")}</td><td className="py-2 font-mono font-bold text-primary">{receipt.password}</td></tr>
-                                        </tbody>
-                                    </table>
-                                    <p className="text-[10px] text-muted-foreground mt-3">{tn("Use these to log in and track your application. Change your password after first login.", "অবস্থা ট্র্যাক করতে এগুলো দিয়ে লগইন করুন। প্রথম লগইনের পরে পাসওয়ার্ড পরিবর্তন করুন।")}</p>
+                                    <p className="text-[10px] font-black text-primary uppercase tracking-wider mb-2">{tn("Application Number", "আবেদন নম্বর")}</p>
+                                    <p className="font-mono font-black text-lg">{receipt.id.slice(-8).toUpperCase()}</p>
+                                    <p className="text-[10px] text-muted-foreground mt-2">{tn("Keep this number. The admission result will be published in the school notices.", "এই নম্বরটি সংরক্ষণ করুন। ভর্তির ফলাফল বিদ্যালয়ের নোটিশে প্রকাশ করা হবে।")}</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -432,7 +499,7 @@ export default function AdmissionPage() {
                 <div className="container mx-auto px-4 max-w-4xl">
                     <div className="text-center mb-8">
                         <h1 className="text-3xl font-black text-primary uppercase tracking-tight">{tn("Online Admission", "অনলাইন ভর্তি")}</h1>
-                        <p className="text-sm text-muted-foreground mt-2">{tn("Fill out the form below — no account needed. Credentials are issued after you submit.", "নিচের ফর্মটি পূরণ করুন — কোনো অ্যাকাউন্ট লাগবে না। জমা দেওয়ার পরে পরিচয়পত্র দেওয়া হবে।")}</p>
+                        <p className="text-sm text-muted-foreground mt-2">{tn("Fill out the form below — no account needed. You get an application number after you submit; the result is published in the school notices.", "নিচের ফর্মটি পূরণ করুন — কোনো অ্যাকাউন্ট লাগবে না। জমা দেওয়ার পরে একটি আবেদন নম্বর পাবেন; ফলাফল বিদ্যালয়ের নোটিশে প্রকাশ করা হবে।")}</p>
                     </div>
 
                     {/* The progress bar. A completed step is clickable, so the
@@ -637,27 +704,37 @@ export default function AdmissionPage() {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <Field label={`${tn("Class Applied for", "যে শ্রেণিতে আবেদন")} *`} error={errors.classWanted} span2>
                                                 <div className="grid grid-cols-5 gap-2">
-                                                    {CLASSES.map((c) => <Toggle key={c} value={c} current={form.classWanted} onPick={(v) => set("classWanted", v)} label={c.replace("Class ", "")} />)}
+                                                    {CLASSES.map((c) => <Toggle key={c} value={c} current={form.classWanted} onPick={pickClass} label={c.replace("Class ", "")} />)}
                                                 </div>
                                             </Field>
-                                            <Field label={tn("Section", "শাখা")}><Input className="h-11" value={form.section} onChange={(e) => set("section", e.target.value)} placeholder="A / B" /></Field>
-                                            <Field label={tn("Group", "বিভাগ")} error={errors.group}>
-                                                <Select value={form.group || undefined} onValueChange={(v) => set("group", v)} label="Group">
-                                                    <SelectTrigger className="h-11"><SelectValue placeholder="Select group (Class 9–10)" /></SelectTrigger>
-                                                    <SelectContent searchable>{GROUPS.map((g) => <SelectItem key={g} value={g}>{tn(g, GROUP_BN[g])}</SelectItem>)}</SelectContent>
-                                                </Select>
-                                            </Field>
+                                            {classHasGroups(form.classWanted) ? (
+                                                <Field label={tn("Group", "বিভাগ")} error={errors.group}>
+                                                    <Select value={form.group || undefined} onValueChange={(v) => set("group", v)} label="Group">
+                                                        <SelectTrigger className="h-11"><SelectValue placeholder="Select group" /></SelectTrigger>
+                                                        <SelectContent searchable>{GROUPS.map((g) => <SelectItem key={g} value={g}>{tn(g, GROUP_BN[g])}</SelectItem>)}</SelectContent>
+                                                    </Select>
+                                                </Field>
+                                            ) : null}
                                             <Field label={tn("Admission Type", "ভর্তির ধরন")} error={errors.admissionType}>
-                                                <Select value={form.admissionType} onValueChange={(v) => set("admissionType", v)} label="Admission type">
+                                                <Select value={form.admissionType || undefined} onValueChange={(v) => set("admissionType", v)} label="Admission type">
                                                     <SelectTrigger className="h-11"><SelectValue placeholder="Select type" /></SelectTrigger>
-                                                    <SelectContent>{ADMISSION_TYPES.map((a) => <SelectItem key={a} value={a}>{tn(a, ADMISSION_TYPE_BN[a])}</SelectItem>)}</SelectContent>
+                                                    <SelectContent>{cfg.admissionTypes.map((a) => <SelectItem key={a} value={a}>{tn(a, ADMISSION_TYPE_BN[a] ?? a)}</SelectItem>)}</SelectContent>
                                                 </Select>
                                             </Field>
+                                            {cfg.shifts.length > 0 ? (
+                                                <Field label={tn("Shift", "শিফট")} error={errors.shift}>
+                                                    <Select value={form.shift || undefined} onValueChange={(v) => set("shift", v)} label="Shift">
+                                                        <SelectTrigger className="h-11"><SelectValue placeholder="Select shift" /></SelectTrigger>
+                                                        <SelectContent>{cfg.shifts.map((shiftName) => <SelectItem key={shiftName} value={shiftName}>{shiftName}</SelectItem>)}</SelectContent>
+                                                    </Select>
+                                                </Field>
+                                            ) : null}
                                             <Field label={tn("Previous School", "পূর্ববর্তী বিদ্যালয়")}><Input className="h-11" value={form.previousSchool} onChange={(e) => set("previousSchool", e.target.value)} /></Field>
                                             <Field label={tn("Previous Class", "পূর্বের শ্রেণি")} error={errors.previousClass}>
-                                                <Select value={form.previousClass || undefined} onValueChange={(v) => set("previousClass", v)} label="Previous class">
-                                                    <SelectTrigger className="h-11"><SelectValue placeholder="Select previous class" /></SelectTrigger>
-                                                    <SelectContent searchable>{PREVIOUS_CLASSES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                                                <Select value={form.previousClass || undefined} onValueChange={(v) => set("previousClass", v)} label="Previous class"
+                                                    disabled={!form.classWanted}>
+                                                    <SelectTrigger className="h-11"><SelectValue placeholder={form.classWanted ? "Select previous class" : "Choose the class first"} /></SelectTrigger>
+                                                    <SelectContent searchable>{previousClassOptions(form.classWanted).map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                                                 </Select>
                                             </Field>
                                             <Field label={tn("Previous Result / GPA", "পূর্ববর্তী ফলাফল / জিপিএ")}><Input className="h-11" value={form.previousResult} onChange={(e) => set("previousResult", e.target.value)} placeholder="5.00 / Division" /></Field>
@@ -684,6 +761,7 @@ export default function AdmissionPage() {
                                                 return (
                                                     <div key={kind} className="space-y-1.5">
                                                         <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider flex items-center gap-1.5"><meta.icon size={10} /> {meta.label}</Label>
+                                                        {meta.hint ? <p className="text-[10px] text-muted-foreground">{meta.hint}</p> : null}
                                                         {url ? (
                                                             <div className="relative rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-3 text-center">
                                                                 {kind === "photoUrl" ? (
@@ -704,6 +782,9 @@ export default function AdmissionPage() {
                                                                     onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadFile(kind, file); }} />
                                                             </label>
                                                         )}
+                                                        {uploadErrors[kind] ? (
+                                                            <p className="text-[10px] font-semibold text-destructive">{uploadErrors[kind]}</p>
+                                                        ) : null}
                                                     </div>
                                                 );
                                             })}
@@ -760,20 +841,45 @@ export default function AdmissionPage() {
                                                 onEdit={() => { setErrors({}); setStep(2); }}
                                                 rows={[
                                                     [tn("Class Applied for", "যে শ্রেণিতে আবেদন"), form.classWanted],
-                                                    [tn("Section", "শাখা"), form.section],
                                                     [tn("Group", "বিভাগ"), form.group ? tn(form.group, GROUP_BN[form.group] ?? form.group) : ""],
                                                     [tn("Admission Type", "ভর্তির ধরন"), form.admissionType ? tn(form.admissionType, ADMISSION_TYPE_BN[form.admissionType] ?? form.admissionType) : ""],
+                                                    [tn("Shift", "শিফট"), form.shift],
                                                     [tn("Previous School", "পূর্ববর্তী বিদ্যালয়"), form.previousSchool],
                                                     [tn("TC No.", "টিসি নং"), form.tcNumber],
                                                     [tn("Quota", "কোটা"), form.quota && form.quota !== "general" ? tn(form.quota, QUOTA_BN[form.quota] ?? form.quota) : tn("General", "সাধারণ")],
-                                                    [tn("Attachments", "সংযুক্তি"), [
-                                                        files.photoUrl && tn("Photo", "ছবি"),
-                                                        files.birthCertUrl && tn("Birth Certificate", "জন্মনিবন্ধন"),
-                                                        files.testimonialUrl && tn("Testimonial", "প্রশংসাপত্র"),
-                                                    ].filter(Boolean).join(", ")],
                                                 ]}
                                             />
                                         </div>
+
+                                        {(files.photoUrl || files.birthCertUrl || files.testimonialUrl) ? (
+                                            <div className="mt-4 rounded-xl border border-border/70">
+                                                <div className="flex items-center justify-between gap-3 px-4 py-3 bg-muted/40 border-b border-border/70">
+                                                    <p className="text-[10px] font-black text-foreground uppercase tracking-wider">{tn("Attachments", "সংযুক্তি")}</p>
+                                                    <button type="button" onClick={() => { setErrors({}); setStep(2); }}
+                                                        className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-primary hover:opacity-75 cursor-pointer">
+                                                        <FaPen size={10} /> {tn("Edit", "সম্পাদনা")}
+                                                    </button>
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4">
+                                                    {(Object.keys(UPLOAD_META) as (keyof Files)[]).map((kind) => {
+                                                        const url = files[kind];
+                                                        if (!url) return null;
+                                                        const meta = UPLOAD_META[kind];
+                                                        return (
+                                                            <div key={kind} className="space-y-1.5">
+                                                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">{meta.label}</p>
+                                                                {kind === "photoUrl" ? (
+                                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                                    <img src={url} alt={meta.label} className="size-24 object-cover rounded-lg border border-border/60" />
+                                                                ) : (
+                                                                    <a href={url} target="_blank" rel="noreferrer" className="text-xs text-primary underline">{tn("View file", "ফাইল দেখুন")}</a>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        ) : null}
                                     </Section>
 
                                     <label className="flex items-start gap-2.5 cursor-pointer">

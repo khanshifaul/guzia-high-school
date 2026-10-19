@@ -1,6 +1,19 @@
 // src/admissions/admissions.controller.ts — public submit + admin review,
 // applicant self-view, and admin edit of a submitted application.
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Get,
+    Param,
+    Patch,
+    Post,
+    Query,
+    UploadedFile,
+    UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { RateLimit } from '../common/rate-limiter/rate-limit.guard';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -20,6 +33,28 @@ export class AdmissionsController {
     @ApiOperation({ summary: 'Submit an admission application (public)' })
     submit(@Body() dto: SubmitApplicationDto) {
         return this.service.submit(dto);
+    }
+
+    @Public()
+    @Post('upload')
+    @RateLimit('admissions:upload', 60_000, 20)
+    @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 100 * 1024 * 1024 } }))
+    @ApiOperation({ summary: 'Upload an admission attachment (public): photo, birth certificate, testimonial' })
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                file: { type: 'string', format: 'binary' },
+                kind: { type: 'string', enum: ['photo', 'birthCert', 'testimonial'] },
+            },
+        },
+    })
+    upload(
+        @UploadedFile() file: { buffer: Buffer; originalname: string; mimetype: string } | undefined,
+        @Body('kind') kind?: string,
+    ) {
+        return this.service.storeAttachment(file, kind);
     }
 
     @Roles('ADMIN')

@@ -79,6 +79,17 @@ Endpoints enforce child linkage server-side.
   next to the date of birth, and the server recomputes it on submit (`common/age.util.ts`),
   so a client cannot store an age that disagrees with the date of birth. A date of birth
   outside the admission age window is refused with 400.
+  **Section is not the applicant's to choose** — the administration assigns it at approval
+  (`POST /admissions/:id/review` takes an optional `sectionId`, checked against the class);
+  neither the form nor the payload carries one. **Group** exists only for Class 9 and 10:
+  the field is hidden for other classes and the schema refuses a group there. **Previous
+  Class** is derived from the class applied for — from Class 5 up to the class below it
+  (Class 6 → Class 5; Class 10 → Class 5–9) — and is cleared when the class changes.
+  **Attachments** are uploaded from the academic step and shown again on the review step.
+  The student photo is held to the ID-card rule — **exactly 300×300 px, max 1 MB** — checked
+  in the browser for an inline error and enforced by `POST /admissions/upload`.
+  **Admission Type and Shift** are read from the site settings, so the school never offers
+  a type (day/residential) or a shift it does not run.
 
 ## Business logic (single implementations, unit-tested)
 
@@ -115,20 +126,29 @@ Runs in a Prisma `$transaction`; partial amounts never orphan (School-management
 lesson: application of money is a ledger, not a boolean). Overdue days computed
 on read: `max(0, days(now − dueDate))` for status ≠ PAID.
 
-### 4. Admission approve → enroll — `admissions.service.ts` transaction
+### 4. Admission submit → approve → enroll — `admissions.service.ts`
 ```
+submit (public):
+  user        = create User(email from form, random unguessable hash, role STUDENT, status BLOCKED)
+  application = create AdmissionApplication({formData (+ derived age), status SUBMITTED, userId})
+  email       = acknowledgement: application number + "result published in the notices"
+  return {id, status, studentName, classWanted, emailSent}    // application number only
+
 review(id, APPROVED):
   $transaction:
     admission = find SUBMITTED (else 409)
     admissionNo = "GHS-" + year + "-" + zeroPad(nextSeq, 3)      // seq from student count
-    rollNo      = next roll in target section (or class)
-    user        = create User(email from form, bcrypt(generatedPassword), role STUDENT)
-    student     = create Student({...form academic fields, userId, admissionNo, rollNo})
+    rollNo      = next roll in the target class/section
+    user        = activate the pending account + bcrypt(fresh generatedPassword)
+    student     = create Student({userId, admissionNo, rollNo, classId, sectionId})
     admission.status = APPROVED, reviewedBy/At set
-  return {generatedPassword}   // shown once in admin UI
+  return {admissionNo, rollNo, email, generatedPassword}   // shown once in admin UI
 ```
-Deterministic demo password generation = `ghs` + last 4 of admissionNo + `!` (documented
-in README). Reject: status + note only.
+**No credentials at apply time.** The account is `BLOCKED` until an admin approves it,
+so a password printed on the receipt could never be used; the receipt carries the
+application number only, and the result is published in the school notices. The admin
+generates the password at approval and hands it over (the `generatedPassword` is an
+unguessable `xxxx-xxxx-xxxx` one-time password). Reject: status + note only.
 
 ### 5. Marks entry guard — `exams.service.ts`
 Server-side re-fetch of totalMarks per (exam, subject); reject any

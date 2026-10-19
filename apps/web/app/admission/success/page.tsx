@@ -13,8 +13,6 @@ import { Footer } from "@/components/public/footer";
 
 interface Receipt {
     id: string;
-    username: string;
-    password: string;
     studentName: string;
     classWanted: string;
     emailSent: boolean;
@@ -63,8 +61,8 @@ export default function AdmissionSuccessPage() {
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">
                         {receipt.emailSent
-                            ? "Your credentials have also been emailed to you."
-                            : "Save or print this form — it contains your portal credentials."}
+                            ? "A confirmation has also been emailed to you."
+                            : "Save or print this page — keep your application number."}
                     </p>
                 </div>
                 <Card className="border-2 border-border bg-card shadow-sm">
@@ -85,16 +83,16 @@ export default function AdmissionSuccessPage() {
                                 <p className="font-semibold">{receipt.classWanted}</p>
                             </div>
                             <div className="space-y-2">
-                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Username</p>
-                                <p className="font-mono font-bold">{receipt.username}</p>
+                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Application No</p>
+                                <p className="font-mono font-bold text-primary">{receipt.id.slice(-8).toUpperCase()}</p>
                             </div>
                             <div className="space-y-2">
-                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Password</p>
-                                <p className="font-mono font-bold text-primary">{receipt.password}</p>
+                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Status</p>
+                                <p className="font-semibold">Submitted — under review</p>
                             </div>
                         </div>
                         <p className="text-[10px] text-muted-foreground mt-4">
-                            Use these credentials to log in and track your application. Change your password after first login.
+                            Keep this application number. The admission result will be published in the school notices.
                         </p>
                     </CardContent>
                 </Card>

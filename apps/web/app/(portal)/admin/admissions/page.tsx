@@ -52,6 +52,11 @@ interface ReviewResult {
     email?: string;
     generatedPassword?: string;
 }
+interface ClassWithSections {
+    id: string;
+    name: string;
+    sections: { id: string; name: string }[];
+}
 
 const STATUS_STYLE: Record<string, string> = {
     SUBMITTED: "bg-amber-500/10 text-amber-600 border-amber-500/20",
@@ -79,6 +84,9 @@ export default function AdminAdmissionsPage() {
     );
     const [statusFilter, setStatusFilter] = React.useState<string>("ALL");
     const [classFilter, setClassFilter] = React.useState<string>("ALL");
+    const [classes, setClasses] = React.useState<ClassWithSections[]>([]);
+    // The applicant never picks a section; the admin chooses one here.
+    const [sectionFor, setSectionFor] = React.useState<Record<string, string>>({});
     const [editId, setEditId] = React.useState<string | null>(null);
     const [editForm, setEditForm] = React.useState<Record<string, string>>({});
     const [editBusy, setEditBusy] = React.useState(false);
@@ -95,13 +103,22 @@ export default function AdminAdmissionsPage() {
 
     React.useEffect(() => { load(); }, [load]);
 
-    async function review(id: string, decision: "APPROVED" | "REJECTED") {
+    React.useEffect(() => {
+        api<{ classes: ClassWithSections[] }>("/classes")
+            .then((p) => setClasses(p.classes))
+            .catch(() => setClasses([]));
+    }, []);
+
+    const sectionsOf = (className: string | undefined) =>
+        classes.find((c) => c.name === className)?.sections ?? [];
+
+    async function review(id: string, decision: "APPROVED" | "REJECTED", sectionId?: string) {
         setBusyId(id);
         setFeedback(null);
         try {
             const res = await api<{ data: ReviewResult }>(`/admissions/${id}/review`, {
                 method: "POST",
-                body: { decision },
+                body: { decision, ...(sectionId ? { sectionId } : {}) },
             });
             setResult(res.data);
             setFeedback({
@@ -251,6 +268,23 @@ export default function AdminAdmissionsPage() {
                                     </p>
                                 </div>
                                 <div className="flex flex-col sm:flex-row items-end sm:justify-end gap-2">
+                                    {sectionsOf(app.formData.classWanted).length > 0 ? (
+                                        <div className="w-[130px]">
+                                            <Select
+                                                value={sectionFor[app.id] ?? undefined}
+                                                onValueChange={(v) => setSectionFor((prev) => ({ ...prev, [app.id]: v }))}
+                                            >
+                                                <SelectTrigger className="h-9">
+                                                    <SelectValue placeholder="Section" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {sectionsOf(app.formData.classWanted).map((sec) => (
+                                                        <SelectItem key={sec.id} value={sec.id}>{sec.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    ) : null}
                                     <Button
                                         onClick={() => openEdit(app)}
                                         disabled={busyId === app.id}
@@ -263,7 +297,7 @@ export default function AdminAdmissionsPage() {
                                         )}
                                     </Button>
                                     <Button
-                                        onClick={() => review(app.id, "APPROVED")}
+                                        onClick={() => review(app.id, "APPROVED", sectionFor[app.id])}
                                         disabled={busyId === app.id}
                                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider"
                                     >

@@ -553,6 +553,8 @@ export const SiteSettingScalarFieldEnum = {
   websiteUrl: 'websiteUrl',
   mapEmbedUrl: 'mapEmbedUrl',
   importantLinks: 'importantLinks',
+  admissionTypes: 'admissionTypes',
+  shifts: 'shifts',
   updatedAt: 'updatedAt'
 } as const
 
