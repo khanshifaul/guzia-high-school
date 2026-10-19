@@ -18,7 +18,9 @@ import { SourceRow } from "@/components/teacher/studio/source-row";
 import { AttachSheet } from "@/components/teacher/studio/attach-sheet";
 import { StudioPane, type StudioView } from "@/components/teacher/studio/studio-pane";
 import { SourceDetailDialog } from "@/components/teacher/studio/source-detail-dialog";
+import { UploadSourceDialog } from "@/components/teacher/studio/upload-source-dialog";
 import { api, RequestError } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { workspaceScope, type ChatMessage, type Citation, type StudioSource, type WorkspaceDetail } from "@/lib/studio";
 
 const RATE_LIMIT_COOLDOWN_MS = 10_000;
@@ -64,6 +66,8 @@ function WorkspaceView() {
     const [cooling, setCooling] = React.useState(false);
 
     const [attachOpen, setAttachOpen] = React.useState(false);
+    const [uploadOpen, setUploadOpen] = React.useState(false);
+    const [mobileTab, setMobileTab] = React.useState<"sources" | "chat" | "studio">("chat");
     const [editingTitle, setEditingTitle] = React.useState(false);
     const [titleDraft, setTitleDraft] = React.useState("");
     const [clearing, setClearing] = React.useState(false);
@@ -320,7 +324,7 @@ function WorkspaceView() {
                             {clearing ? <FaSpinner className="animate-spin" size={10} /> : <FaTrash size={10} />} Clear chat
                         </Button>
                     ) : null}
-                    <Button size="sm" onClick={() => setAttachOpen(true)} className="font-black text-[10px] uppercase tracking-wider">
+                    <Button size="sm" onClick={() => setUploadOpen(true)} className="font-black text-[10px] uppercase tracking-wider">
                         <FaPaperclip size={10} /> Attach source
                     </Button>
                 </div>
@@ -340,9 +344,34 @@ function WorkspaceView() {
                 </div>
             ) : null}
 
+            {/* Below xl the three panes become tabs instead of a long stack. */}
+            <div className="flex gap-1 rounded-lg border border-border/60 bg-card p-1 xl:hidden">
+                {(["sources", "chat", "studio"] as const).map((key) => (
+                    <button
+                        key={key}
+                        type="button"
+                        onClick={() => setMobileTab(key)}
+                        className={cn(
+                            "flex-1 rounded-md px-2 py-1.5 text-[10px] font-black uppercase tracking-wider transition-colors",
+                            mobileTab === key
+                                ? "bg-primary text-primary-foreground"
+                                : "text-muted-foreground hover:text-foreground",
+                        )}
+                    >
+                        {key}
+                        {key === "sources" ? ` (${detail.sources.length})` : ""}
+                    </button>
+                ))}
+            </div>
+
             <div className="grid grid-cols-1 xl:grid-cols-[260px_minmax(0,1fr)_340px] gap-4 items-stretch xl:h-[calc(100dvh-11rem)] xl:min-h-[520px]">
                 {/* Sources */}
-                <aside className="flex min-h-0 flex-col rounded-xl border border-border/60 bg-card xl:h-full">
+                <aside
+                    className={cn(
+                        "min-h-0 flex-col rounded-xl border border-border/60 bg-card xl:flex xl:h-full",
+                        mobileTab === "sources" ? "flex" : "hidden",
+                    )}
+                >
                     <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
                         <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Sources</span>
                         <span className="text-[10px] text-muted-foreground">{detail.sources.length}</span>
@@ -387,7 +416,10 @@ function WorkspaceView() {
                         const file = event.dataTransfer.files?.[0];
                         if (file) void dropFile(file);
                     }}
-                    className="relative flex min-h-[520px] flex-col rounded-xl border border-border/60 bg-card xl:h-full xl:min-h-0"
+                    className={cn(
+                        "relative min-h-[520px] flex-col rounded-xl border border-border/60 bg-card xl:flex xl:h-full xl:min-h-0",
+                        mobileTab === "chat" ? "flex" : "hidden",
+                    )}
                 >
                     {dragging ? (
                         <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary bg-background/85 px-4 text-center">
@@ -451,7 +483,12 @@ function WorkspaceView() {
                 </section>
 
                 {/* Studio */}
-                <aside className="flex min-h-0 flex-col rounded-xl border border-border/60 bg-card xl:h-full">
+                <aside
+                    className={cn(
+                        "min-h-0 flex-col rounded-xl border border-border/60 bg-card xl:flex xl:h-full",
+                        mobileTab === "studio" ? "flex" : "hidden",
+                    )}
+                >
                     <div className="border-b border-border/60 px-3 py-2">
                         <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Studio</span>
                     </div>
@@ -470,6 +507,18 @@ function WorkspaceView() {
                     </div>
                 </aside>
             </div>
+
+            <UploadSourceDialog
+                open={uploadOpen}
+                onOpenChange={setUploadOpen}
+                workspaceId={detail.id}
+                classId={detail.classId}
+                subjectId={detail.subjectId}
+                onUploaded={(message) => {
+                    setFeedback(message);
+                    load();
+                }}
+            />
 
             <AttachSheet
                 open={attachOpen}
