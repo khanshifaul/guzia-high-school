@@ -27,6 +27,9 @@ function Counter({ end, suffix = "", duration = 2 }: { end: number; suffix?: str
     const [count, setCount] = React.useState(0);
     const ref = React.useRef<HTMLSpanElement>(null);
     const done = React.useRef(false);
+    // A fractional target (e.g. a pass rate) keeps one decimal; a whole one
+    // counts up as an integer.
+    const decimals = Number.isInteger(end) ? 0 : 1;
 
     React.useEffect(() => {
         const el = ref.current;
@@ -37,7 +40,8 @@ function Counter({ end, suffix = "", duration = 2 }: { end: number; suffix?: str
                 const start = performance.now();
                 const step = (now: number) => {
                     const p = Math.min((now - start) / (duration * 1000), 1);
-                    setCount(Math.floor((1 - Math.pow(1 - p, 3)) * end));
+                    const value = (1 - Math.pow(1 - p, 3)) * end;
+                    setCount(decimals > 0 ? Number(value.toFixed(decimals)) : Math.floor(value));
                     if (p < 1) requestAnimationFrame(step);
                 };
                 requestAnimationFrame(step);
@@ -45,7 +49,7 @@ function Counter({ end, suffix = "", duration = 2 }: { end: number; suffix?: str
         }, { threshold: 0.3 });
         obs.observe(el);
         return () => obs.disconnect();
-    }, [end, duration]);
+    }, [end, duration, decimals]);
 
     return <span ref={ref}>{count}{suffix}</span>;
 }
@@ -99,17 +103,17 @@ const testimonials = [
 ];
 
 const achievements = [
-    { icon: FaTrophy, title: "National Rank #3", desc: "In the National Science Olympiad 2025" },
-    { icon: FaAward, title: "100% Pass Rate", desc: "In SSC Board Examination 2025" },
-    { icon: FaStar, title: "Best School Award", desc: "Upazila Education Excellence Award 2024" },
-    { icon: FaHeart, title: "Gold Medal Debate", desc: "National Inter-School Debate Championship 2025" },
+    { icon: FaTrophy, title: "Recognized", desc: "Government recognition since 1 July 1962" },
+    { icon: FaAward, title: "MPO Institution", desc: "Government pay order, no. 7610041302" },
+    { icon: FaStar, title: "National Rank 1861", desc: "In the national school ranking" },
+    { icon: FaHeart, title: "JSC 94.94% Pass", desc: "1,031 of 1,086 students passed, 2010–2019" },
 ];
 const ESTABLISHED_YEAR = 1958;
 const stats = [
-    { icon: FaUserGraduate, end: 1200, suffix: "+", label: "Students" },
-    { icon: FaChalkboardUser, end: 80, suffix: "+", label: "Teachers" },
+    { icon: FaUserGraduate, end: 536, suffix: "", label: "Students" },
+    { icon: FaChalkboardUser, end: 18, suffix: "", label: "Teachers" },
     { icon: FaSchool, end: new Date().getFullYear() - ESTABLISHED_YEAR, suffix: "", label: "Years of Excellence" },
-    { icon: FaAward, end: achievements.length, suffix: "+", label: "National Awards" },
+    { icon: FaAward, end: 97.3, suffix: "%", label: "SSC Pass Rate, 2022" },
 ];
 
 const gallery = [

@@ -62,6 +62,7 @@ export const ModelName = {
   TimetableSlot: 'TimetableSlot',
   AttendanceRecord: 'AttendanceRecord',
   Exam: 'Exam',
+  ExamSubject: 'ExamSubject',
   ExamMark: 'ExamMark',
   GradeBand: 'GradeBand',
   Assignment: 'Assignment',
@@ -258,6 +259,16 @@ export const ExamScalarFieldEnum = {
 } as const
 
 export type ExamScalarFieldEnum = (typeof ExamScalarFieldEnum)[keyof typeof ExamScalarFieldEnum]
+
+
+export const ExamSubjectScalarFieldEnum = {
+  id: 'id',
+  examId: 'examId',
+  subjectId: 'subjectId',
+  totalMarks: 'totalMarks'
+} as const
+
+export type ExamSubjectScalarFieldEnum = (typeof ExamSubjectScalarFieldEnum)[keyof typeof ExamSubjectScalarFieldEnum]
 
 
 export const ExamMarkScalarFieldEnum = {

@@ -58,7 +58,7 @@ async function bootstrap() {
   });
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Guzia High School API')
+    .setTitle('Guzia Bilateral High School API')
     .setDescription(
       'School management API: auth (cookie JWT), students, teachers, classes, attendance, exams/grading, fees, admissions, notices, AI (at-risk + teacher toolkit).',
     )

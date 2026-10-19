@@ -408,6 +408,7 @@ export const ModelName = {
   TimetableSlot: 'TimetableSlot',
   AttendanceRecord: 'AttendanceRecord',
   Exam: 'Exam',
+  ExamSubject: 'ExamSubject',
   ExamMark: 'ExamMark',
   GradeBand: 'GradeBand',
   Assignment: 'Assignment',
@@ -446,7 +447,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "teacher" | "student" | "parent" | "class" | "section" | "subject" | "classSubject" | "timetableSlot" | "attendanceRecord" | "exam" | "examMark" | "gradeBand" | "assignment" | "submission" | "feeHead" | "invoice" | "payment" | "paymentAllocation" | "notice" | "admissionApplication" | "atRiskScore" | "aiProviderConfig" | "teachingPlan" | "questionPaper" | "question" | "testAttempt" | "studentAnswer" | "sourceDocument" | "sourceChunk" | "siteSetting" | "contactMessage" | "galleryItem" | "studyMaterial"
+    modelProps: "user" | "teacher" | "student" | "parent" | "class" | "section" | "subject" | "classSubject" | "timetableSlot" | "attendanceRecord" | "exam" | "examSubject" | "examMark" | "gradeBand" | "assignment" | "submission" | "feeHead" | "invoice" | "payment" | "paymentAllocation" | "notice" | "admissionApplication" | "atRiskScore" | "aiProviderConfig" | "teachingPlan" | "questionPaper" | "question" | "testAttempt" | "studentAnswer" | "sourceDocument" | "sourceChunk" | "siteSetting" | "contactMessage" | "galleryItem" | "studyMaterial"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1261,6 +1262,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ExamCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ExamCountAggregateOutputType> | number
+        }
+      }
+    }
+    ExamSubject: {
+      payload: Prisma.$ExamSubjectPayload<ExtArgs>
+      fields: Prisma.ExamSubjectFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ExamSubjectFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExamSubjectPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ExamSubjectFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExamSubjectPayload>
+        }
+        findFirst: {
+          args: Prisma.ExamSubjectFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExamSubjectPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ExamSubjectFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExamSubjectPayload>
+        }
+        findMany: {
+          args: Prisma.ExamSubjectFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExamSubjectPayload>[]
+        }
+        create: {
+          args: Prisma.ExamSubjectCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExamSubjectPayload>
+        }
+        createMany: {
+          args: Prisma.ExamSubjectCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ExamSubjectCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExamSubjectPayload>[]
+        }
+        delete: {
+          args: Prisma.ExamSubjectDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExamSubjectPayload>
+        }
+        update: {
+          args: Prisma.ExamSubjectUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExamSubjectPayload>
+        }
+        deleteMany: {
+          args: Prisma.ExamSubjectDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ExamSubjectUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ExamSubjectUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExamSubjectPayload>[]
+        }
+        upsert: {
+          args: Prisma.ExamSubjectUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ExamSubjectPayload>
+        }
+        aggregate: {
+          args: Prisma.ExamSubjectAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateExamSubject>
+        }
+        groupBy: {
+          args: Prisma.ExamSubjectGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ExamSubjectGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ExamSubjectCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ExamSubjectCountAggregateOutputType> | number
         }
       }
     }
@@ -3162,6 +3237,16 @@ export const ExamScalarFieldEnum = {
 export type ExamScalarFieldEnum = (typeof ExamScalarFieldEnum)[keyof typeof ExamScalarFieldEnum]
 
 
+export const ExamSubjectScalarFieldEnum = {
+  id: 'id',
+  examId: 'examId',
+  subjectId: 'subjectId',
+  totalMarks: 'totalMarks'
+} as const
+
+export type ExamSubjectScalarFieldEnum = (typeof ExamSubjectScalarFieldEnum)[keyof typeof ExamSubjectScalarFieldEnum]
+
+
 export const ExamMarkScalarFieldEnum = {
   id: 'id',
   examId: 'examId',
@@ -4009,6 +4094,7 @@ export type GlobalOmitConfig = {
   timetableSlot?: Prisma.TimetableSlotOmit
   attendanceRecord?: Prisma.AttendanceRecordOmit
   exam?: Prisma.ExamOmit
+  examSubject?: Prisma.ExamSubjectOmit
   examMark?: Prisma.ExamMarkOmit
   gradeBand?: Prisma.GradeBandOmit
   assignment?: Prisma.AssignmentOmit

@@ -401,6 +401,41 @@ async function main(): Promise<void> {
     },
   });
 
+  // Public site settings singleton — the school's real identity, from
+  // sohopathi.com/guzia-bilateral-high-school/ (EIIN 119825, founded 1958,
+  // Rajshahi Education Board, Union Guzia / Shibganj / Bogura).
+  const schoolIdentity = {
+    schoolName: "Guzia Bilateral High School",
+    schoolNameBn: "গুজিয়া উচ্চ বিদ্যালয়",
+    phone: "01713939240",
+    eiin: "119825",
+    board: "Rajshahi Education Board",
+    address: "Union Guzia, Shibganj, Bogura",
+    addressBn: "গুজিয়া ইউনিয়ন, শিবগঞ্জ, বগুড়া",
+    established: "1958",
+    tagline:
+      "A combined secondary school in Guzia, Bogura — serving the community since 1958.",
+    taglineBn:
+      "১৯৫৮ সাল থেকে বগুড়ার গুজিয়ায় প্রতিষ্ঠিত একটি সহ-শিক্ষা মাধ্যমিক বিদ্যালয়।",
+
+  };
+  await prisma.siteSetting.upsert({
+    where: { id: "singleton" },
+    update: schoolIdentity,
+    create: {
+      id: "singleton",
+      ...schoolIdentity,
+      developedBy: "Shifaul Islam",
+      developedByUrl: "https://shifaul.dev",
+      importantLinks: [
+        { label: "Ministry of Education", labelBn: "শিক্ষা মন্ত্রণালয়", href: "https://moedu.gov.bd" },
+        { label: "Rajshahi Education Board", labelBn: "রাজশাহী শিক্ষা বোর্ড", href: "https://rajshahieducationboard.gov.bd" },
+        { label: "BANBEIS (EIIN)", labelBn: "বানবেইস (EIIN)", href: "https://banbeis.gov.bd" },
+        { label: "National Emergency", labelBn: "জাতীয় জরুরি সেবা", href: "tel:999" },
+      ],
+    },
+  });
+
   console.log("✅ Seed complete.");
   console.log("   Demo logins (all password: password123)");
   console.log("   admin@guziahs.edu | teacher1..3@guziahs.edu | student01..15@guziahs.edu | parent01..08@guziahs.edu");

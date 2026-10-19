@@ -192,6 +192,7 @@ export type ExamWhereInput = {
   published?: Prisma.BoolFilter<"Exam"> | boolean
   class?: Prisma.XOR<Prisma.ClassScalarRelationFilter, Prisma.ClassWhereInput>
   marks?: Prisma.ExamMarkListRelationFilter
+  subjects?: Prisma.ExamSubjectListRelationFilter
 }
 
 export type ExamOrderByWithRelationInput = {
@@ -203,6 +204,7 @@ export type ExamOrderByWithRelationInput = {
   published?: Prisma.SortOrder
   class?: Prisma.ClassOrderByWithRelationInput
   marks?: Prisma.ExamMarkOrderByRelationAggregateInput
+  subjects?: Prisma.ExamSubjectOrderByRelationAggregateInput
 }
 
 export type ExamWhereUniqueInput = Prisma.AtLeast<{
@@ -218,6 +220,7 @@ export type ExamWhereUniqueInput = Prisma.AtLeast<{
   published?: Prisma.BoolFilter<"Exam"> | boolean
   class?: Prisma.XOR<Prisma.ClassScalarRelationFilter, Prisma.ClassWhereInput>
   marks?: Prisma.ExamMarkListRelationFilter
+  subjects?: Prisma.ExamSubjectListRelationFilter
 }, "id" | "name_classId">
 
 export type ExamOrderByWithAggregationInput = {
@@ -252,6 +255,7 @@ export type ExamCreateInput = {
   published?: boolean
   class: Prisma.ClassCreateNestedOneWithoutExamsInput
   marks?: Prisma.ExamMarkCreateNestedManyWithoutExamInput
+  subjects?: Prisma.ExamSubjectCreateNestedManyWithoutExamInput
 }
 
 export type ExamUncheckedCreateInput = {
@@ -262,6 +266,7 @@ export type ExamUncheckedCreateInput = {
   endDate: Date | string
   published?: boolean
   marks?: Prisma.ExamMarkUncheckedCreateNestedManyWithoutExamInput
+  subjects?: Prisma.ExamSubjectUncheckedCreateNestedManyWithoutExamInput
 }
 
 export type ExamUpdateInput = {
@@ -272,6 +277,7 @@ export type ExamUpdateInput = {
   published?: Prisma.BoolFieldUpdateOperationsInput | boolean
   class?: Prisma.ClassUpdateOneRequiredWithoutExamsNestedInput
   marks?: Prisma.ExamMarkUpdateManyWithoutExamNestedInput
+  subjects?: Prisma.ExamSubjectUpdateManyWithoutExamNestedInput
 }
 
 export type ExamUncheckedUpdateInput = {
@@ -282,6 +288,7 @@ export type ExamUncheckedUpdateInput = {
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   published?: Prisma.BoolFieldUpdateOperationsInput | boolean
   marks?: Prisma.ExamMarkUncheckedUpdateManyWithoutExamNestedInput
+  subjects?: Prisma.ExamSubjectUncheckedUpdateManyWithoutExamNestedInput
 }
 
 export type ExamCreateManyInput = {
@@ -403,6 +410,20 @@ export type BoolFieldUpdateOperationsInput = {
   set?: boolean
 }
 
+export type ExamCreateNestedOneWithoutSubjectsInput = {
+  create?: Prisma.XOR<Prisma.ExamCreateWithoutSubjectsInput, Prisma.ExamUncheckedCreateWithoutSubjectsInput>
+  connectOrCreate?: Prisma.ExamCreateOrConnectWithoutSubjectsInput
+  connect?: Prisma.ExamWhereUniqueInput
+}
+
+export type ExamUpdateOneRequiredWithoutSubjectsNestedInput = {
+  create?: Prisma.XOR<Prisma.ExamCreateWithoutSubjectsInput, Prisma.ExamUncheckedCreateWithoutSubjectsInput>
+  connectOrCreate?: Prisma.ExamCreateOrConnectWithoutSubjectsInput
+  upsert?: Prisma.ExamUpsertWithoutSubjectsInput
+  connect?: Prisma.ExamWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ExamUpdateToOneWithWhereWithoutSubjectsInput, Prisma.ExamUpdateWithoutSubjectsInput>, Prisma.ExamUncheckedUpdateWithoutSubjectsInput>
+}
+
 export type ExamCreateNestedOneWithoutMarksInput = {
   create?: Prisma.XOR<Prisma.ExamCreateWithoutMarksInput, Prisma.ExamUncheckedCreateWithoutMarksInput>
   connectOrCreate?: Prisma.ExamCreateOrConnectWithoutMarksInput
@@ -424,6 +445,7 @@ export type ExamCreateWithoutClassInput = {
   endDate: Date | string
   published?: boolean
   marks?: Prisma.ExamMarkCreateNestedManyWithoutExamInput
+  subjects?: Prisma.ExamSubjectCreateNestedManyWithoutExamInput
 }
 
 export type ExamUncheckedCreateWithoutClassInput = {
@@ -433,6 +455,7 @@ export type ExamUncheckedCreateWithoutClassInput = {
   endDate: Date | string
   published?: boolean
   marks?: Prisma.ExamMarkUncheckedCreateNestedManyWithoutExamInput
+  subjects?: Prisma.ExamSubjectUncheckedCreateNestedManyWithoutExamInput
 }
 
 export type ExamCreateOrConnectWithoutClassInput = {
@@ -473,6 +496,62 @@ export type ExamScalarWhereInput = {
   published?: Prisma.BoolFilter<"Exam"> | boolean
 }
 
+export type ExamCreateWithoutSubjectsInput = {
+  id?: string
+  name: string
+  startDate: Date | string
+  endDate: Date | string
+  published?: boolean
+  class: Prisma.ClassCreateNestedOneWithoutExamsInput
+  marks?: Prisma.ExamMarkCreateNestedManyWithoutExamInput
+}
+
+export type ExamUncheckedCreateWithoutSubjectsInput = {
+  id?: string
+  name: string
+  classId: string
+  startDate: Date | string
+  endDate: Date | string
+  published?: boolean
+  marks?: Prisma.ExamMarkUncheckedCreateNestedManyWithoutExamInput
+}
+
+export type ExamCreateOrConnectWithoutSubjectsInput = {
+  where: Prisma.ExamWhereUniqueInput
+  create: Prisma.XOR<Prisma.ExamCreateWithoutSubjectsInput, Prisma.ExamUncheckedCreateWithoutSubjectsInput>
+}
+
+export type ExamUpsertWithoutSubjectsInput = {
+  update: Prisma.XOR<Prisma.ExamUpdateWithoutSubjectsInput, Prisma.ExamUncheckedUpdateWithoutSubjectsInput>
+  create: Prisma.XOR<Prisma.ExamCreateWithoutSubjectsInput, Prisma.ExamUncheckedCreateWithoutSubjectsInput>
+  where?: Prisma.ExamWhereInput
+}
+
+export type ExamUpdateToOneWithWhereWithoutSubjectsInput = {
+  where?: Prisma.ExamWhereInput
+  data: Prisma.XOR<Prisma.ExamUpdateWithoutSubjectsInput, Prisma.ExamUncheckedUpdateWithoutSubjectsInput>
+}
+
+export type ExamUpdateWithoutSubjectsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  class?: Prisma.ClassUpdateOneRequiredWithoutExamsNestedInput
+  marks?: Prisma.ExamMarkUpdateManyWithoutExamNestedInput
+}
+
+export type ExamUncheckedUpdateWithoutSubjectsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  classId?: Prisma.StringFieldUpdateOperationsInput | string
+  startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  published?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  marks?: Prisma.ExamMarkUncheckedUpdateManyWithoutExamNestedInput
+}
+
 export type ExamCreateWithoutMarksInput = {
   id?: string
   name: string
@@ -480,6 +559,7 @@ export type ExamCreateWithoutMarksInput = {
   endDate: Date | string
   published?: boolean
   class: Prisma.ClassCreateNestedOneWithoutExamsInput
+  subjects?: Prisma.ExamSubjectCreateNestedManyWithoutExamInput
 }
 
 export type ExamUncheckedCreateWithoutMarksInput = {
@@ -489,6 +569,7 @@ export type ExamUncheckedCreateWithoutMarksInput = {
   startDate: Date | string
   endDate: Date | string
   published?: boolean
+  subjects?: Prisma.ExamSubjectUncheckedCreateNestedManyWithoutExamInput
 }
 
 export type ExamCreateOrConnectWithoutMarksInput = {
@@ -514,6 +595,7 @@ export type ExamUpdateWithoutMarksInput = {
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   published?: Prisma.BoolFieldUpdateOperationsInput | boolean
   class?: Prisma.ClassUpdateOneRequiredWithoutExamsNestedInput
+  subjects?: Prisma.ExamSubjectUpdateManyWithoutExamNestedInput
 }
 
 export type ExamUncheckedUpdateWithoutMarksInput = {
@@ -523,6 +605,7 @@ export type ExamUncheckedUpdateWithoutMarksInput = {
   startDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   published?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  subjects?: Prisma.ExamSubjectUncheckedUpdateManyWithoutExamNestedInput
 }
 
 export type ExamCreateManyClassInput = {
@@ -540,6 +623,7 @@ export type ExamUpdateWithoutClassInput = {
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   published?: Prisma.BoolFieldUpdateOperationsInput | boolean
   marks?: Prisma.ExamMarkUpdateManyWithoutExamNestedInput
+  subjects?: Prisma.ExamSubjectUpdateManyWithoutExamNestedInput
 }
 
 export type ExamUncheckedUpdateWithoutClassInput = {
@@ -549,6 +633,7 @@ export type ExamUncheckedUpdateWithoutClassInput = {
   endDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   published?: Prisma.BoolFieldUpdateOperationsInput | boolean
   marks?: Prisma.ExamMarkUncheckedUpdateManyWithoutExamNestedInput
+  subjects?: Prisma.ExamSubjectUncheckedUpdateManyWithoutExamNestedInput
 }
 
 export type ExamUncheckedUpdateManyWithoutClassInput = {
@@ -566,10 +651,12 @@ export type ExamUncheckedUpdateManyWithoutClassInput = {
 
 export type ExamCountOutputType = {
   marks: number
+  subjects: number
 }
 
 export type ExamCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   marks?: boolean | ExamCountOutputTypeCountMarksArgs
+  subjects?: boolean | ExamCountOutputTypeCountSubjectsArgs
 }
 
 /**
@@ -589,6 +676,13 @@ export type ExamCountOutputTypeCountMarksArgs<ExtArgs extends runtime.Types.Exte
   where?: Prisma.ExamMarkWhereInput
 }
 
+/**
+ * ExamCountOutputType without action
+ */
+export type ExamCountOutputTypeCountSubjectsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ExamSubjectWhereInput
+}
+
 
 export type ExamSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -599,6 +693,7 @@ export type ExamSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   published?: boolean
   class?: boolean | Prisma.ClassDefaultArgs<ExtArgs>
   marks?: boolean | Prisma.Exam$marksArgs<ExtArgs>
+  subjects?: boolean | Prisma.Exam$subjectsArgs<ExtArgs>
   _count?: boolean | Prisma.ExamCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["exam"]>
 
@@ -635,6 +730,7 @@ export type ExamOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = run
 export type ExamInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   class?: boolean | Prisma.ClassDefaultArgs<ExtArgs>
   marks?: boolean | Prisma.Exam$marksArgs<ExtArgs>
+  subjects?: boolean | Prisma.Exam$subjectsArgs<ExtArgs>
   _count?: boolean | Prisma.ExamCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ExamIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -649,6 +745,7 @@ export type $ExamPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   objects: {
     class: Prisma.$ClassPayload<ExtArgs>
     marks: Prisma.$ExamMarkPayload<ExtArgs>[]
+    subjects: Prisma.$ExamSubjectPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1053,6 +1150,7 @@ export interface Prisma__ExamClient<T, Null = never, ExtArgs extends runtime.Typ
   readonly [Symbol.toStringTag]: "PrismaPromise"
   class<T extends Prisma.ClassDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ClassDefaultArgs<ExtArgs>>): Prisma.Prisma__ClassClient<runtime.Types.Result.GetResult<Prisma.$ClassPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   marks<T extends Prisma.Exam$marksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Exam$marksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ExamMarkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  subjects<T extends Prisma.Exam$subjectsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Exam$subjectsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ExamSubjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1510,6 +1608,30 @@ export type Exam$marksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
   take?: number
   skip?: number
   distinct?: Prisma.ExamMarkScalarFieldEnum | Prisma.ExamMarkScalarFieldEnum[]
+}
+
+/**
+ * Exam.subjects
+ */
+export type Exam$subjectsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ExamSubject
+   */
+  select?: Prisma.ExamSubjectSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ExamSubject
+   */
+  omit?: Prisma.ExamSubjectOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ExamSubjectInclude<ExtArgs> | null
+  where?: Prisma.ExamSubjectWhereInput
+  orderBy?: Prisma.ExamSubjectOrderByWithRelationInput | Prisma.ExamSubjectOrderByWithRelationInput[]
+  cursor?: Prisma.ExamSubjectWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ExamSubjectScalarFieldEnum | Prisma.ExamSubjectScalarFieldEnum[]
 }
 
 /**

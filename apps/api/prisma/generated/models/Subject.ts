@@ -168,6 +168,7 @@ export type SubjectWhereInput = {
   code?: Prisma.StringFilter<"Subject"> | string
   classSubjects?: Prisma.ClassSubjectListRelationFilter
   examMarks?: Prisma.ExamMarkListRelationFilter
+  examSubjects?: Prisma.ExamSubjectListRelationFilter
   assignments?: Prisma.AssignmentListRelationFilter
   plans?: Prisma.TeachingPlanListRelationFilter
   papers?: Prisma.QuestionPaperListRelationFilter
@@ -180,6 +181,7 @@ export type SubjectOrderByWithRelationInput = {
   code?: Prisma.SortOrder
   classSubjects?: Prisma.ClassSubjectOrderByRelationAggregateInput
   examMarks?: Prisma.ExamMarkOrderByRelationAggregateInput
+  examSubjects?: Prisma.ExamSubjectOrderByRelationAggregateInput
   assignments?: Prisma.AssignmentOrderByRelationAggregateInput
   plans?: Prisma.TeachingPlanOrderByRelationAggregateInput
   papers?: Prisma.QuestionPaperOrderByRelationAggregateInput
@@ -195,6 +197,7 @@ export type SubjectWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.SubjectWhereInput | Prisma.SubjectWhereInput[]
   classSubjects?: Prisma.ClassSubjectListRelationFilter
   examMarks?: Prisma.ExamMarkListRelationFilter
+  examSubjects?: Prisma.ExamSubjectListRelationFilter
   assignments?: Prisma.AssignmentListRelationFilter
   plans?: Prisma.TeachingPlanListRelationFilter
   papers?: Prisma.QuestionPaperListRelationFilter
@@ -225,6 +228,7 @@ export type SubjectCreateInput = {
   code: string
   classSubjects?: Prisma.ClassSubjectCreateNestedManyWithoutSubjectInput
   examMarks?: Prisma.ExamMarkCreateNestedManyWithoutSubjectInput
+  examSubjects?: Prisma.ExamSubjectCreateNestedManyWithoutSubjectInput
   assignments?: Prisma.AssignmentCreateNestedManyWithoutSubjectInput
   plans?: Prisma.TeachingPlanCreateNestedManyWithoutSubjectInput
   papers?: Prisma.QuestionPaperCreateNestedManyWithoutSubjectInput
@@ -237,6 +241,7 @@ export type SubjectUncheckedCreateInput = {
   code: string
   classSubjects?: Prisma.ClassSubjectUncheckedCreateNestedManyWithoutSubjectInput
   examMarks?: Prisma.ExamMarkUncheckedCreateNestedManyWithoutSubjectInput
+  examSubjects?: Prisma.ExamSubjectUncheckedCreateNestedManyWithoutSubjectInput
   assignments?: Prisma.AssignmentUncheckedCreateNestedManyWithoutSubjectInput
   plans?: Prisma.TeachingPlanUncheckedCreateNestedManyWithoutSubjectInput
   papers?: Prisma.QuestionPaperUncheckedCreateNestedManyWithoutSubjectInput
@@ -249,6 +254,7 @@ export type SubjectUpdateInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   classSubjects?: Prisma.ClassSubjectUpdateManyWithoutSubjectNestedInput
   examMarks?: Prisma.ExamMarkUpdateManyWithoutSubjectNestedInput
+  examSubjects?: Prisma.ExamSubjectUpdateManyWithoutSubjectNestedInput
   assignments?: Prisma.AssignmentUpdateManyWithoutSubjectNestedInput
   plans?: Prisma.TeachingPlanUpdateManyWithoutSubjectNestedInput
   papers?: Prisma.QuestionPaperUpdateManyWithoutSubjectNestedInput
@@ -261,6 +267,7 @@ export type SubjectUncheckedUpdateInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   classSubjects?: Prisma.ClassSubjectUncheckedUpdateManyWithoutSubjectNestedInput
   examMarks?: Prisma.ExamMarkUncheckedUpdateManyWithoutSubjectNestedInput
+  examSubjects?: Prisma.ExamSubjectUncheckedUpdateManyWithoutSubjectNestedInput
   assignments?: Prisma.AssignmentUncheckedUpdateManyWithoutSubjectNestedInput
   plans?: Prisma.TeachingPlanUncheckedUpdateManyWithoutSubjectNestedInput
   papers?: Prisma.QuestionPaperUncheckedUpdateManyWithoutSubjectNestedInput
@@ -336,6 +343,20 @@ export type SubjectUpdateOneRequiredWithoutTimetableSlotsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.SubjectUpdateToOneWithWhereWithoutTimetableSlotsInput, Prisma.SubjectUpdateWithoutTimetableSlotsInput>, Prisma.SubjectUncheckedUpdateWithoutTimetableSlotsInput>
 }
 
+export type SubjectCreateNestedOneWithoutExamSubjectsInput = {
+  create?: Prisma.XOR<Prisma.SubjectCreateWithoutExamSubjectsInput, Prisma.SubjectUncheckedCreateWithoutExamSubjectsInput>
+  connectOrCreate?: Prisma.SubjectCreateOrConnectWithoutExamSubjectsInput
+  connect?: Prisma.SubjectWhereUniqueInput
+}
+
+export type SubjectUpdateOneRequiredWithoutExamSubjectsNestedInput = {
+  create?: Prisma.XOR<Prisma.SubjectCreateWithoutExamSubjectsInput, Prisma.SubjectUncheckedCreateWithoutExamSubjectsInput>
+  connectOrCreate?: Prisma.SubjectCreateOrConnectWithoutExamSubjectsInput
+  upsert?: Prisma.SubjectUpsertWithoutExamSubjectsInput
+  connect?: Prisma.SubjectWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.SubjectUpdateToOneWithWhereWithoutExamSubjectsInput, Prisma.SubjectUpdateWithoutExamSubjectsInput>, Prisma.SubjectUncheckedUpdateWithoutExamSubjectsInput>
+}
+
 export type SubjectCreateNestedOneWithoutExamMarksInput = {
   create?: Prisma.XOR<Prisma.SubjectCreateWithoutExamMarksInput, Prisma.SubjectUncheckedCreateWithoutExamMarksInput>
   connectOrCreate?: Prisma.SubjectCreateOrConnectWithoutExamMarksInput
@@ -397,6 +418,7 @@ export type SubjectCreateWithoutClassSubjectsInput = {
   name: string
   code: string
   examMarks?: Prisma.ExamMarkCreateNestedManyWithoutSubjectInput
+  examSubjects?: Prisma.ExamSubjectCreateNestedManyWithoutSubjectInput
   assignments?: Prisma.AssignmentCreateNestedManyWithoutSubjectInput
   plans?: Prisma.TeachingPlanCreateNestedManyWithoutSubjectInput
   papers?: Prisma.QuestionPaperCreateNestedManyWithoutSubjectInput
@@ -408,6 +430,7 @@ export type SubjectUncheckedCreateWithoutClassSubjectsInput = {
   name: string
   code: string
   examMarks?: Prisma.ExamMarkUncheckedCreateNestedManyWithoutSubjectInput
+  examSubjects?: Prisma.ExamSubjectUncheckedCreateNestedManyWithoutSubjectInput
   assignments?: Prisma.AssignmentUncheckedCreateNestedManyWithoutSubjectInput
   plans?: Prisma.TeachingPlanUncheckedCreateNestedManyWithoutSubjectInput
   papers?: Prisma.QuestionPaperUncheckedCreateNestedManyWithoutSubjectInput
@@ -435,6 +458,7 @@ export type SubjectUpdateWithoutClassSubjectsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   examMarks?: Prisma.ExamMarkUpdateManyWithoutSubjectNestedInput
+  examSubjects?: Prisma.ExamSubjectUpdateManyWithoutSubjectNestedInput
   assignments?: Prisma.AssignmentUpdateManyWithoutSubjectNestedInput
   plans?: Prisma.TeachingPlanUpdateManyWithoutSubjectNestedInput
   papers?: Prisma.QuestionPaperUpdateManyWithoutSubjectNestedInput
@@ -446,6 +470,7 @@ export type SubjectUncheckedUpdateWithoutClassSubjectsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   examMarks?: Prisma.ExamMarkUncheckedUpdateManyWithoutSubjectNestedInput
+  examSubjects?: Prisma.ExamSubjectUncheckedUpdateManyWithoutSubjectNestedInput
   assignments?: Prisma.AssignmentUncheckedUpdateManyWithoutSubjectNestedInput
   plans?: Prisma.TeachingPlanUncheckedUpdateManyWithoutSubjectNestedInput
   papers?: Prisma.QuestionPaperUncheckedUpdateManyWithoutSubjectNestedInput
@@ -458,6 +483,7 @@ export type SubjectCreateWithoutTimetableSlotsInput = {
   code: string
   classSubjects?: Prisma.ClassSubjectCreateNestedManyWithoutSubjectInput
   examMarks?: Prisma.ExamMarkCreateNestedManyWithoutSubjectInput
+  examSubjects?: Prisma.ExamSubjectCreateNestedManyWithoutSubjectInput
   assignments?: Prisma.AssignmentCreateNestedManyWithoutSubjectInput
   plans?: Prisma.TeachingPlanCreateNestedManyWithoutSubjectInput
   papers?: Prisma.QuestionPaperCreateNestedManyWithoutSubjectInput
@@ -469,6 +495,7 @@ export type SubjectUncheckedCreateWithoutTimetableSlotsInput = {
   code: string
   classSubjects?: Prisma.ClassSubjectUncheckedCreateNestedManyWithoutSubjectInput
   examMarks?: Prisma.ExamMarkUncheckedCreateNestedManyWithoutSubjectInput
+  examSubjects?: Prisma.ExamSubjectUncheckedCreateNestedManyWithoutSubjectInput
   assignments?: Prisma.AssignmentUncheckedCreateNestedManyWithoutSubjectInput
   plans?: Prisma.TeachingPlanUncheckedCreateNestedManyWithoutSubjectInput
   papers?: Prisma.QuestionPaperUncheckedCreateNestedManyWithoutSubjectInput
@@ -496,6 +523,7 @@ export type SubjectUpdateWithoutTimetableSlotsInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   classSubjects?: Prisma.ClassSubjectUpdateManyWithoutSubjectNestedInput
   examMarks?: Prisma.ExamMarkUpdateManyWithoutSubjectNestedInput
+  examSubjects?: Prisma.ExamSubjectUpdateManyWithoutSubjectNestedInput
   assignments?: Prisma.AssignmentUpdateManyWithoutSubjectNestedInput
   plans?: Prisma.TeachingPlanUpdateManyWithoutSubjectNestedInput
   papers?: Prisma.QuestionPaperUpdateManyWithoutSubjectNestedInput
@@ -507,9 +535,74 @@ export type SubjectUncheckedUpdateWithoutTimetableSlotsInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   classSubjects?: Prisma.ClassSubjectUncheckedUpdateManyWithoutSubjectNestedInput
   examMarks?: Prisma.ExamMarkUncheckedUpdateManyWithoutSubjectNestedInput
+  examSubjects?: Prisma.ExamSubjectUncheckedUpdateManyWithoutSubjectNestedInput
   assignments?: Prisma.AssignmentUncheckedUpdateManyWithoutSubjectNestedInput
   plans?: Prisma.TeachingPlanUncheckedUpdateManyWithoutSubjectNestedInput
   papers?: Prisma.QuestionPaperUncheckedUpdateManyWithoutSubjectNestedInput
+}
+
+export type SubjectCreateWithoutExamSubjectsInput = {
+  id?: string
+  name: string
+  code: string
+  classSubjects?: Prisma.ClassSubjectCreateNestedManyWithoutSubjectInput
+  examMarks?: Prisma.ExamMarkCreateNestedManyWithoutSubjectInput
+  assignments?: Prisma.AssignmentCreateNestedManyWithoutSubjectInput
+  plans?: Prisma.TeachingPlanCreateNestedManyWithoutSubjectInput
+  papers?: Prisma.QuestionPaperCreateNestedManyWithoutSubjectInput
+  timetableSlots?: Prisma.TimetableSlotCreateNestedManyWithoutSubjectInput
+}
+
+export type SubjectUncheckedCreateWithoutExamSubjectsInput = {
+  id?: string
+  name: string
+  code: string
+  classSubjects?: Prisma.ClassSubjectUncheckedCreateNestedManyWithoutSubjectInput
+  examMarks?: Prisma.ExamMarkUncheckedCreateNestedManyWithoutSubjectInput
+  assignments?: Prisma.AssignmentUncheckedCreateNestedManyWithoutSubjectInput
+  plans?: Prisma.TeachingPlanUncheckedCreateNestedManyWithoutSubjectInput
+  papers?: Prisma.QuestionPaperUncheckedCreateNestedManyWithoutSubjectInput
+  timetableSlots?: Prisma.TimetableSlotUncheckedCreateNestedManyWithoutSubjectInput
+}
+
+export type SubjectCreateOrConnectWithoutExamSubjectsInput = {
+  where: Prisma.SubjectWhereUniqueInput
+  create: Prisma.XOR<Prisma.SubjectCreateWithoutExamSubjectsInput, Prisma.SubjectUncheckedCreateWithoutExamSubjectsInput>
+}
+
+export type SubjectUpsertWithoutExamSubjectsInput = {
+  update: Prisma.XOR<Prisma.SubjectUpdateWithoutExamSubjectsInput, Prisma.SubjectUncheckedUpdateWithoutExamSubjectsInput>
+  create: Prisma.XOR<Prisma.SubjectCreateWithoutExamSubjectsInput, Prisma.SubjectUncheckedCreateWithoutExamSubjectsInput>
+  where?: Prisma.SubjectWhereInput
+}
+
+export type SubjectUpdateToOneWithWhereWithoutExamSubjectsInput = {
+  where?: Prisma.SubjectWhereInput
+  data: Prisma.XOR<Prisma.SubjectUpdateWithoutExamSubjectsInput, Prisma.SubjectUncheckedUpdateWithoutExamSubjectsInput>
+}
+
+export type SubjectUpdateWithoutExamSubjectsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  classSubjects?: Prisma.ClassSubjectUpdateManyWithoutSubjectNestedInput
+  examMarks?: Prisma.ExamMarkUpdateManyWithoutSubjectNestedInput
+  assignments?: Prisma.AssignmentUpdateManyWithoutSubjectNestedInput
+  plans?: Prisma.TeachingPlanUpdateManyWithoutSubjectNestedInput
+  papers?: Prisma.QuestionPaperUpdateManyWithoutSubjectNestedInput
+  timetableSlots?: Prisma.TimetableSlotUpdateManyWithoutSubjectNestedInput
+}
+
+export type SubjectUncheckedUpdateWithoutExamSubjectsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  classSubjects?: Prisma.ClassSubjectUncheckedUpdateManyWithoutSubjectNestedInput
+  examMarks?: Prisma.ExamMarkUncheckedUpdateManyWithoutSubjectNestedInput
+  assignments?: Prisma.AssignmentUncheckedUpdateManyWithoutSubjectNestedInput
+  plans?: Prisma.TeachingPlanUncheckedUpdateManyWithoutSubjectNestedInput
+  papers?: Prisma.QuestionPaperUncheckedUpdateManyWithoutSubjectNestedInput
+  timetableSlots?: Prisma.TimetableSlotUncheckedUpdateManyWithoutSubjectNestedInput
 }
 
 export type SubjectCreateWithoutExamMarksInput = {
@@ -517,6 +610,7 @@ export type SubjectCreateWithoutExamMarksInput = {
   name: string
   code: string
   classSubjects?: Prisma.ClassSubjectCreateNestedManyWithoutSubjectInput
+  examSubjects?: Prisma.ExamSubjectCreateNestedManyWithoutSubjectInput
   assignments?: Prisma.AssignmentCreateNestedManyWithoutSubjectInput
   plans?: Prisma.TeachingPlanCreateNestedManyWithoutSubjectInput
   papers?: Prisma.QuestionPaperCreateNestedManyWithoutSubjectInput
@@ -528,6 +622,7 @@ export type SubjectUncheckedCreateWithoutExamMarksInput = {
   name: string
   code: string
   classSubjects?: Prisma.ClassSubjectUncheckedCreateNestedManyWithoutSubjectInput
+  examSubjects?: Prisma.ExamSubjectUncheckedCreateNestedManyWithoutSubjectInput
   assignments?: Prisma.AssignmentUncheckedCreateNestedManyWithoutSubjectInput
   plans?: Prisma.TeachingPlanUncheckedCreateNestedManyWithoutSubjectInput
   papers?: Prisma.QuestionPaperUncheckedCreateNestedManyWithoutSubjectInput
@@ -555,6 +650,7 @@ export type SubjectUpdateWithoutExamMarksInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   classSubjects?: Prisma.ClassSubjectUpdateManyWithoutSubjectNestedInput
+  examSubjects?: Prisma.ExamSubjectUpdateManyWithoutSubjectNestedInput
   assignments?: Prisma.AssignmentUpdateManyWithoutSubjectNestedInput
   plans?: Prisma.TeachingPlanUpdateManyWithoutSubjectNestedInput
   papers?: Prisma.QuestionPaperUpdateManyWithoutSubjectNestedInput
@@ -566,6 +662,7 @@ export type SubjectUncheckedUpdateWithoutExamMarksInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   code?: Prisma.StringFieldUpdateOperationsInput | string
   classSubjects?: Prisma.ClassSubjectUncheckedUpdateManyWithoutSubjectNestedInput
+  examSubjects?: Prisma.ExamSubjectUncheckedUpdateManyWithoutSubjectNestedInput
   assignments?: Prisma.AssignmentUncheckedUpdateManyWithoutSubjectNestedInput
   plans?: Prisma.TeachingPlanUncheckedUpdateManyWithoutSubjectNestedInput
   papers?: Prisma.QuestionPaperUncheckedUpdateManyWithoutSubjectNestedInput
@@ -578,6 +675,7 @@ export type SubjectCreateWithoutAssignmentsInput = {
   code: string
   classSubjects?: Prisma.ClassSubjectCreateNestedManyWithoutSubjectInput
   examMarks?: Prisma.ExamMarkCreateNestedManyWithoutSubjectInput
+  examSubjects?: Prisma.ExamSubjectCreateNestedManyWithoutSubjectInput
   plans?: Prisma.TeachingPlanCreateNestedManyWithoutSubjectInput
   papers?: Prisma.QuestionPaperCreateNestedManyWithoutSubjectInput
   timetableSlots?: Prisma.TimetableSlotCreateNestedManyWithoutSubjectInput
@@ -589,6 +687,7 @@ export type SubjectUncheckedCreateWithoutAssignmentsInput = {
   code: string
   classSubjects?: Prisma.ClassSubjectUncheckedCreateNestedManyWithoutSubjectInput
   examMarks?: Prisma.ExamMarkUncheckedCreateNestedManyWithoutSubjectInput
+  examSubjects?: Prisma.ExamSubjectUncheckedCreateNestedManyWithoutSubjectInput
   plans?: Prisma.TeachingPlanUncheckedCreateNestedManyWithoutSubjectInput
   papers?: Prisma.QuestionPaperUncheckedCreateNestedManyWithoutSubjectInput
   timetableSlots?: Prisma.TimetableSlotUncheckedCreateNestedManyWithoutSubjectInput
@@ -616,6 +715,7 @@ export type SubjectUpdateWithoutAssignmentsInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   classSubjects?: Prisma.ClassSubjectUpdateManyWithoutSubjectNestedInput
   examMarks?: Prisma.ExamMarkUpdateManyWithoutSubjectNestedInput
+  examSubjects?: Prisma.ExamSubjectUpdateManyWithoutSubjectNestedInput
   plans?: Prisma.TeachingPlanUpdateManyWithoutSubjectNestedInput
   papers?: Prisma.QuestionPaperUpdateManyWithoutSubjectNestedInput
   timetableSlots?: Prisma.TimetableSlotUpdateManyWithoutSubjectNestedInput
@@ -627,6 +727,7 @@ export type SubjectUncheckedUpdateWithoutAssignmentsInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   classSubjects?: Prisma.ClassSubjectUncheckedUpdateManyWithoutSubjectNestedInput
   examMarks?: Prisma.ExamMarkUncheckedUpdateManyWithoutSubjectNestedInput
+  examSubjects?: Prisma.ExamSubjectUncheckedUpdateManyWithoutSubjectNestedInput
   plans?: Prisma.TeachingPlanUncheckedUpdateManyWithoutSubjectNestedInput
   papers?: Prisma.QuestionPaperUncheckedUpdateManyWithoutSubjectNestedInput
   timetableSlots?: Prisma.TimetableSlotUncheckedUpdateManyWithoutSubjectNestedInput
@@ -638,6 +739,7 @@ export type SubjectCreateWithoutPlansInput = {
   code: string
   classSubjects?: Prisma.ClassSubjectCreateNestedManyWithoutSubjectInput
   examMarks?: Prisma.ExamMarkCreateNestedManyWithoutSubjectInput
+  examSubjects?: Prisma.ExamSubjectCreateNestedManyWithoutSubjectInput
   assignments?: Prisma.AssignmentCreateNestedManyWithoutSubjectInput
   papers?: Prisma.QuestionPaperCreateNestedManyWithoutSubjectInput
   timetableSlots?: Prisma.TimetableSlotCreateNestedManyWithoutSubjectInput
@@ -649,6 +751,7 @@ export type SubjectUncheckedCreateWithoutPlansInput = {
   code: string
   classSubjects?: Prisma.ClassSubjectUncheckedCreateNestedManyWithoutSubjectInput
   examMarks?: Prisma.ExamMarkUncheckedCreateNestedManyWithoutSubjectInput
+  examSubjects?: Prisma.ExamSubjectUncheckedCreateNestedManyWithoutSubjectInput
   assignments?: Prisma.AssignmentUncheckedCreateNestedManyWithoutSubjectInput
   papers?: Prisma.QuestionPaperUncheckedCreateNestedManyWithoutSubjectInput
   timetableSlots?: Prisma.TimetableSlotUncheckedCreateNestedManyWithoutSubjectInput
@@ -676,6 +779,7 @@ export type SubjectUpdateWithoutPlansInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   classSubjects?: Prisma.ClassSubjectUpdateManyWithoutSubjectNestedInput
   examMarks?: Prisma.ExamMarkUpdateManyWithoutSubjectNestedInput
+  examSubjects?: Prisma.ExamSubjectUpdateManyWithoutSubjectNestedInput
   assignments?: Prisma.AssignmentUpdateManyWithoutSubjectNestedInput
   papers?: Prisma.QuestionPaperUpdateManyWithoutSubjectNestedInput
   timetableSlots?: Prisma.TimetableSlotUpdateManyWithoutSubjectNestedInput
@@ -687,6 +791,7 @@ export type SubjectUncheckedUpdateWithoutPlansInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   classSubjects?: Prisma.ClassSubjectUncheckedUpdateManyWithoutSubjectNestedInput
   examMarks?: Prisma.ExamMarkUncheckedUpdateManyWithoutSubjectNestedInput
+  examSubjects?: Prisma.ExamSubjectUncheckedUpdateManyWithoutSubjectNestedInput
   assignments?: Prisma.AssignmentUncheckedUpdateManyWithoutSubjectNestedInput
   papers?: Prisma.QuestionPaperUncheckedUpdateManyWithoutSubjectNestedInput
   timetableSlots?: Prisma.TimetableSlotUncheckedUpdateManyWithoutSubjectNestedInput
@@ -698,6 +803,7 @@ export type SubjectCreateWithoutPapersInput = {
   code: string
   classSubjects?: Prisma.ClassSubjectCreateNestedManyWithoutSubjectInput
   examMarks?: Prisma.ExamMarkCreateNestedManyWithoutSubjectInput
+  examSubjects?: Prisma.ExamSubjectCreateNestedManyWithoutSubjectInput
   assignments?: Prisma.AssignmentCreateNestedManyWithoutSubjectInput
   plans?: Prisma.TeachingPlanCreateNestedManyWithoutSubjectInput
   timetableSlots?: Prisma.TimetableSlotCreateNestedManyWithoutSubjectInput
@@ -709,6 +815,7 @@ export type SubjectUncheckedCreateWithoutPapersInput = {
   code: string
   classSubjects?: Prisma.ClassSubjectUncheckedCreateNestedManyWithoutSubjectInput
   examMarks?: Prisma.ExamMarkUncheckedCreateNestedManyWithoutSubjectInput
+  examSubjects?: Prisma.ExamSubjectUncheckedCreateNestedManyWithoutSubjectInput
   assignments?: Prisma.AssignmentUncheckedCreateNestedManyWithoutSubjectInput
   plans?: Prisma.TeachingPlanUncheckedCreateNestedManyWithoutSubjectInput
   timetableSlots?: Prisma.TimetableSlotUncheckedCreateNestedManyWithoutSubjectInput
@@ -736,6 +843,7 @@ export type SubjectUpdateWithoutPapersInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   classSubjects?: Prisma.ClassSubjectUpdateManyWithoutSubjectNestedInput
   examMarks?: Prisma.ExamMarkUpdateManyWithoutSubjectNestedInput
+  examSubjects?: Prisma.ExamSubjectUpdateManyWithoutSubjectNestedInput
   assignments?: Prisma.AssignmentUpdateManyWithoutSubjectNestedInput
   plans?: Prisma.TeachingPlanUpdateManyWithoutSubjectNestedInput
   timetableSlots?: Prisma.TimetableSlotUpdateManyWithoutSubjectNestedInput
@@ -747,6 +855,7 @@ export type SubjectUncheckedUpdateWithoutPapersInput = {
   code?: Prisma.StringFieldUpdateOperationsInput | string
   classSubjects?: Prisma.ClassSubjectUncheckedUpdateManyWithoutSubjectNestedInput
   examMarks?: Prisma.ExamMarkUncheckedUpdateManyWithoutSubjectNestedInput
+  examSubjects?: Prisma.ExamSubjectUncheckedUpdateManyWithoutSubjectNestedInput
   assignments?: Prisma.AssignmentUncheckedUpdateManyWithoutSubjectNestedInput
   plans?: Prisma.TeachingPlanUncheckedUpdateManyWithoutSubjectNestedInput
   timetableSlots?: Prisma.TimetableSlotUncheckedUpdateManyWithoutSubjectNestedInput
@@ -760,6 +869,7 @@ export type SubjectUncheckedUpdateWithoutPapersInput = {
 export type SubjectCountOutputType = {
   classSubjects: number
   examMarks: number
+  examSubjects: number
   assignments: number
   plans: number
   papers: number
@@ -769,6 +879,7 @@ export type SubjectCountOutputType = {
 export type SubjectCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   classSubjects?: boolean | SubjectCountOutputTypeCountClassSubjectsArgs
   examMarks?: boolean | SubjectCountOutputTypeCountExamMarksArgs
+  examSubjects?: boolean | SubjectCountOutputTypeCountExamSubjectsArgs
   assignments?: boolean | SubjectCountOutputTypeCountAssignmentsArgs
   plans?: boolean | SubjectCountOutputTypeCountPlansArgs
   papers?: boolean | SubjectCountOutputTypeCountPapersArgs
@@ -797,6 +908,13 @@ export type SubjectCountOutputTypeCountClassSubjectsArgs<ExtArgs extends runtime
  */
 export type SubjectCountOutputTypeCountExamMarksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ExamMarkWhereInput
+}
+
+/**
+ * SubjectCountOutputType without action
+ */
+export type SubjectCountOutputTypeCountExamSubjectsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ExamSubjectWhereInput
 }
 
 /**
@@ -834,6 +952,7 @@ export type SubjectSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   code?: boolean
   classSubjects?: boolean | Prisma.Subject$classSubjectsArgs<ExtArgs>
   examMarks?: boolean | Prisma.Subject$examMarksArgs<ExtArgs>
+  examSubjects?: boolean | Prisma.Subject$examSubjectsArgs<ExtArgs>
   assignments?: boolean | Prisma.Subject$assignmentsArgs<ExtArgs>
   plans?: boolean | Prisma.Subject$plansArgs<ExtArgs>
   papers?: boolean | Prisma.Subject$papersArgs<ExtArgs>
@@ -863,6 +982,7 @@ export type SubjectOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
 export type SubjectInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   classSubjects?: boolean | Prisma.Subject$classSubjectsArgs<ExtArgs>
   examMarks?: boolean | Prisma.Subject$examMarksArgs<ExtArgs>
+  examSubjects?: boolean | Prisma.Subject$examSubjectsArgs<ExtArgs>
   assignments?: boolean | Prisma.Subject$assignmentsArgs<ExtArgs>
   plans?: boolean | Prisma.Subject$plansArgs<ExtArgs>
   papers?: boolean | Prisma.Subject$papersArgs<ExtArgs>
@@ -877,6 +997,7 @@ export type $SubjectPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   objects: {
     classSubjects: Prisma.$ClassSubjectPayload<ExtArgs>[]
     examMarks: Prisma.$ExamMarkPayload<ExtArgs>[]
+    examSubjects: Prisma.$ExamSubjectPayload<ExtArgs>[]
     assignments: Prisma.$AssignmentPayload<ExtArgs>[]
     plans: Prisma.$TeachingPlanPayload<ExtArgs>[]
     papers: Prisma.$QuestionPaperPayload<ExtArgs>[]
@@ -1282,6 +1403,7 @@ export interface Prisma__SubjectClient<T, Null = never, ExtArgs extends runtime.
   readonly [Symbol.toStringTag]: "PrismaPromise"
   classSubjects<T extends Prisma.Subject$classSubjectsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Subject$classSubjectsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ClassSubjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   examMarks<T extends Prisma.Subject$examMarksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Subject$examMarksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ExamMarkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  examSubjects<T extends Prisma.Subject$examSubjectsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Subject$examSubjectsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ExamSubjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   assignments<T extends Prisma.Subject$assignmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Subject$assignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   plans<T extends Prisma.Subject$plansArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Subject$plansArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TeachingPlanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   papers<T extends Prisma.Subject$papersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Subject$papersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$QuestionPaperPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -1756,6 +1878,30 @@ export type Subject$examMarksArgs<ExtArgs extends runtime.Types.Extensions.Inter
   take?: number
   skip?: number
   distinct?: Prisma.ExamMarkScalarFieldEnum | Prisma.ExamMarkScalarFieldEnum[]
+}
+
+/**
+ * Subject.examSubjects
+ */
+export type Subject$examSubjectsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ExamSubject
+   */
+  select?: Prisma.ExamSubjectSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ExamSubject
+   */
+  omit?: Prisma.ExamSubjectOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ExamSubjectInclude<ExtArgs> | null
+  where?: Prisma.ExamSubjectWhereInput
+  orderBy?: Prisma.ExamSubjectOrderByWithRelationInput | Prisma.ExamSubjectOrderByWithRelationInput[]
+  cursor?: Prisma.ExamSubjectWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ExamSubjectScalarFieldEnum | Prisma.ExamSubjectScalarFieldEnum[]
 }
 
 /**

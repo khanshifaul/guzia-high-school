@@ -95,6 +95,11 @@ export type AttendanceRecord = Prisma.AttendanceRecordModel
  */
 export type Exam = Prisma.ExamModel
 /**
+ * Model ExamSubject
+ * 
+ */
+export type ExamSubject = Prisma.ExamSubjectModel
+/**
  * Model ExamMark
  * 
  */
