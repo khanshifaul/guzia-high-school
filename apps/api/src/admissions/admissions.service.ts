@@ -1,8 +1,7 @@
-// src/admissions/admissions.service.ts — the admission workflow (specs/06
+import { ConflictException, Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 // rule #4, extended): public submit creates a pending portal account +
 // generates credentials (emailed via Resend), admin review → on APPROVE the
 // pending user is activated and the enrolled Student is created atomically.
-import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
@@ -221,11 +220,13 @@ export class AdmissionsService {
                     },
                 }),
             ]);
-            return { status: 'APPROVED' as const, admissionNo, rollNo };
+            const user = await this.prisma.user.findUnique({ where: { id: application.userId } });
+            return { status: 'APPROVED' as const, admissionNo, rollNo, email: user?.email ?? '' };
         }
 
         // Legacy path (no pending user): create login + student together.
-        const email = String(formData.email ?? '');
+        const email = String(formData.email ?? '').trim();
+        if (!email) throw new BadRequestException('Applicant email is required');
         const dup = await this.prisma.user.findUnique({ where: { email } });
         if (dup) throw new ConflictException('A user with this email already exists');
         const password = this.generatePassword();
