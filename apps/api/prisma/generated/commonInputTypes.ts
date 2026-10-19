@@ -569,6 +569,23 @@ export type EnumSourceStatusWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumSourceStatusFilter<$PrismaModel>
 }
 
+export type EnumMaterialKindFilter<$PrismaModel = never> = {
+  equals?: $Enums.MaterialKind | Prisma.EnumMaterialKindFieldRefInput<$PrismaModel>
+  in?: $Enums.MaterialKind[] | Prisma.ListEnumMaterialKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.MaterialKind[] | Prisma.ListEnumMaterialKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumMaterialKindFilter<$PrismaModel> | $Enums.MaterialKind
+}
+
+export type EnumMaterialKindWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.MaterialKind | Prisma.EnumMaterialKindFieldRefInput<$PrismaModel>
+  in?: $Enums.MaterialKind[] | Prisma.ListEnumMaterialKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.MaterialKind[] | Prisma.ListEnumMaterialKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumMaterialKindWithAggregatesFilter<$PrismaModel> | $Enums.MaterialKind
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumMaterialKindFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumMaterialKindFilter<$PrismaModel>
+}
+
 export type NestedStringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
@@ -1070,6 +1087,23 @@ export type NestedEnumSourceStatusWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumSourceStatusFilter<$PrismaModel>
   _max?: Prisma.NestedEnumSourceStatusFilter<$PrismaModel>
+}
+
+export type NestedEnumMaterialKindFilter<$PrismaModel = never> = {
+  equals?: $Enums.MaterialKind | Prisma.EnumMaterialKindFieldRefInput<$PrismaModel>
+  in?: $Enums.MaterialKind[] | Prisma.ListEnumMaterialKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.MaterialKind[] | Prisma.ListEnumMaterialKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumMaterialKindFilter<$PrismaModel> | $Enums.MaterialKind
+}
+
+export type NestedEnumMaterialKindWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.MaterialKind | Prisma.EnumMaterialKindFieldRefInput<$PrismaModel>
+  in?: $Enums.MaterialKind[] | Prisma.ListEnumMaterialKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.MaterialKind[] | Prisma.ListEnumMaterialKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumMaterialKindWithAggregatesFilter<$PrismaModel> | $Enums.MaterialKind
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumMaterialKindFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumMaterialKindFilter<$PrismaModel>
 }
 
 

@@ -427,7 +427,8 @@ export const ModelName = {
   SourceChunk: 'SourceChunk',
   SiteSetting: 'SiteSetting',
   ContactMessage: 'ContactMessage',
-  GalleryItem: 'GalleryItem'
+  GalleryItem: 'GalleryItem',
+  StudyMaterial: 'StudyMaterial'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -443,7 +444,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "teacher" | "student" | "parent" | "class" | "section" | "subject" | "classSubject" | "timetableSlot" | "attendanceRecord" | "exam" | "examMark" | "gradeBand" | "assignment" | "submission" | "feeHead" | "invoice" | "payment" | "paymentAllocation" | "notice" | "admissionApplication" | "atRiskScore" | "aiProviderConfig" | "teachingPlan" | "questionPaper" | "question" | "sourceDocument" | "sourceChunk" | "siteSetting" | "contactMessage" | "galleryItem"
+    modelProps: "user" | "teacher" | "student" | "parent" | "class" | "section" | "subject" | "classSubject" | "timetableSlot" | "attendanceRecord" | "exam" | "examMark" | "gradeBand" | "assignment" | "submission" | "feeHead" | "invoice" | "payment" | "paymentAllocation" | "notice" | "admissionApplication" | "atRiskScore" | "aiProviderConfig" | "teachingPlan" | "questionPaper" | "question" | "sourceDocument" | "sourceChunk" | "siteSetting" | "contactMessage" | "galleryItem" | "studyMaterial"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2741,6 +2742,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    StudyMaterial: {
+      payload: Prisma.$StudyMaterialPayload<ExtArgs>
+      fields: Prisma.StudyMaterialFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.StudyMaterialFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudyMaterialPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.StudyMaterialFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudyMaterialPayload>
+        }
+        findFirst: {
+          args: Prisma.StudyMaterialFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudyMaterialPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.StudyMaterialFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudyMaterialPayload>
+        }
+        findMany: {
+          args: Prisma.StudyMaterialFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudyMaterialPayload>[]
+        }
+        create: {
+          args: Prisma.StudyMaterialCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudyMaterialPayload>
+        }
+        createMany: {
+          args: Prisma.StudyMaterialCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.StudyMaterialCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudyMaterialPayload>[]
+        }
+        delete: {
+          args: Prisma.StudyMaterialDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudyMaterialPayload>
+        }
+        update: {
+          args: Prisma.StudyMaterialUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudyMaterialPayload>
+        }
+        deleteMany: {
+          args: Prisma.StudyMaterialDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.StudyMaterialUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.StudyMaterialUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudyMaterialPayload>[]
+        }
+        upsert: {
+          args: Prisma.StudyMaterialUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$StudyMaterialPayload>
+        }
+        aggregate: {
+          args: Prisma.StudyMaterialAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateStudyMaterial>
+        }
+        groupBy: {
+          args: Prisma.StudyMaterialGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StudyMaterialGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.StudyMaterialCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.StudyMaterialCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -3223,6 +3298,21 @@ export const GalleryItemScalarFieldEnum = {
 export type GalleryItemScalarFieldEnum = (typeof GalleryItemScalarFieldEnum)[keyof typeof GalleryItemScalarFieldEnum]
 
 
+export const StudyMaterialScalarFieldEnum = {
+  id: 'id',
+  teacherId: 'teacherId',
+  sourceId: 'sourceId',
+  classId: 'classId',
+  subjectId: 'subjectId',
+  kind: 'kind',
+  title: 'title',
+  content: 'content',
+  createdAt: 'createdAt'
+} as const
+
+export type StudyMaterialScalarFieldEnum = (typeof StudyMaterialScalarFieldEnum)[keyof typeof StudyMaterialScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -3535,6 +3625,20 @@ export type EnumSourceStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$Pri
 export type ListEnumSourceStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SourceStatus[]'>
     
 
+
+/**
+ * Reference to a field of type 'MaterialKind'
+ */
+export type EnumMaterialKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MaterialKind'>
+    
+
+
+/**
+ * Reference to a field of type 'MaterialKind[]'
+ */
+export type ListEnumMaterialKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MaterialKind[]'>
+    
+
 /**
  * Batch Payload for updateMany & deleteMany & createMany
  */
@@ -3717,6 +3821,7 @@ export type GlobalOmitConfig = {
   siteSetting?: Prisma.SiteSettingOmit
   contactMessage?: Prisma.ContactMessageOmit
   galleryItem?: Prisma.GalleryItemOmit
+  studyMaterial?: Prisma.StudyMaterialOmit
 }
 
 /* Types for Logging */

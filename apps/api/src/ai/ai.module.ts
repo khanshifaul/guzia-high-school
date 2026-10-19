@@ -15,6 +15,8 @@ import { TestsController } from './tests/tests.controller';
 import { SourcesService } from './sources/sources.service';
 import { RetrievalService } from './sources/retrieval.service';
 import { SourcesController } from './sources/sources.controller';
+import { MaterialsController } from './materials/materials.controller';
+import { MaterialsService } from './materials/materials.service';
 import { EmbeddingsService } from './embeddings/embeddings.service';
 
 @Module({
@@ -25,6 +27,7 @@ import { EmbeddingsService } from './embeddings/embeddings.service';
         PlansController,
         TestsController,
         SourcesController,
+        MaterialsController,
     ],
     providers: [
         AtRiskService,
@@ -35,6 +38,7 @@ import { EmbeddingsService } from './embeddings/embeddings.service';
         SourcesService,
         RetrievalService,
         EmbeddingsService,
+        MaterialsService,
         RateLimiterService,
     ],
     exports: [

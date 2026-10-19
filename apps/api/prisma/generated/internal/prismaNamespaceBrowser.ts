@@ -81,7 +81,8 @@ export const ModelName = {
   SourceChunk: 'SourceChunk',
   SiteSetting: 'SiteSetting',
   ContactMessage: 'ContactMessage',
-  GalleryItem: 'GalleryItem'
+  GalleryItem: 'GalleryItem',
+  StudyMaterial: 'StudyMaterial'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -541,6 +542,21 @@ export const GalleryItemScalarFieldEnum = {
 } as const
 
 export type GalleryItemScalarFieldEnum = (typeof GalleryItemScalarFieldEnum)[keyof typeof GalleryItemScalarFieldEnum]
+
+
+export const StudyMaterialScalarFieldEnum = {
+  id: 'id',
+  teacherId: 'teacherId',
+  sourceId: 'sourceId',
+  classId: 'classId',
+  subjectId: 'subjectId',
+  kind: 'kind',
+  title: 'title',
+  content: 'content',
+  createdAt: 'createdAt'
+} as const
+
+export type StudyMaterialScalarFieldEnum = (typeof StudyMaterialScalarFieldEnum)[keyof typeof StudyMaterialScalarFieldEnum]
 
 
 export const SortOrder = {

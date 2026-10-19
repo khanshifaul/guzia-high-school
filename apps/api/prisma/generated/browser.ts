@@ -172,3 +172,8 @@ export type ContactMessage = Prisma.ContactMessageModel
  * 
  */
 export type GalleryItem = Prisma.GalleryItemModel
+/**
+ * Model StudyMaterial
+ * 
+ */
+export type StudyMaterial = Prisma.StudyMaterialModel

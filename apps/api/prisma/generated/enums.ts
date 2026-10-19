@@ -124,3 +124,11 @@ export const SourceStatus = {
 } as const
 
 export type SourceStatus = (typeof SourceStatus)[keyof typeof SourceStatus]
+
+
+export const MaterialKind = {
+  FLASHCARDS: 'FLASHCARDS',
+  MINDMAP: 'MINDMAP'
+} as const
+
+export type MaterialKind = (typeof MaterialKind)[keyof typeof MaterialKind]

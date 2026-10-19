@@ -73,6 +73,19 @@ enum PaperStatus {
   DRAFT
   FINAL
 }
+enum TestMode {
+  OFFLINE
+  ONLINE
+}
+PUT 449-454=:
+  title          String
+  durationMinutes Int
+  totalMarks     Int
+  mode           TestMode @default(OFFLINE)
+  startAt        DateTime?
+  endAt          DateTime?
+  status         PaperStatus @default(DRAFT)
+  questions      Question[]
 
 enum SourceKind {
   PDF
@@ -84,6 +97,11 @@ enum SourceStatus {
   READY
   NEEDS_OCR
   FAILED
+}
+
+enum MaterialKind {
+  FLASHCARDS
+  MINDMAP
 }
 
 model User {
@@ -121,6 +139,7 @@ model Teacher {
   plans      TeachingPlan[]
   papers     QuestionPaper[]
   sources    SourceDocument[]
+  studyMaterials StudyMaterial[]
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
 }
@@ -535,4 +554,23 @@ model GalleryItem {
   category  String?  // e.g. "campus", "events", "science-fair"
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
+}
+
+// AI-generated revision material (flashcards or a mind map) persisted so the
+// teacher can reopen it later. `content` is the validated JSON payload:
+//   FLASHCARDS { cards: { front, back }[] }
+//   MINDMAP    { root, branches: { title, children: string[] }[] }
+model StudyMaterial {
+  id        String       @id @default(cuid())
+  teacherId String
+  teacher   Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  sourceId  String?
+  classId   String?
+  subjectId String?
+  kind      MaterialKind
+  title     String
+  content   Json
+  createdAt DateTime     @default(now())
+
+  @@index([teacherId, createdAt])
 }
