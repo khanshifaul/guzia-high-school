@@ -3,12 +3,22 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { gradeSubject, examGPA, cgpa as computeCgpa, type Band } from './grading.util';
 import { CreateExamDto, SubmitMarksDto } from './dto';
+
+/** Who is asking for an exam. Decides whether they may read its marks. */
+export interface ExamViewer {
+  id: string;
+  role: 'ADMIN' | 'TEACHER';
+}
+
+/** The total for a subject that has no explicit ExamSubject row. */
+const DEFAULT_TOTAL_MARKS = 100;
 
 @Injectable()
 export class ExamsService {
@@ -21,13 +31,21 @@ export class ExamsService {
                 // The teacher marks-entry page picks the subject from the exam's
                 // class, so the subject list must travel with the list response.
                 class: { include: { subjects: { include: { subject: true } } } },
+                // The per-subject totals the server owns, so the entry grid can
+                // show the real limit instead of a hardcoded 100.
+                subjects: { select: { subjectId: true, totalMarks: true } },
                 _count: { select: { marks: true } },
             },
             orderBy: { startDate: 'desc' },
         });
     }
 
-    async findOne(id: string) {
+    /**
+     * One exam with its marks. A teacher may only read an exam for a class
+     * they are assigned to teach — otherwise the roster of every student in
+     * the school is readable by any teacher.
+     */
+    async findOne(id: string, viewer: ExamViewer) {
         const exam = await this.prisma.exam.findUnique({
             where: { id },
             include: {
@@ -36,7 +54,26 @@ export class ExamsService {
             },
         });
         if (!exam) throw new NotFoundException('Exam not found');
+        await this.assertCanTeachExam(exam.classId, viewer);
         return exam;
+    }
+
+    /**
+     * Throw unless the viewer may read the marks of this class. An admin may
+     * read anything; a teacher must be assigned to teach the class.
+     */
+    private async assertCanTeachExam(classId: string, viewer: ExamViewer): Promise<void> {
+        if (viewer.role === 'ADMIN') return;
+        const teacher = await this.prisma.teacher.findUnique({
+            where: { userId: viewer.id },
+            select: { id: true },
+        });
+        if (!teacher) throw new ForbiddenException('Not allowed to view this exam');
+        const taught = await this.prisma.classSubject.findFirst({
+            where: { teacherId: teacher.id, classId },
+            select: { id: true },
+        });
+        if (!taught) throw new ForbiddenException('Not allowed to view this exam');
     }
 
     async create(dto: CreateExamDto) {
@@ -56,16 +93,29 @@ export class ExamsService {
         });
     }
 
-    /** Bulk upsert marks. Server re-validates every mark against its total —
-     *  never trusts the client (Unifiedtransform cap-validation lesson). */
-    async submitMarks(examId: string, dto: SubmitMarksDto) {
+    /**
+     * Bulk upsert marks. The total is the server's: it is read from
+     * ExamSubject for each (exam, subject) and never taken from the request
+     * (Unifiedtransform cap-validation lesson, and a caller cannot inflate
+     * the total to slip a mark past the check).
+     */
+    async submitMarks(examId: string, dto: SubmitMarksDto, viewer: ExamViewer) {
         const exam = await this.prisma.exam.findUnique({ where: { id: examId } });
         if (!exam) throw new NotFoundException('Exam not found');
+        await this.assertCanTeachExam(exam.classId, viewer);
+
+        const subjectIds = [...new Set(dto.marks.map((m) => m.subjectId))];
+        const totals = await this.prisma.examSubject.findMany({
+            where: { examId, subjectId: { in: subjectIds } },
+            select: { subjectId: true, totalMarks: true },
+        });
+        const totalBySubject = new Map(totals.map((t) => [t.subjectId, t.totalMarks]));
 
         for (const m of dto.marks) {
-            if (m.marksObtained > m.totalMarks) {
+            const total = totalBySubject.get(m.subjectId) ?? DEFAULT_TOTAL_MARKS;
+            if (m.marksObtained > total) {
                 throw new BadRequestException(
-                    `Marks ${m.marksObtained} exceed total ${m.totalMarks} for student ${m.studentId}`,
+                    `Marks ${m.marksObtained} exceed total ${total} for student ${m.studentId}`,
                 );
             }
         }
@@ -85,11 +135,11 @@ export class ExamsService {
                         studentId: m.studentId,
                         subjectId: m.subjectId,
                         marksObtained: m.marksObtained,
-                        totalMarks: m.totalMarks,
+                        totalMarks: totalBySubject.get(m.subjectId) ?? DEFAULT_TOTAL_MARKS,
                     },
                     update: {
                         marksObtained: m.marksObtained,
-                        totalMarks: m.totalMarks,
+                        totalMarks: totalBySubject.get(m.subjectId) ?? DEFAULT_TOTAL_MARKS,
                     },
                 }),
             ),

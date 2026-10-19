@@ -6,7 +6,7 @@
 //     in the order a teacher reads them,
 //   - an exam cannot be created for a class that does not exist, nor twice
 //     for the same class.
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ExamsService } from './exams.service';
 import type { Band } from './grading.util';
 
@@ -19,6 +19,15 @@ interface FakeState {
     classExists: boolean;
     existingExam: { id: string } | null;
     created: { name: string; classId: string; startDate: Date; endDate: Date }[];
+    // The exam the marks endpoints read, and the class it belongs to.
+    exam: { id: string; classId: string } | null;
+    // The totals the server owns, per subject.
+    examSubjects: { subjectId: string; totalMarks: number }[];
+    // The teacher the request comes from, and the classes they teach.
+    teacher: { id: string } | null;
+    taughtClassIds: string[];
+    // The marks rows the service wrote.
+    savedMarks: { studentId: string; subjectId: string; marksObtained: number; totalMarks: number }[];
 }
 
 const CANONICAL: Band[] = [
@@ -38,10 +47,35 @@ function serviceWith(state: FakeState): ExamsService {
         },
         exam: {
             findFirst: async () => state.existingExam,
+            findUnique: async ({ where }: { where: { id: string } }) =>
+                state.exam && state.exam.id === where.id ? state.exam : null,
             create: async ({ data }: { data: FakeState['created'][number] }) => {
                 state.created.push(data);
                 return { id: 'exam-1', ...data };
             },
+        },
+        examSubject: {
+            findMany: async ({ where }: { where: { examId: string; subjectId: { in: string[] } } }) =>
+                state.examSubjects.filter(
+                    (s) => where.subjectId.in.includes(s.subjectId),
+                ),
+        },
+        examMark: {
+            upsert: async ({
+                create,
+            }: {
+                create: { studentId: string; subjectId: string; marksObtained: number; totalMarks: number };
+            }) => {
+                state.savedMarks.push(create);
+                return create;
+            },
+        },
+        teacher: {
+            findUnique: async () => state.teacher,
+        },
+        classSubject: {
+            findFirst: async ({ where }: { where: { teacherId: string; classId: string } }) =>
+                state.taughtClassIds.includes(where.classId) ? { id: 'cs-1' } : null,
         },
         gradeBand: {
             findMany: async () => state.bands,
@@ -68,6 +102,11 @@ function baseState(overrides: Partial<FakeState> = {}): FakeState {
         classExists: true,
         existingExam: null,
         created: [],
+        exam: { id: 'exam-1', classId: 'class-1' },
+        examSubjects: [],
+        teacher: { id: 'teacher-1' },
+        taughtClassIds: ['class-1'],
+        savedMarks: [],
         ...overrides,
     };
 }
@@ -193,5 +232,87 @@ describe('ExamsService — grade bands', () => {
                 }),
             ).rejects.toBeInstanceOf(ConflictException);
         });
+    });
+});
+
+describe('ExamsService — the server owns the total', () => {
+    const TEACHER = { id: 'teacher-user', role: 'TEACHER' } as const;
+
+    it('ignores a client-supplied total and uses the stored one', async () => {
+        const state = baseState({ examSubjects: [{ subjectId: 'sub-1', totalMarks: 50 }] });
+        const service = serviceWith(state);
+        // The client claims the total is 1000; the server's 50 must win.
+        await service.submitMarks(
+            'exam-1',
+            { marks: [{ studentId: 'st-1', subjectId: 'sub-1', marksObtained: 40, totalMarks: 1000 }] } as never,
+            TEACHER,
+        );
+        expect(state.savedMarks[0].totalMarks).toBe(50);
+    });
+
+    it('rejects a mark above the stored total', async () => {
+        const state = baseState({ examSubjects: [{ subjectId: 'sub-1', totalMarks: 50 }] });
+        const service = serviceWith(state);
+        await expect(
+            service.submitMarks(
+                'exam-1',
+                { marks: [{ studentId: 'st-1', subjectId: 'sub-1', marksObtained: 60, totalMarks: 1000 }] } as never,
+                TEACHER,
+            ),
+        ).rejects.toBeInstanceOf(BadRequestException);
+        expect(state.savedMarks).toHaveLength(0);
+    });
+
+    it('falls back to 100 for a subject with no stored total', async () => {
+        const state = baseState();
+        const service = serviceWith(state);
+        await service.submitMarks(
+            'exam-1',
+            { marks: [{ studentId: 'st-1', subjectId: 'sub-1', marksObtained: 100 }] } as never,
+            TEACHER,
+        );
+        expect(state.savedMarks[0].totalMarks).toBe(100);
+    });
+});
+
+describe('ExamsService — a teacher only reads their own classes', () => {
+    const TEACHER = { id: 'teacher-user', role: 'TEACHER' } as const;
+    const ADMIN = { id: 'admin-user', role: 'ADMIN' } as const;
+
+    it('refuses an exam for a class the teacher does not teach', async () => {
+        const state = baseState({ taughtClassIds: [] });
+        const service = serviceWith(state);
+        await expect(service.findOne('exam-1', TEACHER)).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('allows an exam for a class the teacher teaches', async () => {
+        const state = baseState();
+        const service = serviceWith(state);
+        await expect(service.findOne('exam-1', TEACHER)).resolves.toBeTruthy();
+    });
+
+    it('allows an admin to read any exam', async () => {
+        const state = baseState({ taughtClassIds: [] });
+        const service = serviceWith(state);
+        await expect(service.findOne('exam-1', ADMIN)).resolves.toBeTruthy();
+    });
+
+    it('refuses marks for a class the teacher does not teach', async () => {
+        const state = baseState({ taughtClassIds: [] });
+        const service = serviceWith(state);
+        await expect(
+            service.submitMarks(
+                'exam-1',
+                { marks: [{ studentId: 'st-1', subjectId: 'sub-1', marksObtained: 10 }] } as never,
+                TEACHER,
+            ),
+        ).rejects.toBeInstanceOf(ForbiddenException);
+        expect(state.savedMarks).toHaveLength(0);
+    });
+
+    it('refuses a teacher with no teacher profile', async () => {
+        const state = baseState({ teacher: null });
+        const service = serviceWith(state);
+        await expect(service.findOne('exam-1', TEACHER)).rejects.toBeInstanceOf(ForbiddenException);
     });
 });

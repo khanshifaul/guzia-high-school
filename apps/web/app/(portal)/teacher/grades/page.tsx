@@ -22,8 +22,11 @@ import { PageHeader } from "@/components/shared/page-header";
 import { api, RequestError } from "@/lib/api";
 import { dedupeSubjects } from "@/lib/subjects";
 
-interface Exam { id: string; name: string; published: boolean; class: { id: string; name: string; subjects: { subjectId: string; subject: { id: string; name: string } }[] } }
+interface Exam { id: string; name: string; published: boolean; subjects: { subjectId: string; totalMarks: number }[]; class: { id: string; name: string; subjects: { subjectId: string; subject: { id: string; name: string } }[] } }
 interface Student { id: string; rollNo: number; fullName: string }
+
+/** The server's fallback total for a subject with no explicit row. */
+const DEFAULT_TOTAL_MARKS = 100;
 
 export default function TeacherGradesPage() {
     const [exams, setExams] = React.useState<Exam[]>([]);
@@ -31,7 +34,7 @@ export default function TeacherGradesPage() {
     const [subjectId, setSubjectId] = React.useState<string | null>(null);
     const [students, setStudents] = React.useState<Student[]>([]);
     const [marks, setMarks] = React.useState<Record<string, string>>({});
-    const [totalMarks] = React.useState(100);
+
     const [loading, setLoading] = React.useState(true);
     const [loadingStudents, setLoadingStudents] = React.useState(false);
     const [busy, setBusy] = React.useState(false);
@@ -46,6 +49,9 @@ export default function TeacherGradesPage() {
 
     const exam = exams.find((e) => e.id === examId);
     const subjects = dedupeSubjects(exam?.class.subjects);
+    // The server owns the total for each subject of this exam.
+    const totalMarks =
+        exam?.subjects.find((s) => s.subjectId === subjectId)?.totalMarks ?? DEFAULT_TOTAL_MARKS;
 
     React.useEffect(() => {
         if (!exam) return;
@@ -69,13 +75,13 @@ export default function TeacherGradesPage() {
         setBusy(true);
         setFeedback(null);
         try {
+            // The total is the server's; the client sends only the mark.
             const payload = students
                 .filter((s) => marks[s.id] !== undefined && marks[s.id] !== "")
                 .map((s) => ({
                     studentId: s.id,
                     subjectId,
                     marksObtained: Number(marks[s.id]),
-                    totalMarks,
                 }));
             if (payload.length === 0) {
                 setFeedback({ kind: "err", msg: "Enter marks for at least one student" });

@@ -42,8 +42,8 @@ export class ExamsController {
 
     @Roles('ADMIN', 'TEACHER')
     @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.service.findOne(id);
+    findOne(@Param('id') id: string, @User() user: { id: string; role: 'ADMIN' | 'TEACHER' }) {
+        return this.service.findOne(id, user);
     }
 
     @Roles('ADMIN')
@@ -54,9 +54,13 @@ export class ExamsController {
 
     @Roles('ADMIN', 'TEACHER')
     @Post(':id/marks')
-    @ApiOperation({ summary: 'Bulk upsert marks (server validates against total)' })
-    submitMarks(@Param('id') id: string, @Body() dto: SubmitMarksDto) {
-        return this.service.submitMarks(id, dto);
+    @ApiOperation({ summary: 'Bulk upsert marks (the server owns the total)' })
+    submitMarks(
+        @Param('id') id: string,
+        @Body() dto: SubmitMarksDto,
+        @User() user: { id: string; role: 'ADMIN' | 'TEACHER' },
+    ) {
+        return this.service.submitMarks(id, dto, user);
     }
 
     @Roles('ADMIN')

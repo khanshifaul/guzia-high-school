@@ -226,6 +226,7 @@ model Subject {
   code          String         @unique
   classSubjects ClassSubject[]
   examMarks     ExamMark[]
+  examSubjects  ExamSubject[]
   assignments   Assignment[]
   plans         TeachingPlan[]
   papers        QuestionPaper[]
@@ -282,7 +283,20 @@ model Exam {
   endDate   DateTime
   published Boolean    @default(false)
   marks     ExamMark[]
+  subjects  ExamSubject[]
   @@unique([name, classId])
+}
+
+// The server-owned total for one subject of one exam. The client sends only
+// marksObtained; the total lives here so a caller cannot inflate it.
+model ExamSubject {
+  id         String  @id @default(cuid())
+  examId     String
+  exam       Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
+  subjectId  String
+  subject    Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  totalMarks Int     @default(100)
+  @@unique([examId, subjectId])
 }
 
 model ExamMark {
@@ -537,18 +551,18 @@ model SourceChunk {
 
 model SiteSetting {
   id            String   @id @default("singleton")
-  schoolName    String   @default("Guzia High School")
+  schoolName    String   @default("Guzia Bilateral High School")
   schoolNameBn  String   @default("গুজিয়া উচ্চ বিদ্যালয়")
-  phone         String   @default("+880 1711-000000")
+  phone         String   @default("01713939240")
   hotline       String   @default("")
   email         String   @default("info@guziahs.edu")
-  eiin          String   @default("123456")
+  eiin          String   @default("119825")
   board         String   @default("Rajshahi Education Board")
-  address       String   @default("Guzia, Bangladesh")
-  addressBn     String   @default("গুজিয়া, বাংলাদেশ")
+  address       String   @default("Union Guzia, Shibganj, Bogura")
+  addressBn     String   @default("গুজিয়া ইউনিয়ন, শিবগঞ্জ, বগুড়া")
   established   String   @default("1958")
-  tagline       String   @default("Empowering students for academic excellence and lifelong success since 1958.")
-  taglineBn     String   @default("১৯৫৮ সাল থেকে শিক্ষার্থীদের একাডেমিক উৎকর্ষ ও জীবনব্যাপী সাফল্যের জন্য ক্ষমতায়ন।")
+  tagline       String   @default("A combined secondary school in Guzia, Bogura — serving the community since 1958.")
+  taglineBn     String   @default("১৯৫৮ সাল থেকে বগুড়ার গুজিয়ায় প্রতিষ্ঠিত একটি সহ-শিক্ষা মাধ্যমিক বিদ্যালয়।")
   developedBy   String   @default("Shifaul Islam")
   developedByUrl String  @default("https://shifaul.dev")
   facebookUrl   String   @default("")

@@ -24,10 +24,9 @@ export class MarkInput {
   @Min(0)
   marksObtained: number;
 
-  @ApiProperty({ example: 100 })
-  @IsInt()
-  @Min(1)
-  totalMarks: number;
+  // totalMarks is deliberately absent: the server owns the total for each
+  // (exam, subject) and reads it from ExamSubject. A client that sends it
+  // is rejected by the global whitelist.
 }
 
 export class SubmitMarksDto {
