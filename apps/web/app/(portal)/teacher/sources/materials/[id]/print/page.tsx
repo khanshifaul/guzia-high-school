@@ -76,7 +76,7 @@ export default function StudyMaterialPrintPage() {
     }, [material, loading]);
 
     const letterhead: Letterhead = {
-        schoolName: site.schoolName ?? "Guzia High School",
+        schoolName: site.schoolName ?? "Guzia Bilateral High School",
         address: site.address ?? "",
         phone: site.phone ?? "",
         email: site.email ?? "",

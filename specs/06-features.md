@@ -61,8 +61,12 @@ Endpoints enforce child linkage server-side.
 - `page.tsx` — small landing: hero ("Guzia High School"), stats strip, notices preview, CTA → admissions/login.
 - `login/` — centered-card recipe; prefilled demo-credential chips (click to fill).
 - `admissions/` — 4-step wizard (student info → guardian info → academic choice → review+submit):
-  zod schema per step, progress bar, review step editable, submit → POST `/admissions`
+  zod schema per step (`lib/zod-schemas/admission.ts` — one schema per step, mirrored by the API DTO),
+  progress bar (completed steps are clickable), per-step validation on "Next" that shows the
+  message next to the offending field, a review step that lists what was entered with an "Edit"
+  control per group, submit → POST `/admissions`
   → success screen with application id. Steps map 1:1 to AdmissionApplication.formData.
+  The form carries a hidden `website` honeypot; the API refuses a non-blank one.
 
 ## Business logic (single implementations, unit-tested)
 

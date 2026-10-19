@@ -79,8 +79,8 @@ export default function AdminGradesPage() {
     const [feedback, setFeedback] = React.useState<{ kind: "ok" | "err"; msg: string } | null>(null);
 
     // Grade scale.
-    const [bands, setBands] = React.useState<Band[]>([]);
     const [drafts, setDrafts] = React.useState<BandDraft[]>([]);
+
     const [bandsDirty, setBandsDirty] = React.useState(false);
     const [savingBands, setSavingBands] = React.useState(false);
 
@@ -102,7 +102,6 @@ export default function AdminGradesPage() {
     const loadBands = React.useCallback(() => {
         api<Band[]>("/exams/grade-bands")
             .then((p) => {
-                setBands(p);
                 setDrafts(
                     p.map((b) => ({
                         minPercent: String(b.minPercent),
@@ -113,7 +112,7 @@ export default function AdminGradesPage() {
                 );
                 setBandsDirty(false);
             })
-            .catch(() => setBands([]));
+            .catch(() => setDrafts([]));
     }, []);
 
     React.useEffect(() => { load(); }, [load]);

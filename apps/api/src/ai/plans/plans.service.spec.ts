@@ -36,7 +36,6 @@ function serviceWith(state: FakeState): PlansService {
             findUnique: async () => (state.plan ? { ...state.plan } : null),
             findMany: async () => (state.plan ? [{ ...state.plan }] : []),
             update: async ({
-                where,
                 data,
             }: {
                 where: { id: string };

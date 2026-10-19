@@ -9,7 +9,7 @@
 // page shows the API's error rather than pretending the list is empty.
 
 import * as React from "react";
-import Link from "next/link";
+
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { FaArrowLeft, FaCheck, FaSpinner } from "react-icons/fa6";

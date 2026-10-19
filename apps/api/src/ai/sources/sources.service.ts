@@ -486,7 +486,7 @@ export class SourcesService {
         }
         const seen = new Set<string>();
         const out: { sourceId: string; filename: string; page: number | null; snippet: string }[] = [];
-        for (const match of answer.matchAll(/\[([^\[\]]+?) p\.(\d+)\]/g)) {
+        for (const match of answer.matchAll(/\[([^[\]]+?) p\.(\d+)\]/g)) {
             const hit = index.get(`${match[1]}::${match[2]}`);
             if (!hit) continue; // hallucinated source/page — drop it
             const key = `${hit.sourceId}:${hit.page ?? '?'}`;
