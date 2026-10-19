@@ -56,8 +56,10 @@ function admissionNo(i: number): string {
 async function main(): Promise<void> {
   console.log("🌱 Seeding guzia-high-school demo data...");
 
-  // Wipe in FK-safe order (idempotent re-seed).
-  await prisma.$transaction([
+  // Wipe in FK-safe order (idempotent re-seed). Sequential rather than one big
+  // transaction: two dozen statements in one transaction can exceed Prisma's
+  // default budget on a network database (Neon) and fail with P2028.
+  for (const reset of [
     prisma.paymentAllocation.deleteMany(),
     prisma.payment.deleteMany(),
     prisma.invoice.deleteMany(),
@@ -83,8 +85,10 @@ async function main(): Promise<void> {
     prisma.questionPaper.deleteMany(),
     prisma.sourceDocument.deleteMany(),
     prisma.user.deleteMany(),
-    prisma.class.deleteMany(),
-  ]);
+    prisma.class.deleteMany()
+  ]) {
+    await reset;
+  }
 
   const passwordHash = await bcrypt.hash("password123", 10);
 
