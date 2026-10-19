@@ -4,7 +4,7 @@
 // payment (waterfall preview), student ledger lookup.
 
 import * as React from "react";
-import { FaMoneyBillWave, FaPlus, FaSpinner, FaMagnifyingGlass } from "react-icons/fa6";
+import { FaMoneyBillWave, FaPlus, FaSpinner, FaMagnifyingGlass, FaFileInvoiceDollar } from "react-icons/fa6";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ import { api, RequestError } from "@/lib/api";
 interface FeeHead { id: string; name: string; amount: number; class: { name: string } | null; _count: { invoices: number } }
 interface Student { id: string; fullName: string; admissionNo: string; class: { name: string } }
 interface Ledger { invoices: { id: string; feeHead: string; amount: number; outstanding: number; dueDate: string; status: string }[]; totalDue: number }
+interface ClassOption { id: string; name: string }
 
 export default function AdminFeesPage() {
     const [heads, setHeads] = React.useState<FeeHead[]>([]);
@@ -46,7 +47,11 @@ export default function AdminFeesPage() {
     const [openHead, setOpenHead] = React.useState(false);
     const [headName, setHeadName] = React.useState("");
     const [headAmount, setHeadAmount] = React.useState("");
-    // Record payment.
+    // Generate invoices.
+    const [classes, setClasses] = React.useState<ClassOption[]>([]);
+    const [genHeadId, setGenHeadId] = React.useState<string | null>(null);
+    const [genClassId, setGenClassId] = React.useState<string>("all");
+    const [genDueDate, setGenDueDate] = React.useState("");
     const [openPay, setOpenPay] = React.useState(false);
     const [payAmount, setPayAmount] = React.useState("");
     const [payMethod, setPayMethod] = React.useState("CASH");
@@ -61,6 +66,12 @@ export default function AdminFeesPage() {
     }, []);
 
     React.useEffect(() => { loadHeads(); }, [loadHeads]);
+
+    React.useEffect(() => {
+        api<{ classes: ClassOption[] }>("/classes")
+            .then((p) => setClasses(p.classes))
+            .catch(() => setClasses([]));
+    }, []);
 
     React.useEffect(() => {
         const t = setTimeout(() => {
@@ -90,15 +101,37 @@ export default function AdminFeesPage() {
         } finally { setBusy(false); }
     }
 
+    async function generateInvoices() {
+        if (!genHeadId || !genDueDate) return;
+        setBusy(true); setFeedback(null);
+        try {
+            const res = await api<{ created: number; amount: number }>("/fees/invoices/generate", {
+                method: "POST",
+                body: {
+                    feeHeadId: genHeadId,
+                    dueDate: genDueDate,
+                    ...(genClassId !== "all" ? { classId: genClassId } : {}),
+                },
+            });
+            setFeedback({
+                kind: "ok",
+                msg: `${res.created} invoice(s) created at ৳${res.amount} each`,
+            });
+            loadHeads();
+        } catch (err) {
+            setFeedback({ kind: "err", msg: err instanceof RequestError ? err.messages.join("; ") : "Invoice generation failed" });
+        } finally { setBusy(false); }
+    }
+
     async function recordPayment() {
         if (!studentId) return;
         setBusy(true); setFeedback(null);
         try {
-            const res = await api<{ allocations: { invoiceId: string; amount: number }[] }>("/fees/payments", {
+            const res = await api<{ allocated: { invoiceId: string; amount: number }[] }>("/fees/payments", {
                 method: "POST",
                 body: { studentId, amount: Number(payAmount), method: payMethod },
             });
-            setFeedback({ kind: "ok", msg: `Payment recorded across ${res.allocations.length} invoice(s) (waterfall)` });
+            setFeedback({ kind: "ok", msg: `Payment recorded across ${res.allocated.length} invoice(s) (waterfall)` });
             setOpenPay(false); setPayAmount("");
             api<Ledger>(`/fees/ledger/${studentId}`).then((p) => setLedger(p));
         } catch (err) {
@@ -152,6 +185,63 @@ export default function AdminFeesPage() {
                                 ))}
                             </TableBody>
                         </Table>
+                    )}
+                </CardContent>
+            </Card>
+
+            <Card className="border-border/60 shadow-sm">
+                <CardHeader className="border-b border-border/60 pb-4">
+                    <CardTitle className="text-xl font-black uppercase tracking-tight">Generate Invoices</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                    {heads.length === 0 ? (
+                        <EmptyState title="No fee heads" description="Create a fee head first, then generate its invoices." />
+                    ) : (
+                        <>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Fee head</label>
+                                    <Select value={genHeadId ?? undefined} onValueChange={setGenHeadId}>
+                                        <SelectTrigger className="h-11 mt-1"><SelectValue placeholder="Select fee head" /></SelectTrigger>
+                                        <SelectContent>
+                                            {heads.map((h) => (
+                                                <SelectItem key={h.id} value={h.id}>
+                                                    {h.name} — ৳{h.amount}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Class</label>
+                                    <Select value={genClassId} onValueChange={setGenClassId}>
+                                        <SelectTrigger className="h-11 mt-1"><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">All active students</SelectItem>
+                                            {classes.map((c) => (
+                                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Due date</label>
+                                    <Input type="date" value={genDueDate} onChange={(e) => setGenDueDate(e.target.value)} className="h-11 mt-1" />
+                                </div>
+                            </div>
+                            <Button
+                                onClick={generateInvoices}
+                                disabled={busy || !genHeadId || !genDueDate}
+                                className="font-black text-xs uppercase tracking-wider cursor-pointer"
+                            >
+                                {busy ? <FaSpinner className="animate-spin" size={12} /> : <FaFileInvoiceDollar size={12} />}
+                                Generate invoices
+                            </Button>
+                            <p className="text-[10px] text-muted-foreground">
+                                One invoice per active student. Running this twice for the same head, class and due date
+                                creates a second invoice for each student — check the head&apos;s invoice count first.
+                            </p>
+                        </>
                     )}
                 </CardContent>
             </Card>

@@ -53,10 +53,20 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
 }
 
 function extractMessages(data: unknown, status: number): string[] {
-    if (data && typeof data === "object" && "message" in data) {
-        const raw: unknown = data.message;
-        if (Array.isArray(raw)) return raw.map(String);
-        if (typeof raw === "string") return [raw];
+    if (data && typeof data === "object") {
+        // The API's error envelope puts the detail in `errors` and a generic
+        // label in `message` ("Validation failed"), so prefer the detail.
+        if ("errors" in data) {
+            const detail = data.errors;
+            if (Array.isArray(detail) && detail.length > 0) return detail.map(String);
+            if (typeof detail === "string" && detail) return [detail];
+        }
+
+        if ("message" in data) {
+            const raw = data.message;
+            if (Array.isArray(raw)) return raw.map(String);
+            if (typeof raw === "string") return [raw];
+        }
     }
     return [`Request failed (${status})`];
 }
