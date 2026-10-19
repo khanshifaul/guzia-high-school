@@ -174,14 +174,14 @@ no restart. A **mock provider** (the seeded `AiProviderConfig` row) keeps tests 
 fully offline.
 
 **Limitations:** AI-generated plans and papers are drafts — the UI badges them
-"AI-generated — verify before use"; retrieval is keyword-based (no embeddings); the
-teacher reviews every artifact before use.
+"AI-generated — verify before use"; retrieval uses pgvector embeddings over the ingested
+source chunks; the teacher reviews every artifact before use.
 
 ## Testing
 
 ```bash
 cd apps/api
-bun run test        # 19 unit tests: grading boundaries, payment waterfall, attendance %
+bun run test        # 136 unit tests: grading boundaries, payment waterfall, attendance %, IDOR access
 bun run dev &       # API must be running
 bun run test:e2e    # 7 e2e tests: auth (login, role gating) + admission workflow
 ```
@@ -215,12 +215,13 @@ unset (and keep the seeded mock provider row) to keep the demo fully offline.
 ## Known limitations & future work
 
 - Payments are recorded manually by the admin (no gateway integration).
-- Source ingestion accepts pasted text; PDF/image extraction (unpdf + vision) and
-  per-page chunking are specced but the demo path is text.
-- No email/SMS delivery, file uploads, timetable builder UI, report-card PDF export,
-  multi-tenancy, or i18n beyond EN/BN (all in the post-assessment backlog).
-- The at-risk model would be retrained on real outcomes; embeddings-based retrieval is
-  the natural upgrade for the source assistant.
+- Source ingestion accepts pasted text and file uploads (PDF, DOCX/PPTX, CSV, markdown,
+  images via vision transcription, and web URLs).
+- Email delivery ships via Resend (admission acknowledgement, grade and fee notices);
+  SMS, a timetable builder UI, report-card PDF export, multi-tenancy, and i18n beyond
+  EN/BN remain in the post-assessment backlog.
+- The at-risk model is trained on synthetic labels; retraining on real outcomes is the
+  natural next step.
 
 ## Repository
 
