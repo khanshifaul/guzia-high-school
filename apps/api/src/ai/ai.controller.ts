@@ -1,5 +1,5 @@
 // src/ai/ai.controller.ts — at-risk endpoints (admin-only).
-import { Controller, Get, Post, Query } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../common/decorators/roles.decorator';
 import { AtRiskService } from './at-risk.service';
@@ -21,5 +21,12 @@ export class AiController {
     @ApiOperation({ summary: 'At-risk board (flagged students sorted by score)' })
     board(@Query('atRisk') atRisk?: string) {
         return this.atRisk.board(atRisk === 'true');
+    }
+
+    @Roles('ADMIN')
+    @Get('at-risk/:studentId')
+    @ApiOperation({ summary: "One student's risk row (drill-in from the board)" })
+    forStudent(@Param('studentId') studentId: string) {
+        return this.atRisk.forStudent(studentId);
     }
 }

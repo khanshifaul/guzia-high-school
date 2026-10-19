@@ -19,6 +19,7 @@ import {
     FaLayerGroup,
     FaSitemap,
     FaPrint,
+
     FaTrash,
 } from "react-icons/fa6";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -109,8 +110,7 @@ export default function TeacherSourcesPage() {
     const [materialBusy, setMaterialBusy] = React.useState<MaterialKind | null>(null);
     const [materialError, setMaterialError] = React.useState<string | null>(null);
     const [deletingId, setDeletingId] = React.useState<string | null>(null);
-    const [viewer, setViewer] = React.useState<Material | null>(null);
-    const [flipped, setFlipped] = React.useState<Set<number>>(new Set());
+
 
     const [open, setOpen] = React.useState(false);
     const [mode, setMode] = React.useState<"file" | "text" | "url">("file");
@@ -322,7 +322,6 @@ export default function TeacherSourcesPage() {
         try {
             await api(`/ai/materials/${m.id}`, { method: "DELETE" });
             setMaterials((prev) => prev.filter((x) => x.id !== m.id));
-            if (viewer?.id === m.id) setViewer(null);
             loadMaterials();
         } catch (err) {
             setMaterialError(err instanceof RequestError ? err.messages.join("; ") : "Could not delete material");
@@ -331,19 +330,12 @@ export default function TeacherSourcesPage() {
         }
     }
 
+    /** Open the material on its own page, so it can be printed cleanly. */
     function openMaterial(m: Material) {
-        setViewer(m);
-        setFlipped(new Set());
+        router.push(`/teacher/sources/materials/${m.id}/print`);
     }
 
-    function toggleFlip(index: number) {
-        setFlipped((prev) => {
-            const next = new Set(prev);
-            if (next.has(index)) next.delete(index);
-            else next.add(index);
-            return next;
-        });
-    }
+
 
     /** Carry the source's key topics into the lesson-plan or test-paper builder. */
     function useFor(target: "plans" | "tests") {
@@ -546,6 +538,12 @@ export default function TeacherSourcesPage() {
                                             {new Date(m.createdAt).toLocaleDateString()}
                                         </span>
                                     </button>
+                                    <Button size="icon" variant="ghost"
+                                        onClick={() => window.open(`/teacher/sources/materials/${m.id}/print`, "_blank")}
+                                        aria-label={`Open ${m.title} for printing`}
+                                        className="text-muted-foreground hover:text-foreground">
+                                        <FaPrint size={12} />
+                                    </Button>
                                     <Button size="icon" variant="ghost" onClick={() => void deleteMaterial(m)} disabled={deletingId === m.id}
                                         aria-label={`Delete ${m.title}`}
                                         className="text-muted-foreground hover:text-destructive">
@@ -677,66 +675,6 @@ export default function TeacherSourcesPage() {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={!!viewer} onOpenChange={(o) => {
-                if (!o) {
-                    setViewer(null);
-                    setFlipped(new Set());
-                }
-            }}>
-                <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle className="font-black uppercase tracking-tight">{viewer?.title}</DialogTitle>
-                    </DialogHeader>
-
-                    <div className="no-print flex flex-wrap items-center justify-between gap-2">
-                        <Badge variant="outline" className="text-[9px]">
-                            {viewer ? MATERIAL_KIND_LABEL[viewer.kind] : ""}
-                        </Badge>
-                        <Button size="sm" variant="outline" onClick={() => window.print()}
-                            className="font-black text-[10px] uppercase tracking-wider">
-                            <FaPrint size={11} /> Print
-                        </Button>
-                    </div>
-
-                    {viewer && viewer.kind === "FLASHCARDS" ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {viewer.content.cards.map((card, i) => {
-                                const isFlipped = flipped.has(i);
-                                return (
-                                    <button key={i} type="button" onClick={() => toggleFlip(i)} aria-pressed={isFlipped}
-                                        className={cn(
-                                            "min-h-28 rounded-xl border p-4 text-left transition-colors cursor-pointer",
-                                            isFlipped
-                                                ? "border-primary/40 bg-primary/5"
-                                                : "border-border/60 hover:border-primary/30",
-                                        )}>
-                                        <p className="text-[9px] font-black uppercase tracking-wider text-muted-foreground">
-                                            {isFlipped ? "Back" : "Front"}
-                                        </p>
-                                        <p className="mt-2 text-sm font-semibold">{isFlipped ? card.back : card.front}</p>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    ) : viewer && viewer.kind === "MINDMAP" ? (
-                        <div className="space-y-4">
-                            <h3 className="text-lg font-black uppercase tracking-tight">{viewer.content.root}</h3>
-                            <ul className="space-y-4 border-l-2 border-primary/20 pl-4">
-                                {viewer.content.branches.map((branch, bi) => (
-                                    <li key={bi} className="space-y-1">
-                                        <p className="text-sm font-black uppercase tracking-wide">{branch.title}</p>
-                                        <ul className="list-disc space-y-1 pl-5">
-                                            {branch.children.map((child, ci) => (
-                                                <li key={ci} className="text-xs text-muted-foreground">{child}</li>
-                                            ))}
-                                        </ul>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    ) : null}
-                </DialogContent>
-            </Dialog>
         </div>
     );
 }

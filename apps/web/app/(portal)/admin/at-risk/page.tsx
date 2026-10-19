@@ -3,6 +3,7 @@
 // app/(portal)/admin/at-risk/page.tsx — AI at-risk board: recompute, model
 // card, sortable table with score bars + top contributing factors.
 
+import Link from "next/link";
 import * as React from "react";
 import { motion } from "motion/react";
 import { FaBrain, FaArrowsRotate, FaSpinner } from "react-icons/fa6";
@@ -126,7 +127,14 @@ export default function AdminAtRiskPage() {
                                     <TableBody>
                                         {flagged.map((r, i) => (
                                             <motion.tr key={r.studentId} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.03, 0.3) }}>
-                                                <TableCell className="font-semibold">{r.fullName}</TableCell>
+                                                <TableCell className="font-semibold">
+                                                    <Link
+                                                        href={`/admin/at-risk/${r.studentId}`}
+                                                        className="hover:underline"
+                                                    >
+                                                        {r.fullName}
+                                                    </Link>
+                                                </TableCell>
                                                 <TableCell className="text-xs">{r.className}{r.sectionName ? `-${r.sectionName}` : ""}</TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
@@ -141,7 +149,7 @@ export default function AdminAtRiskPage() {
                                                     <div className="flex flex-wrap gap-1">
                                                         {r.contributions.slice(0, 3).map((c) => (
                                                             <Badge key={c.feature} className={`text-[9px] ${c.direction === "risk" ? "bg-rose-500/10 text-rose-600 border-rose-500/20" : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"}`}>
-                                                                {FEATURE_LABEL[c.feature] ?? c.feature} {c.direction === "risk" ? "↓" : "↑"}
+                                                                {FEATURE_LABEL[c.feature] ?? c.feature} {c.direction === "risk" ? "↓" : "↑"} {Math.round(c.value * 100)}%
                                                             </Badge>
                                                         ))}
                                                     </div>
@@ -159,15 +167,17 @@ export default function AdminAtRiskPage() {
                             <h2 className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mt-4">Others ({others.length})</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                 {others.map((r) => (
-                                    <Card key={r.studentId} className="border-border/60 shadow-sm">
-                                        <CardContent className="p-4 flex items-center justify-between">
-                                            <div>
-                                                <p className="text-sm font-semibold">{r.fullName}</p>
-                                                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{r.className}</p>
-                                            </div>
-                                            <span className="text-xs font-black text-emerald-600">{(r.score * 100).toFixed(0)}%</span>
-                                        </CardContent>
-                                    </Card>
+                                    <Link key={r.studentId} href={`/admin/at-risk/${r.studentId}`}>
+                                        <Card className="border-border/60 shadow-sm hover:border-primary/20 transition-colors">
+                                            <CardContent className="p-4 flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-sm font-semibold">{r.fullName}</p>
+                                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{r.className}</p>
+                                                </div>
+                                                <span className="text-xs font-black text-emerald-600">{(r.score * 100).toFixed(0)}%</span>
+                                            </CardContent>
+                                        </Card>
+                                    </Link>
                                 ))}
                             </div>
                         </>

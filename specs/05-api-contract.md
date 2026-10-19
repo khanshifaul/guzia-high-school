@@ -113,6 +113,7 @@ List endpoints accept `?page=1&limit=20` (where applicable) and return
 |---|---|---|---|
 | POST `/ai/at-risk/recompute` | ADMIN | recompute all ACTIVE students → upsert AtRiskScore; returns counts |
 | GET `/ai/at-risk` | ADMIN | list `[{student, className, score, atRisk, factors}]` sorted score desc; `?atRisk=true` filter |
+| GET `/ai/at-risk/:studentId` | ADMIN | one student's risk row (score, threshold, factors, contributions) for the board drill-in; `computed: false` when the student has not been scored yet |
 | GET `/ai/provider-config` | ADMIN | provider label, baseUrl, textModel, visionModel, temperature, enabled; **key masked** (`apiKeyHint`), raw key never returned |
 | PUT `/ai/provider-config` | ADMIN | partial update; omitted/blank apiKey keeps stored key; applies ≤60s (cache invalidated on save) |
 | POST `/ai/provider-config/test` | ADMIN | body = form values (may be unsaved) → `{ok, latencyMs, reply}` or `{ok:false, error}`; 5/min |
@@ -148,6 +149,14 @@ Online test delivery (test papers with `mode: ONLINE`; see specs/10 Feature B):
 | POST `/ai/tests/attempts/:attemptId/submit` | STUDENT | submit the attempt; sets `totalScore` from the auto-graded answers |
 | GET `/ai/tests/:id/attempts` | TEACHER | every attempt on the teacher's own paper, with per-question answers |
 | POST `/ai/tests/answers/:answerId/grade` | TEACHER | score a written answer; 400 if the score exceeds the question's marks |
+
+### ai/materials (teacher study material)
+| Method | Path | Roles | Notes |
+|---|---|---|---|
+| POST `/ai/materials` | TEACHER | generate flashcards or a mind map from the teacher's sources (or the RAG index) and save it; 10/min |
+| GET `/ai/materials` | TEACHER | the teacher's saved materials, newest first; `?classId=` `?subjectId=` filters |
+| GET `/ai/materials/:id` | TEACHER | one material with its content, plus `className` / `subjectName` / `sourceName` for the printed header |
+| DELETE `/ai/materials/:id` | TEACHER | delete one of the teacher's own materials |
 
 ### health
 | GET `/health` **public** | — | `{ok: true}` (compose healthcheck / demo sanity) |

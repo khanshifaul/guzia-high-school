@@ -100,6 +100,48 @@ export class AtRiskService {
         };
     }
 
+    /**
+     * One student's risk row, for the drill-in from the board.
+     *
+     * Returns the same shape as a board row so the detail view and the board
+     * cannot drift, plus the factors with their magnitudes so the admin can
+     * see which signal drove the score.
+     */
+    async forStudent(studentId: string) {
+        const score = await this.prisma.atRiskScore.findUnique({
+            where: { studentId },
+            include: {
+                student: { include: { class: true, section: true } },
+            },
+        });
+        if (!score) {
+            return {
+                studentId,
+                computed: false,
+                threshold: (await this.loadModel().catch(() => null))?.threshold ?? 0.5,
+            };
+        }
+
+        const model = await this.loadModel().catch(() => null);
+        const raw = (score.factors as { features?: Record<string, number> })?.features ?? {};
+        const contributions =
+            (score.factors as { contributions?: unknown })?.contributions ?? [];
+
+        return {
+            studentId,
+            computed: true,
+            fullName: score.student.fullName,
+            className: score.student.class.name,
+            sectionName: score.student.section?.name ?? null,
+            score: Math.round(score.score * 1000) / 1000,
+            atRisk: score.atRisk,
+            threshold: model?.threshold ?? 0.5,
+            factors: raw,
+            contributions,
+            computedAt: score.computedAt,
+        };
+    }
+
     /** Build the 5-feature vector for one student, or null if insufficient data. */
     async extractFeatures(studentId: string): Promise<{ vector: number[]; raw: Record<string, number> } | null> {
         const since = new Date(Date.now() - WINDOW_DAYS * 86400000);

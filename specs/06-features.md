@@ -19,7 +19,7 @@ drawer sidebar). Bilingual labels throughout.
 | `attendance` | `/attendance` | pick class/section/date → matrix view (students × last 10 days) |
 | `fees` | `/fee-heads`, `/invoices/generate`, `/payments` | fee heads CRUD; generate invoices (head × class/students × due date); **record payment** page: student picker → outstanding list → amount → waterfalls live preview → submit |
 | `notices` | `/notices` | CRUD, audience select |
-| `at-risk` | `/ai/at-risk` | model card (threshold, trained-at, metrics from eval report), recompute button (info banner while running), sortable table: student, class, score (progress bar), top-3 factor chips, badge HIGH/MEDIUM/LOW |
+| `at-risk` (+`/[studentId]`) | `/ai/at-risk`, `/ai/at-risk/:studentId` | model card (threshold, trained-at, metrics from eval report), recompute button (info banner while running), sortable table: student, class, score (progress bar), top-3 factor chips **with magnitudes** ("Attendance ↓ 44%"), badge HIGH/MEDIUM/LOW; the student name drills into `at-risk/[studentId]`: risk score vs threshold, each of the 5 factors with its value, which ones raise/lower the risk, attendance % / CGPA / fees, exam results |
 | `settings` | `/ai/provider-config` | profile + change-password; **AI provider panel** (specs/10): provider label, base URL, text model, vision model, API key (masked, write-only), temperature, enabled toggle + **Test connection** button (latency/raw reply, works with unsaved values); 60s-apply note displayed |
 
 ## Teacher portal (`(portal)/teacher/`)
@@ -37,6 +37,7 @@ drawer sidebar). Bilingual labels throughout.
 | `plans` (+`/new`, `/[id]`) | `/ai/plans*` | year/term plan: generate → editable week grid → activate; per-week regenerate; DONE checkboxes → progress bar (specs/10-A) |
 | `tests` (+`/new`, `/[id]`) | `/ai/tests*` | blueprint → generated paper; edit/add/delete questions, answer-key toggle, print view; "AI-generated — verify" badge (specs/10-B) |
 | `sources` (+`/[id]`) | `/ai/sources*` | dropzone upload (PDF/image) → status pills; summary card, page-tabbed text, ask box with citation chips, "make test from this" CTA (specs/10-C) |
+| `sources/materials/[id]/print` | GET `/ai/materials/:id` | a saved flashcard deck or mind map on **its own page**, for printing: no portal chrome, auto-prints once, A4. Flashcards print as a table (question + blank answer column, or the answer key with `?answers=1`); the mind map prints as an indented outline rooted at the topic. The sources list opens it in a new tab |
 
 ## Student portal (`(portal)/student/`)
 

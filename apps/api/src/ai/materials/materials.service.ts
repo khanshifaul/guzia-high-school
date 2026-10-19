@@ -152,7 +152,40 @@ export class MaterialsService {
             select: MATERIAL_SELECT,
         });
         if (!material) throw new NotFoundException('Study material not found');
-        return material;
+        return { ...material, ...(await this.contextNames(material)) };
+    }
+
+    /** The class / subject / source names, for the printed header. */
+    private async contextNames(material: {
+        classId: string | null;
+        subjectId: string | null;
+        sourceId: string | null;
+    }) {
+        const [classRow, subjectRow, sourceRow] = await Promise.all([
+            material.classId
+                ? this.prisma.class.findUnique({
+                      where: { id: material.classId },
+                      select: { name: true },
+                  })
+                : null,
+            material.subjectId
+                ? this.prisma.subject.findUnique({
+                      where: { id: material.subjectId },
+                      select: { name: true },
+                  })
+                : null,
+            material.sourceId
+                ? this.prisma.sourceDocument.findUnique({
+                      where: { id: material.sourceId },
+                      select: { filename: true },
+                  })
+                : null,
+        ]);
+        return {
+            className: classRow?.name ?? null,
+            subjectName: subjectRow?.name ?? null,
+            sourceName: sourceRow?.filename ?? null,
+        };
     }
 
     async remove(userId: string, id: string) {
