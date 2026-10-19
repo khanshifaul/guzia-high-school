@@ -11,12 +11,14 @@ services:
     dockerfilePath: ./apps/api/Dockerfile
     dockerContext: .
     healthCheckPath: /health
-    # Migrations are safe to run on every deploy (Prisma skips applied ones).
-    # If the plan does not support pre-deploy commands, run the same command
-    # once in the Render Shell after the first deploy.
-    preDeployCommand: bunx prisma migrate deploy
+    # Migrations are run once from the Render Shell after the first deploy:
+    #   DATABASE_URL="$DATABASE_URL_UNPOOLED" bunx prisma migrate deploy
     envVars:
       - key: DATABASE_URL
+        sync: false
+      # Direct (non-pooled) Neon URL; Prisma migrations must not go through
+      # PgBouncer. Runtime keeps the pooled DATABASE_URL.
+      - key: DATABASE_URL_UNPOOLED
         sync: false
       - key: JWT_SECRET
         generateValue: true

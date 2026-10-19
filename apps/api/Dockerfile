@@ -30,7 +30,12 @@ WORKDIR /app
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/bun.lock ./bun.lock
 COPY --from=build /app/node_modules ./node_modules
+# Bun installs the API workspace's dependencies under apps/api/node_modules
+# (only that workspace is present in the build context).
+COPY --from=build /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=build /app/apps/api/package.json ./apps/api/package.json
+# Bun resolves the `prisma/generated/*` path alias from tsconfig at runtime.
+COPY --from=build /app/apps/api/tsconfig.json ./apps/api/tsconfig.json
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 COPY --from=build /app/apps/api/prisma ./apps/api/prisma
 
