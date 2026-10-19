@@ -92,6 +92,18 @@ Endpoints enforce child linkage server-side.
   in the browser for an inline error and enforced by `POST /admissions/upload`.
   **Admission Type and Shift** are read from the site settings, so the school never offers
   a type (day/residential) or a shift it does not run.
+  **`/admission?print=1` renders the application as a printable A4 sheet** — the form the
+  applicant signs and submits with the school, not a receipt and not a second wizard. The
+  sheet is the *default* rendering of that route: no form controls, no navigation, no portal
+  chrome, so what comes out of the printer is the application and nothing else. The
+  screen-only toolbar (print / new application) is hidden on paper with `print:hidden`.
+  The sheet reuses the canonical A4 print conventions (`components/shared/test-paper.tsx` for
+  the layout, the `@media print` block in `globals.css` for the page size), so there is one
+  way to print a document in this project. It auto-prints once the sheet is ready, after
+  `document.fonts.ready`, guarded by a ref so the applicant sees exactly one print dialog.
+  The values come from the session (`admissionReceipt` + `admissionPrintData`), so no API
+  call is involved and the sheet can be reopened from the success screen
+  ("View Full Form"). Bilingual like the rest of the public site.
 
 ## Business logic (single implementations, unit-tested)
 
