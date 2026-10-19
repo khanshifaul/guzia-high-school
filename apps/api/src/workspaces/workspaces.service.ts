@@ -108,6 +108,7 @@ export class WorkspacesService {
                 classId: true,
                 subjectId: true,
                 createdAt: true,
+                summary: true,
               },
             },
           },
@@ -131,7 +132,14 @@ export class WorkspacesService {
       ...rest,
       class: cls,
       subject,
-      sources: sources.map((row) => ({ ...row.source, addedAt: row.addedAt })),
+      sources: sources.map((row) => {
+        const { summary, ...source } = row.source;
+        return {
+          ...source,
+          addedAt: row.addedAt,
+          error: ((summary as { error?: string } | null) ?? null)?.error ?? null,
+        };
+      }),
       messages: thread?.messages ?? [],
     };
   }

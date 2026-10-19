@@ -74,6 +74,7 @@ export class SourcesService implements OnModuleInit {
                 createdAt: true,
                 classId: true,
                 subjectId: true,
+                summary: true,
             },
         });
 
@@ -104,6 +105,7 @@ export class SourcesService implements OnModuleInit {
 
         return docs.map((d) => ({
             id: d.id,
+            error: ((d.summary as { error?: string } | null) ?? null)?.error ?? null,
             filename: d.filename,
             kind: d.kind,
             pages: d.pages,
@@ -198,9 +200,18 @@ export class SourcesService implements OnModuleInit {
                 },
             });
         } catch (err) {
-            this.logger.warn(`Ingest failed for ${filename}: ${(err as Error).message}`);
+            const message = (err as Error).message;
+            this.logger.warn(`Ingest failed for ${filename}: ${message}`);
+            // Keep the reason on the row: the UI shows it instead of a generic
+            // "failed", so the teacher knows what to do next.
             await this.prisma.sourceDocument
-                .update({ where: { id: docId }, data: { status: 'FAILED' } })
+                .update({
+                    where: { id: docId },
+                    data: {
+                        status: 'FAILED',
+                        summary: { ...fileMeta, error: message } as unknown as Prisma.InputJsonValue,
+                    },
+                })
                 .catch(() => undefined);
         }
     }
@@ -222,8 +233,8 @@ export class SourcesService implements OnModuleInit {
             const pages = raw.map((text, i) => ({ page: i + 1, text })).filter((p) => p.text.trim());
             if (pages.length === 0) {
                 throw new BadRequestException(
-                    'No extractable text in this PDF — it looks like a scanned image. ' +
-                        'Upload the page as an image (PNG/JPEG) instead, or run OCR first.',
+                    'This PDF has no text layer (it is a scan), so it cannot be searched. ' +
+                        'Upload a text-based PDF, or the pages as images (PNG/JPEG) for transcription.',
                 );
             }
             return pages;
@@ -295,11 +306,16 @@ export class SourcesService implements OnModuleInit {
             const pages = await this.extractPages(file, flags);
             await this.finishIngest(docId, pages, file.originalname, fileMeta);
         } catch (err) {
-            this.logger.warn(
-                `Extraction failed for ${file.originalname}: ${(err as Error).message}`,
-            );
+            const message = (err as Error).message;
+            this.logger.warn(`Extraction failed for ${file.originalname}: ${message}`);
             await this.prisma.sourceDocument
-                .update({ where: { id: docId }, data: { status: 'FAILED' } })
+                .update({
+                    where: { id: docId },
+                    data: {
+                        status: 'FAILED',
+                        summary: { ...fileMeta, error: message } as unknown as Prisma.InputJsonValue,
+                    },
+                })
                 .catch(() => undefined);
         }
     }

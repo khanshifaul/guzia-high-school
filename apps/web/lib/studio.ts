@@ -24,6 +24,8 @@ export interface StudioSource {
     classId?: string | null;
     subjectId?: string | null;
     createdAt: string;
+    /** Why the ingest failed, when status is FAILED. */
+    error?: string | null;
     usedIn?: number;
     class?: { id: string; name: string } | null;
     subject?: { id: string; name: string } | null;

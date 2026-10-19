@@ -35,7 +35,9 @@ export function SourceRow({
                     <p className="mt-1 text-[9px] text-amber-600">Not searchable until it finishes processing.</p>
                 ) : null}
                 {source.status === "FAILED" ? (
-                    <p className="mt-1 text-[9px] text-rose-600">Processing failed — remove and upload again.</p>
+                    <p className="mt-1 text-[9px] leading-snug text-rose-600">
+                        {source.error ?? "Processing failed — remove and upload again."}
+                    </p>
                 ) : null}
             </button>
             <button

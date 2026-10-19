@@ -18,6 +18,8 @@ interface SourceSummary {
     suggestedQuestions?: string[];
     fileUrl?: string;
     storage?: string;
+    /** Set when a background ingest failed. */
+    error?: string;
 }
 interface SourceDetail extends StudioSource {
     summary: SourceSummary | null;
@@ -80,6 +82,12 @@ export function SourceDetailDialog({
                             ) : null}
                         </div>
 
+                        {detail.error ?? detail.summary?.error ? (
+                            <p className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-xs font-semibold text-destructive">
+                                {detail.error ?? detail.summary?.error}
+                            </p>
+                        ) : null}
+
                         <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-4">
                             <p className="text-[10px] font-black uppercase tracking-wider text-primary">Summary</p>
                             <p className="text-sm">
@@ -114,7 +122,9 @@ export function SourceDetailDialog({
                             </p>
                             {detail.chunks.length === 0 ? (
                                 <p className="text-xs text-muted-foreground">
-                                    No text extracted yet — the source is still processing.
+                                    {detail.status === "FAILED"
+                                        ? "No text was extracted."
+                                        : "No text extracted yet — the source is still processing."}
                                 </p>
                             ) : (
                                 detail.chunks.map((chunk, index) => (

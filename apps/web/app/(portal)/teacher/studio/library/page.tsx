@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader } from "@/components/shared/page-header";
 import { statusStyle } from "@/components/teacher/studio/source-row";
+import { SourceDetailDialog } from "@/components/teacher/studio/source-detail-dialog";
 import { api, RequestError } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import type { StudioSource, WorkspaceSummary } from "@/lib/studio";
@@ -29,6 +30,7 @@ export default function StudioLibraryPage() {
     const [error, setError] = React.useState<string | null>(null);
     const [feedback, setFeedback] = React.useState<string | null>(null);
     const [search, setSearch] = React.useState("");
+    const [detailId, setDetailId] = React.useState<string | null>(null);
 
     const [selected, setSelected] = React.useState<string[]>([]);
     const [attachOpen, setAttachOpen] = React.useState(false);
@@ -246,10 +248,17 @@ export default function StudioLibraryPage() {
                                                     className="size-3.5 accent-primary"
                                                 />
                                             </td>
-                                            <td className="p-2 font-mono text-xs">{source.filename}</td>
+                                            <td className="p-2 font-mono text-xs">
+                                                <button type="button" onClick={() => setDetailId(source.id)}
+                                                    className="cursor-pointer text-left hover:text-primary hover:underline">
+                                                    {source.filename}
+                                                </button>
+                                            </td>
                                             <td className="p-2 text-xs text-muted-foreground">{source.pages ?? "?"}</td>
                                             <td className="p-2">
-                                                <Badge className={cn(statusStyle(source.status), "text-[8px]")}>{source.status}</Badge>
+                                                <Badge className={cn(statusStyle(source.status), "text-[8px]")} title={source.error ?? undefined}>
+                                                    {source.status}
+                                                </Badge>
                                             </td>
                                             <td className="p-2 text-xs text-muted-foreground">
                                                 {source.usedIn ? `${source.usedIn} workspace${source.usedIn === 1 ? "" : "s"}` : "—"}
@@ -284,6 +293,8 @@ export default function StudioLibraryPage() {
                     </Button>
                 </div>
             ) : null}
+
+            <SourceDetailDialog sourceId={detailId} onClose={() => setDetailId(null)} />
 
             {/* Attach selected sources to a workspace */}
             <Dialog open={attachOpen} onOpenChange={setAttachOpen}>
