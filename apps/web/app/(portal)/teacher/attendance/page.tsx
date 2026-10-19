@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/shared/page-header";
 import { api, RequestError } from "@/lib/api";
-
+import { useMyTeacher } from "@/lib/teacher-session";
 interface Section { id: string; name: string; class: { id: string; name: string } }
 interface RosterRow { studentId: string; rollNo: number; fullName: string; status: "PRESENT" | "ABSENT" | "LATE" | null }
 type Status = "PRESENT" | "ABSENT" | "LATE";
@@ -31,7 +31,8 @@ const STATUS_BTN: Record<Status, string> = {
 };
 
 export default function TeacherAttendancePage() {
-    const today = new Date().toISOString().slice(0, 10);
+    const { teacherId } = useMyTeacher();
+    const today = new Date().toLocaleDateString('en-CA');
     const [sections, setSections] = React.useState<Section[]>([]);
     const [sectionId, setSectionId] = React.useState<string | null>(null);
     const [date, setDate] = React.useState(today);
@@ -42,17 +43,41 @@ export default function TeacherAttendancePage() {
     const [feedback, setFeedback] = React.useState<{ kind: "ok" | "err"; msg: string } | null>(null);
 
     React.useEffect(() => {
-        api<{ classes: { id: string; name: string; sections: { id: string; name: string }[] }[] }>("/classes")
+        let cancelled = false;
+        api<{
+            classes: {
+                id: string;
+                name: string;
+                sections: { id: string; name: string }[];
+                subjects: { section: { id: string }; teacher: { id: string } | null }[];
+            }[];
+        }>("/classes")
             .then((p) => {
+                if (cancelled) return;
+                const teacherSections = new Set<string>();
+                p.classes.forEach((c) => {
+                    c.subjects.forEach((cs) => {
+                        if (cs.teacher?.id === teacherId) teacherSections.add(cs.section.id);
+                    });
+                });
                 const flat = p.classes.flatMap((c) =>
                     c.sections.map((s) => ({ id: s.id, name: s.name, class: { id: c.id, name: c.name } })),
                 );
-                setSections(flat);
-                if (flat.length > 0) setSectionId(flat[0].id);
+                const mine = flat.filter((s) => teacherSections.has(s.id));
+                setSections(mine.length > 0 ? mine : flat);
+                if (mine.length > 0) setSectionId(mine[0].id);
+                else if (flat.length > 0) setSectionId(flat[0].id);
             })
-            .catch(() => setSections([]))
-            .finally(() => setLoadingSections(false));
-    }, []);
+            .catch(() => {
+                if (!cancelled) setSections([]);
+            })
+            .finally(() => {
+                if (!cancelled) setLoadingSections(false);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [teacherId]);
 
     React.useEffect(() => {
         if (!sectionId) return;
