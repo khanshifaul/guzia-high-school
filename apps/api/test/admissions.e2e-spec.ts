@@ -21,8 +21,12 @@ describe('Admissions workflow (e2e)', () => {
     expect(submit.status).toBe(201);
     const applicationId = submit.body.id as string;
     expect(applicationId).toBeTruthy();
+    // Submit creates the pending portal account and returns the one-time
+    // credentials (the password is shown/emailed once, at submit time).
+    const password = submit.body.password as string;
+    expect(password).toBeTruthy();
 
-    // 2. Admin login + review (approve).
+    // 2. Admin login + review (approve) — activates the pending account.
     const admin = await request(API)
       .post('/api/auth/login')
       .send({ email: 'admin@guziahs.edu', password: 'password123' });
@@ -35,12 +39,11 @@ describe('Admissions workflow (e2e)', () => {
     expect(review.status).toBe(201);
     expect(review.body.status).toBe('APPROVED');
     expect(review.body.admissionNo).toMatch(/^GHS-\d{4}-\d{3}$/);
-    expect(review.body.generatedPassword).toBeTruthy();
 
-    // 3. The generated credentials actually work.
+    // 3. The submit-time credentials work once the account is approved.
     const studentLogin = await request(API)
       .post('/api/auth/login')
-      .send({ email, password: review.body.generatedPassword });
+      .send({ email, password });
     expect(studentLogin.status).toBe(200);
     expect(studentLogin.body.data.user.role).toBe('STUDENT');
   });
