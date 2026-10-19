@@ -25,6 +25,8 @@ const ALLOWED_MIME = new Set([
     'image/jpeg',
     'image/webp',
     'text/plain',
+    'text/markdown',
+    'text/x-markdown',
 ]);
 const MAX_BYTES = 15 * 1024 * 1024; // 15 MB
 

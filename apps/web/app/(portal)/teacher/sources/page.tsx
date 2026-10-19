@@ -251,15 +251,15 @@ export default function TeacherSourcesPage() {
                                     >
                                         <FaUpload className="mx-auto mb-2 text-muted-foreground" size={20} />
                                         <p className="text-sm font-semibold">
-                                            {busy ? "Uploading & summarizing…" : "Drop a PDF or text file here"}
+                                            {busy ? "Uploading & summarizing…" : "Drop a PDF, image, or text file here"}
                                         </p>
                                         <p className="text-xs text-muted-foreground mt-1">
-                                            or click to browse · PDF / .txt · max {MAX_MB}MB · stored in R2
+                                            or click to browse · PDF / PNG / JPEG / WebP / .txt / .md · max {MAX_MB}MB · stored in R2
                                         </p>
                                         <input
                                             ref={fileRef}
                                             type="file"
-                                            accept=".pdf,.txt,application/pdf,text/plain"
+                                            accept=".pdf,.txt,.md,.markdown,image/png,image/jpeg,image/webp,application/pdf,text/plain,text/markdown"
                                             className="hidden"
                                             onChange={(e) => {
                                                 const f = e.target.files?.[0];

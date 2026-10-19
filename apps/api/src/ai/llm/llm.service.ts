@@ -18,6 +18,12 @@ import { OpenAI } from 'openai';
 import { decrypt } from './crypto.util';
 import type { AiProviderConfig } from 'prisma/generated/client';
 
+export interface LlmImage {
+    mime: string;
+    /** Base64 (no data: prefix). */
+    base64: string;
+}
+
 export interface LlmCompleteOpts {
     system: string;
     user: string;
@@ -26,6 +32,8 @@ export interface LlmCompleteOpts {
     maxTokens?: number;
     /** Use the vision model path (image inputs) instead of the text model. */
     vision?: boolean;
+    /** Images attached to the user message (vision models only). */
+    images?: LlmImage[];
     /** Which mock fixture to return when the mock provider is active. Callers
      *  declare intent explicitly — substring-sniffing the prompt is fragile. */
     mockFixture?: 'plan' | 'paper' | 'summary';
@@ -136,6 +144,16 @@ export class LlmService {
             baseURL: config.baseUrl,
         });
 
+        const userContent = opts.images?.length
+            ? [
+                  { type: 'text' as const, text: opts.user },
+                  ...opts.images.map((img) => ({
+                      type: 'image_url' as const,
+                      image_url: { url: `data:${img.mime};base64,${img.base64}` },
+                  })),
+              ]
+            : opts.user;
+
         try {
             const response = await client.chat.completions.create({
                 model,
@@ -144,7 +162,7 @@ export class LlmService {
                 ...(opts.json ? { response_format: { type: 'json_object' as const } } : {}),
                 messages: [
                     { role: 'system', content: opts.system },
-                    { role: 'user', content: opts.user },
+                    { role: 'user', content: userContent },
                 ],
             });
             return response.choices[0]?.message?.content ?? '';
@@ -158,7 +176,20 @@ export class LlmService {
     private async kiloComplete(opts: LlmCompleteOpts): Promise<string> {
         const gatewayUrl = this.configService.get<string>('KILO_GATEWAY_URL')!;
         const token = this.configService.get<string>('KILO_API_TOKEN')!;
-        const model = this.configService.get<string>('KILO_MODEL') ?? 'kilo-auto/free';
+        const textModel = this.configService.get<string>('KILO_MODEL') ?? 'kilo-auto/free';
+        const model = opts.vision
+            ? this.configService.get<string>('KILO_VISION_MODEL') ?? textModel
+            : textModel;
+
+        const userContent = opts.images?.length
+            ? [
+                  { type: 'text', text: opts.user },
+                  ...opts.images.map((img) => ({
+                      type: 'image_url',
+                      image_url: { url: `data:${img.mime};base64,${img.base64}` },
+                  })),
+              ]
+            : opts.user;
 
         const body = {
             model,
@@ -167,7 +198,7 @@ export class LlmService {
             ...(opts.json ? { response_format: { type: 'json_object' } } : {}),
             messages: [
                 { role: 'system', content: opts.system },
-                { role: 'user', content: opts.user },
+                { role: 'user', content: userContent },
             ],
         };
 

@@ -142,14 +142,18 @@ export class SourcesService {
     ) {
         if (!file) throw new BadRequestException('No file provided (use form field "file")');
 
-        const isPdf =
-            file.mimetype === 'application/pdf' ||
-            file.originalname.toLowerCase().endsWith('.pdf');
+        const name = file.originalname.toLowerCase();
+        const isPdf = file.mimetype === 'application/pdf' || name.endsWith('.pdf');
+        const isImage = /^image\/(png|jpeg|webp)$/.test(file.mimetype) || /\.(png|jpe?g|webp)$/.test(name);
         const isText =
             file.mimetype === 'text/plain' ||
-            file.originalname.toLowerCase().endsWith('.txt');
-        if (!isPdf && !isText) {
-            throw new BadRequestException('Only PDF and plain-text (.txt) files are supported');
+            file.mimetype === 'text/markdown' ||
+            file.mimetype === 'text/x-markdown' ||
+            /\.(txt|md|markdown)$/.test(name);
+        if (!isPdf && !isImage && !isText) {
+            throw new BadRequestException(
+                'Unsupported file — upload a PDF, an image (PNG/JPEG/WebP), or a text/Markdown file.',
+            );
         }
 
         // Store the original file (R2 or local disk).
@@ -160,7 +164,7 @@ export class SourcesService {
             'sources',
         );
 
-        // Extract text: unpdf for PDFs, direct decode for text.
+        // Extract text: unpdf for PDFs, vision for images, direct decode for text.
         let pages: { page: number; text: string }[];
         if (isPdf) {
             // pdf.js requires a Uint8Array; it rejects Node Buffers. This is a
@@ -174,9 +178,36 @@ export class SourcesService {
             pages = raw.map((text, i) => ({ page: i + 1, text })).filter((p) => p.text.trim());
             if (pages.length === 0) {
                 throw new BadRequestException(
-                    'No extractable text in this PDF (it may be a scanned image).',
+                    'No extractable text in this PDF — it looks like a scanned image. ' +
+                        'Upload the page as an image (PNG/JPEG) instead, or run OCR first.',
                 );
             }
+        } else if (isImage) {
+            // Transcribe the page with the provider's vision model.
+            const mime = file.mimetype === 'image/jpg' ? 'image/jpeg' : file.mimetype;
+            const transcript = await this.llm
+                .complete({
+                    system:
+                        'Transcribe the text in this page image exactly, preserving line breaks. ' +
+                        'Output only the text — no commentary.',
+                    user: 'Transcribe this page.',
+                    vision: true,
+                    images: [{ mime, base64: file.buffer.toString('base64') }],
+                    maxTokens: 2000,
+                })
+                .catch((err: Error) => {
+                    this.logger.error(
+                        `Image transcription failed for ${file.originalname}: ${err.message}`,
+                    );
+                    throw new BadRequestException(
+                        `Could not read this image (${err.message}). ` +
+                            'Check the provider vision model in Settings.',
+                    );
+                });
+            if (!transcript.trim()) {
+                throw new BadRequestException('No text detected in this image.');
+            }
+            pages = [{ page: 1, text: transcript }];
         } else {
             pages = [{ page: 1, text: file.buffer.toString('utf8') }];
         }
@@ -184,7 +215,7 @@ export class SourcesService {
         const doc = await this.ingest({
             userId,
             filename: file.originalname,
-            kind: isPdf ? 'PDF' : 'PDF',
+            kind: isImage ? 'IMAGE' : 'PDF',
             pages,
             classId,
             subjectId,
