@@ -289,12 +289,14 @@ polls the list while anything is `PROCESSING`, and a boot-time sweep marks a
 1. PDF → `unpdf` (`extractText`) → page-tagged text; zero text layer → status
    `FAILED` (limitation surfaced; the image-only path handles the demo case).
 2. Image → the provider's vision model → page text.
-   A PDF with no text layer is not a failure: it is marked `NEEDS_OCR`, and an
-   explicit "Transcribe with OCR" action rasterizes the stored file with
-   poppler (`pdftoppm`, 200 dpi) and reads each page with tesseract, then runs
-   the same chunk → embed → summarize tail. Both binaries are optional; when
-   absent the row stays `NEEDS_OCR` and the message says so. (162-page scan
-   measured: ~2 min, zero API cost.)
+   A PDF with no text layer is transcribed **automatically** on upload when
+   poppler + tesseract are installed: the row goes `PROCESSING`, the stored
+   file is rasterized (`pdftoppm`, 200 dpi) and read page by page with
+   tesseract, then takes the same chunk → embed → summarize tail. Only a host
+   without the binaries falls back to `NEEDS_OCR` + the explicit "Transcribe
+   with OCR" action. 200 vs 300 dpi and PSM 3/4/6 were compared on a real exam
+   scan: identical text, so the default is unchanged; column order remains the
+   limit of a text-only OCR. (162-page scan measured: ~2 min, zero API cost.)
 3. Page furniture → dropped (`text-clean.util.ts`): a line repeated at the top or
    bottom of ≥40% of pages (running head, footer, bare number) is removed before
    chunking, so scans do not embed "English For Today 6" into every chunk. Only

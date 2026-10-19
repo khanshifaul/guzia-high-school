@@ -22,7 +22,7 @@ import { parseJsonObject } from '../llm/json.util';
 import { validateOutboundUrl } from '../../common/net.util';
 import { convertWithMarkItDown } from './markitdown.util';
 import { RetrievalService } from './retrieval.service';
-import { NeedsOcrError, ocrPdf } from './ocr.util';
+import { NeedsOcrError, ocrAvailable, ocrPdf } from './ocr.util';
 import { stripRunningHeads } from './text-clean.util';
 
 const SummarySchema = z.object({
@@ -321,7 +321,19 @@ export class SourcesService implements OnModuleInit {
             await this.finishIngest(docId, pages, file.originalname, fileMeta);
         } catch (err) {
             const message = (err as Error).message;
-            // A scan is not a failure: it needs one explicit OCR step.
+
+            // A scan with no text layer is transcribed automatically when the
+            // OCR binaries are installed; only a host without them falls back
+            // to the explicit "Transcribe with OCR" action.
+            if (err instanceof NeedsOcrError && flags.isPdf && (await ocrAvailable())) {
+                this.logger.log(`No text layer in ${file.originalname}; transcribing with OCR`);
+                await this.prisma.sourceDocument
+                    .update({ where: { id: docId }, data: { status: 'PROCESSING' } })
+                    .catch(() => undefined);
+                await this.finishOcr(docId, file.buffer, file.originalname, fileMeta);
+                return;
+            }
+
             const status = err instanceof NeedsOcrError ? 'NEEDS_OCR' : 'FAILED';
             this.logger.warn(`Extraction ${status} for ${file.originalname}: ${message}`);
             await this.prisma.sourceDocument

@@ -34,6 +34,7 @@ export function UploadSourceDialog({
     const [mode, setMode] = React.useState<"file" | "url">("file");
     const [url, setUrl] = React.useState("");
     const [busy, setBusy] = React.useState(false);
+    const [progress, setProgress] = React.useState<number | null>(null);
     const [error, setError] = React.useState<string | null>(null);
     const fileRef = React.useRef<HTMLInputElement>(null);
 
@@ -42,6 +43,7 @@ export function UploadSourceDialog({
         setMode("file");
         setUrl("");
         setError(null);
+        setProgress(null);
     }, [open]);
 
     /** One workspace attach, shared by both modes. */
@@ -64,29 +66,60 @@ export function UploadSourceDialog({
         }
         setBusy(true);
         setError(null);
+        setProgress(0);
         try {
             const body = new FormData();
             body.append("file", file);
             if (classId) body.append("classId", classId);
             if (subjectId) body.append("subjectId", subjectId);
-            const response = await fetch(`${API_ORIGIN}/api/ai/sources/upload`, {
-                method: "POST",
-                body,
-                credentials: "include",
-            });
-            const created = (await response.json().catch(() => null)) as
-                | { id?: string; message?: string | string[] }
-                | null;
-            if (!response.ok || !created?.id) {
-                const message = Array.isArray(created?.message) ? created.message.join("; ") : created?.message;
-                throw new Error(message ?? `Upload failed (${response.status})`);
-            }
+
+            // fetch() cannot report upload bytes, and a 40 MB textbook is slow
+            // enough that a spinner reads as a hang. XHR reports real progress.
+            const created = await new Promise<{ id: string }>(
+                (resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open("POST", `${API_ORIGIN}/api/ai/sources/upload`);
+                    xhr.withCredentials = true;
+                    xhr.upload.onprogress = (event) => {
+                        if (event.lengthComputable) {
+                            setProgress(Math.round((event.loaded / event.total) * 100));
+                        }
+                    };
+                    xhr.onload = () => {
+                        let parsed: { id?: string; message?: string | string[] } | null = null;
+                        try {
+                            parsed = JSON.parse(xhr.responseText) as {
+                                id?: string;
+                                message?: string | string[];
+                            };
+                        } catch {
+                            parsed = null;
+                        }
+                        const message = Array.isArray(parsed?.message)
+                            ? parsed.message.join("; ")
+                            : parsed?.message;
+                        if (xhr.status < 200 || xhr.status >= 300) {
+                            reject(new Error(message ?? `Upload failed (${xhr.status})`));
+                            return;
+                        }
+                        if (!parsed?.id) {
+                            reject(new Error(message ?? "Upload returned no source id"));
+                            return;
+                        }
+                        resolve({ id: parsed.id });
+                    };
+                    xhr.onerror = () => reject(new Error("Network error while uploading"));
+                    xhr.send(body);
+                },
+            );
+            setProgress(100);
             await attach(created.id);
             finish(file.name);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Could not add that file");
         } finally {
             setBusy(false);
+            setProgress(null);
         }
     }
 
@@ -150,8 +183,20 @@ export function UploadSourceDialog({
                         >
                             <FaUpload className="mx-auto mb-2 text-muted-foreground" size={20} />
                             <p className="text-sm font-semibold">
-                                {busy ? "Uploading…" : "Drop a file here or click to browse"}
+                                {busy
+                                    ? progress === 100
+                                        ? "Uploaded — processing…"
+                                        : `Uploading… ${progress ?? 0}%`
+                                    : "Drop a file here or click to browse"}
                             </p>
+                            {busy ? (
+                                <div className="mx-auto mt-3 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-border">
+                                    <div
+                                        className="h-full bg-primary transition-[width] duration-200"
+                                        style={{ width: `${progress ?? 0}%` }}
+                                    />
+                                </div>
+                            ) : null}
                             <p className="mt-1 text-xs text-muted-foreground">
                                 PDF / PNG / JPEG / WebP / .txt / .md / Office · max {MAX_MB}MB
                             </p>
