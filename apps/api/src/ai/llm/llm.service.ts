@@ -1,7 +1,7 @@
 // src/ai/llm/llm.service.ts — LLM access with fallback chain:
 //   1. DB AiProviderConfig row (admin-configured, encrypted key, 60s TTL cache)
 //   2. KILO_* env fallback (real-life LLM via kilo.ai gateway, kilo-auto/free)
-//   3. Mock provider (AI_MOCK=true or provider name starts with "mock")
+//   3. Mock provider (the provider row's name starts with "mock")
 //   4. 503 ServiceUnavailable (nothing configured)
 //
 // Provider fallback keeps the demo green without a DB row and lets production
@@ -134,12 +134,8 @@ export class LlmService {
             return this.retry(() => this.openaiComplete(dbConfig, opts));
         }
 
-        if (this.configService.get<string>('AI_MOCK') === 'true') {
-            return this.mockComplete(opts);
-        }
-
         throw new ServiceUnavailableException(
-            'AI provider is not configured (no usable AiProviderConfig row, no KILO_* env, AI_MOCK not set).',
+            'AI provider is not configured (no usable AiProviderConfig row and no KILO_* env).',
         );
     }
 
@@ -272,7 +268,7 @@ export class LlmService {
      */
     private mockComplete(opts: LlmCompleteOpts): string {
         if (!opts.json) {
-            return 'This is a mocked AI response (AI_MOCK provider).';
+            return 'This is a mocked AI response (mock provider).';
         }
         // Explicit intent from the caller (substring-sniffing proved fragile —
         // "question-paper" contains "plan"). Fall back to summary.

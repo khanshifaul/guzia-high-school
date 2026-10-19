@@ -110,5 +110,5 @@ settings, tests, README.
 | Cookie cross-port friction (3000↔4000) | same-site localhost OK in dev; web proxies `/api/*` server-side anyway |
 | Time blowout on UI polish | design recipes are copy-paste from alumni-app; no new component design allowed during build |
 | AI training nondeterminism | seeded RNG everywhere; model JSON committed — inference never trains at runtime |
-| External LLM flaky/keys missing on demo day | provider-config with **Test connection** in admin; `AI_MOCK=true` or local Ollama fallback; toolkit artifacts (plan/paper) saved in DB so pre-generated demo content survives |
+| External LLM flaky/keys missing on demo day | provider-config with **Test connection** in admin; the seeded mock provider row or a local Ollama fallback; toolkit artifacts (plan/paper) saved in DB so pre-generated demo content survives |
 | LLM output malformed JSON | JSON mode + zod validation + one retry → 502 AI_OUTPUT_INVALID; raw text logged, never persisted |

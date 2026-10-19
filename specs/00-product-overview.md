@@ -76,5 +76,6 @@ All UI bilingual EN/BN (context dictionary, alumni-app pattern). Currency BDT (à
 - At-risk board lists flagged students with scores; README documents model, inputs, limits, eval.
 - Teacher generates an editable year plan and test paper from the AI panel; uploads a
   chapter PDF/image â†’ summary + ask-with-citations; admin switches/tests the LLM
-  provider (base URL/model/key) in settings without restart; `AI_MOCK=true` demo runs offline.
+  provider (base URL/model/key) in settings without restart; the seeded mock provider row keeps the
+  demo running offline.
 - `bun run test` passes with unit tests on the three business-logic cores + AI scoring.

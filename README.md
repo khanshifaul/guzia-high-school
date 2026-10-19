@@ -170,7 +170,7 @@ OpenAI-compatible LLM** (DeepSeek, OpenAI, Groq, local Ollama…):
 **Admin controls the provider** (Settings → LLM Provider): base URL, text/vision models,
 API key (write-only, AES-256-GCM-encrypted at rest, masked in the UI), temperature, and
 an enable kill-switch — with a **Test connection** button. Config applies within 60s,
-no restart. A **mock provider** (`AI_MOCK=true`, the default) keeps tests and the demo
+no restart. A **mock provider** (the seeded `AiProviderConfig` row) keeps tests and the demo
 fully offline.
 
 **Limitations:** AI-generated plans and papers are drafts — the UI badges them
@@ -201,16 +201,16 @@ See `apps/api/.env.example` and `apps/web/.env.example`. Required:
 | `AI_CONFIG_SECRET` | Encrypts the stored LLM API key (AES-256-GCM) |
 | `API_BASE_URL` | (web) where the API lives |
 
-Optional AI boot defaults: `AI_PROVIDER` (`deepseek` | `mock`), `AI_MOCK`,
-`DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, `DEEPSEEK_MODEL`, `GEMINI_API_KEY`. These only
+Optional AI boot defaults: `AI_PROVIDER` (`deepseek` | `mock`), `DEEPSEEK_API_KEY`,
+`DEEPSEEK_BASE_URL`, `DEEPSEEK_MODEL`, `GEMINI_API_KEY`. These only
 seed the first `AiProviderConfig` row; runtime truth lives in the database and is edited
 in the admin UI.
 
-Provider resolution order (first usable wins): **DB row with a stored key → `KILO_*`
-env fallback → mock → 503**. The `KILO_*` vars (`KILO_GATEWAY_URL`, `KILO_MODEL`,
+Provider resolution order (first usable wins): **mock provider row → DB row with a
+stored key → `KILO_*` env fallback → keyless DB row → 503**. The `KILO_*` vars (`KILO_GATEWAY_URL`, `KILO_MODEL`,
 `KILO_API_TOKEN`) point at any OpenAI-compatible gateway (default `kilo-auto/free`);
 they let the toolkit serve a **real** LLM without any admin configuration. Leave them
-unset (and `AI_MOCK=true`) to keep the demo fully offline.
+unset (and keep the seeded mock provider row) to keep the demo fully offline.
 
 ## Known limitations & future work
 

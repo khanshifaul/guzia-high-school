@@ -46,7 +46,7 @@ model AiProviderConfig {
 | Env | Purpose |
 |---|---|
 | `AI_CONFIG_SECRET` `[REQUIRED]` | AES-256-GCM key encrypting stored provider API keys |
-| `AI_PROVIDER` / `AI_MOCK` | initial provider selection / force mock (tests, offline demo) |
+| `AI_PROVIDER` | initial provider selection (`deepseek` \| `mock`); the mock row keeps the demo offline |
 | `DEEPSEEK_API_KEY/BASE_URL/MODEL` `[OPTIONAL]` | seed the provider row on first migrate/seed |
 | `GEMINI_API_KEY` `[OPTIONAL]` | seed vision-model default |
 
@@ -60,7 +60,7 @@ model AiProviderConfig {
   response validated with a zod schema. Parse/validate failure → **one retry**, then
   502 `AI_OUTPUT_INVALID` with the raw text logged (never persisted to domain tables).
 - **MockProvider:** deterministic canned responses keyed by prompt fingerprint
-  (fixtures in `llm/__fixtures__/`). Tests + `AI_MOCK=true` demo never hit the network —
+  (fixtures in `llm/__fixtures__/`). Tests + the mock provider row never hit the network —
   the demo survives a dead API key.
 - **Server does the math, not the model:** dates, totals, codes, sequencing are computed
   server-side from LLM *content* only. The LLM never emits week dates or mark sums —

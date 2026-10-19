@@ -16,7 +16,7 @@ poke at. Coverage over breadth; every test asserts real behavior.
 | `admissions/admissions.service.spec.ts` | approve→enroll (mocked Prisma) | APPROVE: student+user created with sequential admissionNo (GHS-2026-001 → -002); REJECT: no student; re-review → 409; password returned once |
 | `auth/roles.guard.spec.ts` | guard matrix | each role × route table subset; expired token → 401 |
 | `ai/provider-config.service.spec.ts` | provider admin | GET never returns raw key (only `apiKeyHint`); PUT blank/omitted apiKey keeps stored key; AES-256-GCM encrypt→decrypt roundtrip; disabled config → generation services raise 503 AI_DISABLED |
-| `ai/llm.service.spec.ts` | LLM layer (prisma mocked, AI_MOCK=true) | reads config row; config cache hit within TTL / invalidated on save; JSON-parse failure → 1 retry then 502 AI_OUTPUT_INVALID; mock provider returns fixture for fingerprint; baseUrl http rejected (https/localhost-http allowed) |
+| `ai/llm.service.spec.ts` | LLM layer (prisma mocked, mock provider row) | reads config row; config cache hit within TTL / invalidated on save; JSON-parse failure → 1 retry then 502 AI_OUTPUT_INVALID; mock provider returns fixture for fingerprint; baseUrl http rejected (https/localhost-http allowed) |
 | `ai/plans/plans.service.spec.ts` | plan generation (mocked LLM) | week-date fill from startDate skips Fridays; week-count mismatch → 502; activate archives previous ACTIVE in transaction; single-week regenerate leaves other weeks untouched |
 | `ai/tests/tests.service.spec.ts` | paper generation (mocked LLM) | marks-sum ≠ totalMarks → retry then 502; MCQ options normalized to 4; FINAL paper rejects question PATCH; editedByTeacher flag set on manual edit |
 

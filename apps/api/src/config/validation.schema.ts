@@ -14,7 +14,6 @@ export const validationSchema = Joi.object({
 
   // AI provider boot-seed defaults (runtime truth = AiProviderConfig row).
   AI_PROVIDER: Joi.string().valid('deepseek', 'mock').default('mock'),
-  AI_MOCK: Joi.string().valid('true', 'false').default('true'),
   DEEPSEEK_API_KEY: optionalStr(),
   DEEPSEEK_BASE_URL: Joi.string()
     .uri()
