@@ -59,6 +59,11 @@ Endpoints enforce child linkage server-side.
 ## Public (`(public)/`)
 
 - `page.tsx` — small landing: hero ("Guzia High School"), stats strip, notices preview, CTA → admissions/login.
+  The "Online Services" cards point at `/portal/<service>`; the resolver reads the session
+  server-side and sends each visitor to the page for their role, to the public page for the
+  service, or to `/login?callbackUrl=/portal/<service>` when the service needs an account
+  (`lib/online-services.ts` is the single table both the homepage and the resolver read).
+- `portal/[service]/` — the Online Services resolver (see above).
 - `login/` — centered-card recipe; prefilled demo-credential chips (click to fill).
 - `admissions/` — 4-step wizard (student info → guardian info → academic choice → review+submit):
   zod schema per step (`lib/zod-schemas/admission.ts` — one schema per step, mirrored by the API DTO),
@@ -67,6 +72,9 @@ Endpoints enforce child linkage server-side.
   control per group, submit → POST `/admissions`
   → success screen with application id. Steps map 1:1 to AdmissionApplication.formData.
   The form carries a hidden `website` honeypot; the API refuses a non-blank one.
+  Submit validates the whole application, not just the declaration, so a field changed after
+  its step was passed (a blank permanent address, say) still sends the applicant back to the
+  step that owns it (`stepForField`).
 
 ## Business logic (single implementations, unit-tested)
 

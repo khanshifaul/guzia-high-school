@@ -180,6 +180,38 @@ export const ADMISSION_STEPS = [
 
 export type AdmissionStepKey = (typeof ADMISSION_STEPS)[number]["key"];
 
+/** The fields each step owns. The review step lists them in this order. */
+export const STEP_FIELDS = {
+    student: ["studentName", "studentNameBn", "dateOfBirth", "age", "gender", "birthCertNo", "religion", "nationality", "bloodGroup"],
+    guardian: ["fatherName", "fatherNameBn", "fatherProfession", "fatherNid", "fatherPhone",
+        "motherName", "motherNameBn", "motherProfession", "motherNid", "motherPhone",
+        "guardianName", "guardianRelation", "localGuardianProfession", "guardianNid",
+        "phone", "emergencyPhone", "email",
+        "presentVillage", "presentRoad", "presentWard", "presentPostOffice", "presentPoliceStation",
+        "presentUpazila", "presentDistrict", "presentPostalCode",
+        "permanentVillage", "permanentRoad", "permanentWard", "permanentPostOffice",
+        "permanentPoliceStation", "permanentUpazila", "permanentDistrict", "permanentPostalCode"],
+    academic: ["classWanted", "section", "group", "admissionType", "previousSchool", "previousClass",
+        "previousResult", "tcNumber", "tcDate", "previousSchoolPhone", "quota"],
+} as const;
+
+export type StepFieldKey = keyof typeof STEP_FIELDS;
+
+/**
+ * The step that owns a field, so an invalid field sends the applicant back
+ * to the step that can fix it. 0 = student, 1 = guardian, 2 = academic,
+ * 3 = review.
+ */
+export function stepForField(field: string): number {
+    // includes(), never `in`: `in` on an array tests the INDICES, so a field
+    // name never matches and every field would fall through to review.
+    const owns = (fields: readonly string[]) => fields.includes(field);
+    if (owns(STEP_FIELDS.student)) return 0;
+    if (owns(STEP_FIELDS.guardian)) return 1;
+    if (owns(STEP_FIELDS.academic)) return 2;
+    return 3;
+}
+
 /**
  * Map a zod issue to the form field it belongs to, so the wizard can show
  * the message next to the input rather than in a banner at the top.

@@ -52,11 +52,13 @@ import {
     QUOTAS,
     RELATIONS,
     RELIGIONS,
+    STEP_FIELDS,
     academicStepSchema,
     admissionSchema,
     fieldErrors,
     guardianStepSchema,
     reviewStepSchema,
+    stepForField,
     studentStepSchema,
 } from "@/lib/zod-schemas/admission";
 
@@ -114,21 +116,6 @@ const UPLOAD_META: Record<keyof Files, { label: string; icon: typeof FaImage; ac
     birthCertUrl: { label: "Birth Certificate", icon: FaFileLines, accept: "image/*,application/pdf" },
     testimonialUrl: { label: "Testimonial / Transfer Certificate", icon: FaAward, accept: "image/*,application/pdf" },
 };
-
-/** The fields each step owns, in the order the review step lists them. */
-const STEP_FIELDS = {
-    student: ["studentName", "studentNameBn", "dateOfBirth", "age", "gender", "birthCertNo", "religion", "nationality", "bloodGroup"],
-    guardian: ["fatherName", "fatherNameBn", "fatherProfession", "fatherNid", "fatherPhone",
-        "motherName", "motherNameBn", "motherProfession", "motherNid", "motherPhone",
-        "guardianName", "guardianRelation", "localGuardianProfession", "guardianNid",
-        "phone", "emergencyPhone", "email",
-        "presentVillage", "presentRoad", "presentWard", "presentPostOffice", "presentPoliceStation",
-        "presentUpazila", "presentDistrict", "presentPostalCode",
-        "permanentVillage", "permanentRoad", "permanentWard", "permanentPostOffice",
-        "permanentPoliceStation", "permanentUpazila", "permanentDistrict", "permanentPostalCode"],
-    academic: ["classWanted", "section", "group", "admissionType", "previousSchool", "previousClass",
-        "previousResult", "tcNumber", "tcDate", "previousSchoolPhone", "quota"],
-} as const satisfies Record<string, readonly (keyof FormState)[]>;
 
 export default function AdmissionPage() {
     const { t, language } = useLanguage();
@@ -220,14 +207,6 @@ export default function AdmissionPage() {
         };
     }
 
-    /** The step that owns a field, so a bad field sends the applicant there. */
-    function stepForField(field: string): number {
-        if (field in STEP_FIELDS.student) return 0;
-        if (field in STEP_FIELDS.guardian) return 1;
-        if (field in STEP_FIELDS.academic) return 2;
-        return 3;
-    }
-
     async function submit() {
         // Validate the whole application, not just the declaration: a field
         // the applicant edited after its step was passed (the permanent
@@ -237,9 +216,6 @@ export default function AdmissionPage() {
             const fieldErrorsOfForm = fieldErrors(result.error);
             setErrors(fieldErrorsOfForm);
             const first = Object.keys(fieldErrorsOfForm)[0];
-            (window as unknown as { __dbg2?: unknown }).__dbg2 = {
-                fieldErrorsOfForm, first, target: first ? stepForField(first) : null,
-            };
             if (first) {
                 setStep(stepForField(first));
                 window.scrollTo({ top: 0, behavior: "smooth" });

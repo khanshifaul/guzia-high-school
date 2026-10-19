@@ -9,6 +9,7 @@ import {
     fieldErrors,
     guardianStepSchema,
     reviewStepSchema,
+    stepForField,
     studentStepSchema,
 } from "./admission";
 
@@ -240,5 +241,31 @@ describe("fieldErrors", () => {
         expect(errors.guardianName).toBeTruthy();
         expect(errors.phone).toBeTruthy();
         expect(errors.email).toBeTruthy();
+    });
+});
+
+describe("stepForField", () => {
+    it("sends a student field back to the student step", () => {
+        expect(stepForField("studentName")).toBe(0);
+        expect(stepForField("bloodGroup")).toBe(0);
+    });
+
+    it("sends a guardian field back to the guardian step", () => {
+        expect(stepForField("guardianName")).toBe(1);
+        expect(stepForField("phone")).toBe(1);
+        expect(stepForField("permanentVillage")).toBe(1);
+    });
+
+    it("sends an academic field back to the academic step", () => {
+        expect(stepForField("classWanted")).toBe(2);
+        expect(stepForField("quota")).toBe(2);
+    });
+
+    it("sends the declaration to the review step", () => {
+        expect(stepForField("declarationAccepted")).toBe(3);
+    });
+
+    it("never reports a step for a field no step owns", () => {
+        expect(stepForField("notAField")).toBe(3);
     });
 });
