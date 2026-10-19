@@ -58,12 +58,6 @@ function Reveal({ children, className }: { children: React.ReactNode; className?
     );
 }
 
-const stats = [
-    { icon: FaUserGraduate, end: 1200, suffix: "+", label: "Students" },
-    { icon: FaChalkboardUser, end: 80, suffix: "+", label: "Teachers" },
-    { icon: FaSchool, end: 68, suffix: "", label: "Years of Excellence" },
-    { icon: FaAward, end: 50, suffix: "+", label: "National Awards" },
-];
 
 const highlights = [
     { icon: FaGraduationCap, title: "Academic Excellence", desc: "Consistent top results in national board examinations with 95%+ pass rate." },
@@ -109,6 +103,13 @@ const achievements = [
     { icon: FaAward, title: "100% Pass Rate", desc: "In SSC Board Examination 2025" },
     { icon: FaStar, title: "Best School Award", desc: "Upazila Education Excellence Award 2024" },
     { icon: FaHeart, title: "Gold Medal Debate", desc: "National Inter-School Debate Championship 2025" },
+];
+const ESTABLISHED_YEAR = 1958;
+const stats = [
+    { icon: FaUserGraduate, end: 1200, suffix: "+", label: "Students" },
+    { icon: FaChalkboardUser, end: 80, suffix: "+", label: "Teachers" },
+    { icon: FaSchool, end: new Date().getFullYear() - ESTABLISHED_YEAR, suffix: "", label: "Years of Excellence" },
+    { icon: FaAward, end: achievements.length, suffix: "+", label: "National Awards" },
 ];
 
 const gallery = [

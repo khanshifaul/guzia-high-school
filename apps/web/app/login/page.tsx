@@ -43,7 +43,7 @@ function LoginInner() {
         setError(null);
         setLoading(true);
         try {
-            const user = await login(email, password);
+            const user = await login(email.trim().toLowerCase(), password);
             const callback = searchParams.get("callbackUrl");
             router.replace(callback ?? ROLE_HOME[user.role]);
         } catch (err) {
