@@ -17,7 +17,7 @@ Built as the **NT Tech Innovation Full-Stack Developer assessment**.
 | UI kit | `@srcroot/ui` components (copied into `apps/web/components/ui/`) |
 | Auth | JWT in httpOnly cookie (`ghs_token`), passport-jwt + RolesGuard |
 | AI | Self-built logistic regression (at-risk) + OpenAI-compatible LLM toolkit |
-| Tests | Jest 30 + supertest (API), Vitest (web) |
+| Tests | Jest 30 + supertest (API unit + e2e) |
 
 ## Quick start
 
@@ -201,9 +201,16 @@ See `apps/api/.env.example` and `apps/web/.env.example`. Required:
 | `AI_CONFIG_SECRET` | Encrypts the stored LLM API key (AES-256-GCM) |
 | `API_BASE_URL` | (web) where the API lives |
 
-Optional AI boot defaults: `AI_PROVIDER`, `AI_MOCK`, `DEEPSEEK_API_KEY`,
-`DEEPSEEK_BASE_URL`, `DEEPSEEK_MODEL`, `GEMINI_API_KEY`. These only seed the first
-`AiProviderConfig` row; runtime truth lives in the database and is edited in the admin UI.
+Optional AI boot defaults: `AI_PROVIDER` (`deepseek` | `mock`), `AI_MOCK`,
+`DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, `DEEPSEEK_MODEL`, `GEMINI_API_KEY`. These only
+seed the first `AiProviderConfig` row; runtime truth lives in the database and is edited
+in the admin UI.
+
+Provider resolution order (first usable wins): **DB row with a stored key → `KILO_*`
+env fallback → mock → 503**. The `KILO_*` vars (`KILO_GATEWAY_URL`, `KILO_MODEL`,
+`KILO_API_TOKEN`) point at any OpenAI-compatible gateway (default `kilo-auto/free`);
+they let the toolkit serve a **real** LLM without any admin configuration. Leave them
+unset (and `AI_MOCK=true`) to keep the demo fully offline.
 
 ## Known limitations & future work
 
