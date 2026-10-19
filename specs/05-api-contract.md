@@ -129,6 +129,12 @@ Lesson plans (see specs/10 Feature A):
 | POST `/ai/plans/:id/weeks/:week/regenerate` | TEACHER | re-ask the AI for that week only, using the neighbouring weeks as context |
 | DELETE `/ai/plans/:id` | TEACHER | delete the plan |
 
+Teacher dashboard (the teacher's "today" view):
+
+| Method | Path | Roles | Notes |
+|---|---|---|---|
+| GET `/teacher/dashboard` | TEACHER | `{sections, assignmentsAwaitingGrading, plans}` — the teacher's own sections (flagged with today's attendance state), the assignments still holding unscored submissions, and their plan progress |
+
 Online test delivery (test papers with `mode: ONLINE`; see specs/10 Feature B):
 
 | Method | Path | Roles | Notes |

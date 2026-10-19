@@ -26,7 +26,7 @@ drawer sidebar). Bilingual labels throughout.
 
 | Page | Backs | Behavior |
 |---|---|---|
-| `dashboard` | rosters + today | my classes, today's unmarked attendance sections, assignments awaiting grading |
+| `dashboard` | GET `/teacher/dashboard` | my sections (with today's attendance marked/unmarked badge), assignments awaiting grading, plan progress % — plus the quick-link grid |
 | `classes` | `/classes` (scoped) | my classes → rosters |
 | `classes/[id]` | student list | section roster with attendance % + latest GPA per student |
 | `attendance/mark` | `/attendance/section/:id`, `/attendance/mark` | date picker (default today) → row per student: P/A/L segmented buttons (keyboard: arrow+enter fast path), "mark all present" shortcut, submit → upsert, success banner |

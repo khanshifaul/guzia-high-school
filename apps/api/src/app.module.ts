@@ -28,6 +28,7 @@ import { RolesGuard } from './common/guards/roles.guard';
 import { RateLimitGuard } from './common/rate-limiter/rate-limit.guard';
 import { HealthController } from './health.controller';
 import { AccessModule } from './common/access/access.module';
+import { TeacherDashboardModule } from './teacher-dashboard/teacher-dashboard.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { AccessModule } from './common/access/access.module';
       envFilePath: ['.env.local', '.env'],
     }),
     AccessModule,
+    TeacherDashboardModule,
     DatabaseModule,
     AuthModule,
     ClassesModule,
