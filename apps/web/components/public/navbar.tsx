@@ -116,37 +116,42 @@ export function Navbar() {
                 transition={{ duration: 0.25, ease: "easeInOut" }}
                 className="overflow-hidden w-full bg-background border-b border-border/40 shrink-0 relative isolate"
             >
-                {/* The campus photo sits on the right. Reading right to left it
-                    starts sharp, then a blurred copy takes over, and the far
-                    left dissolves into the background so the school name stays
-                    legible. */}
-
-                <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-                    <div
-                        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                        style={{
-                            backgroundImage: "url('/images/campus.jpg')",
-                            filter: "blur(14px)",
-                            maskImage:
-                                "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.45) 22%, rgba(0,0,0,0.7) 46%, transparent 70%)",
-                            WebkitMaskImage:
-                                "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.45) 22%, rgba(0,0,0,0.7) 46%, transparent 70%)",
-                        }}
-                    />
-                    <div
-                        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                        style={{
-                            backgroundImage: "url('/images/campus.jpg')",
-                            maskImage:
-                                "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 26%, #000 62%, #000 100%)",
-                            WebkitMaskImage:
-                                "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 26%, #000 62%, #000 100%)",
-                        }}
-                    />
-                </div>
-                <div className="py-4 md:py-6 container mx-auto px-4 md:px-8 max-w-7xl flex justify-between items-center">
-                    <Link href="/" className="flex flex-col items-center md:items-start text-center md:text-left group">
-                        <span className="font-black text-2xl md:text-3.5xl text-primary uppercase tracking-tight group-hover:opacity-90 transition-opacity">
+                <div className="py-4 md:py-6 container mx-auto px-4 md:px-8 max-w-7xl flex justify-between items-center relative">
+                    {/* The campus photo sits behind the row, in the same
+                        container as the name. Its left half is blurred so the
+                        school name reads clearly over it; the right half stays
+                        sharp and shows the campus. */}
+                    <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+                        <div
+                            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                            style={{
+                                backgroundImage: "url('/images/campus.jpg')",
+                                filter: "blur(16px)",
+                                maskImage:
+                                    "linear-gradient(to right, #000 0%, #000 30%, rgba(0,0,0,0.35) 50%, transparent 62%)",
+                                WebkitMaskImage:
+                                    "linear-gradient(to right, #000 0%, #000 30%, rgba(0,0,0,0.35) 50%, transparent 62%)",
+                            }}
+                        />
+                        <div
+                            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                            style={{
+                                backgroundImage: "url('/images/campus.jpg')",
+                                maskImage:
+                                    "linear-gradient(to right, transparent 34%, #000 56%, #000 100%)",
+                                WebkitMaskImage:
+                                    "linear-gradient(to right, transparent 34%, #000 56%, #000 100%)",
+                            }}
+                        />
+                    </div>
+                    <Link
+                        href="/"
+                        className="relative flex flex-col items-center md:items-start text-center md:text-left group"
+                    >
+                        {/* A soft scrim under the name keeps it legible over
+                            the blurred half of the photo. */}
+                        <span className="pointer-events-none absolute -inset-x-3 -inset-y-2 rounded-lg bg-background/70 backdrop-blur-[2px]" />
+                        <span className="relative font-black text-2xl md:text-3.5xl text-primary uppercase tracking-tight group-hover:opacity-90 transition-opacity">
                             {language === "bn" ? cfg.schoolNameBn : cfg.schoolName}
                         </span>
                     </Link>
