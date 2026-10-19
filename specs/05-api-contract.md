@@ -79,9 +79,12 @@ List endpoints accept `?page=1&limit=20` (where applicable) and return
 ### assignments
 | Method | Path | Roles | Notes |
 |---|---|---|---|
-| GET/POST `/assignments` · PATCH/DELETE `/assignments/:id` | TEACHER (own), ADMIN; STUDENT: list for own class | |
-| POST `/assignments/:id/submissions` | STUDENT | `{content}`; unique [assignmentId,studentId] → 409 on resubmit (MVP: no edits) |
-| PATCH `/submissions/:id/grade` | TEACHER (own assignment), ADMIN | `{grade 0..100, feedback}` → status ON_TIME/LATE_GRADED per dueDate |
+| GET `/assignments/class/:classId` | TEACHER (own only), ADMIN (any), STUDENT (own class, own submission only) | list with submission counts |
+| POST `/assignments` | TEACHER (must teach the class), ADMIN | creates with `teacherId` = the Teacher row, never the User id |
+| GET `/assignments/:id/submissions` | TEACHER (own), ADMIN | the grading view; 403 for another teacher's assignment |
+| POST `/assignments/:id/submit` | STUDENT (own class) | `{content}`; unique [assignmentId,studentId] → 409 on resubmit (MVP: no edits) |
+| POST `/assignments/submissions/:id/grade` | TEACHER (own assignment), ADMIN | `{grade 0..100, feedback}` → status ON_TIME/LATE_GRADED per dueDate |
+| DELETE `/assignments/:id` | TEACHER (own), ADMIN | 403 for another teacher's assignment |
 
 ### fees
 | Method | Path | Roles | Notes |

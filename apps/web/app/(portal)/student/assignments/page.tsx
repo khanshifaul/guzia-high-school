@@ -23,7 +23,7 @@ interface Assignment {
     dueDate: string;
     subject: { name: string };
     teacher: { user: { fullName: string } } | null;
-    _count: { submissions: number };
+    submissions: { grade: number | null; feedback: string | null; status: string }[];
 }
 
 export default function StudentAssignmentsPage() {
@@ -98,7 +98,12 @@ export default function StudentAssignmentsPage() {
                                 </CardHeader>
                                 <CardContent className="p-6 space-y-4">
                                     {a.description ? <p className="text-sm text-muted-foreground">{a.description}</p> : null}
-                                    {openSubmit === a.id ? (
+                                    {a.submissions.length > 0 ? (
+                                        <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-wider">
+                                            <FaPaperPlane size={12} className="text-emerald-600" />
+                                            Submitted — graded work cannot be resubmitted
+                                        </div>
+                                    ) : openSubmit === a.id ? (
                                         <div className="space-y-3">
                                             <Textarea value={content} onChange={(e) => setContent(e.target.value)}
                                                 placeholder="Type your answer / work…" rows={4} />
@@ -117,6 +122,26 @@ export default function StudentAssignmentsPage() {
                                             Submit Work
                                         </Button>
                                     )}
+
+                                    {a.submissions.length > 0 && a.submissions[0].grade !== null ? (
+                                        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
+                                                    Teacher&apos;s grade
+                                                </p>
+                                                <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                                                    {a.submissions[0].grade} / 100
+                                                </Badge>
+                                            </div>
+                                            {a.submissions[0].feedback ? (
+                                                <p className="text-sm text-muted-foreground">
+                                                    {a.submissions[0].feedback}
+                                                </p>
+                                            ) : (
+                                                <p className="text-sm text-muted-foreground">No written feedback.</p>
+                                            )}
+                                        </div>
+                                    ) : null}
                                 </CardContent>
                             </Card>
                         </motion.div>

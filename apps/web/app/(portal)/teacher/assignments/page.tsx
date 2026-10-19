@@ -5,6 +5,7 @@
 
 import * as React from "react";
 import { motion } from "motion/react";
+import Link from "next/link";
 import { FaListCheck, FaPlus, FaSpinner } from "react-icons/fa6";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,7 +37,7 @@ import { myClasses } from "@/lib/teacher-classes";
 interface ClassOption { id: string; name: string; subjects: { subject: { id: string; name: string }; teacher?: { id: string } | null }[] }
 interface Assignment {
     id: string; title: string; description: string | null; dueDate: string;
-    subject: { name: string }; _count: { submissions: number };
+    subject: { name: string }; submissions: { grade: number | null }[];
 }
 
 export default function TeacherAssignmentsPage() {
@@ -161,12 +162,24 @@ export default function TeacherAssignmentsPage() {
                                 <CardTitle className="text-lg font-black uppercase tracking-tight">{a.title}</CardTitle>
                                 <div className="flex gap-2">
                                     <Badge className="bg-primary/10 text-primary border-primary/20">{a.subject.name}</Badge>
-                                    <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20">{a._count.submissions} submissions</Badge>
+                                    <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20">{a.submissions.length} submissions</Badge>
+                                    {a.submissions.some((s) => s.grade === null) ? (
+                                        <Badge className="bg-rose-500/10 text-rose-600 border-rose-500/20">
+                                            {a.submissions.filter((s) => s.grade === null).length} to grade
+                                        </Badge>
+                                    ) : null}
                                 </div>
                             </CardHeader>
-                            <CardContent className="p-6 flex items-center justify-between">
+                            <CardContent className="p-6 flex items-center justify-between gap-3">
                                 {a.description ? <p className="text-xs text-muted-foreground">{a.description}</p> : <span />}
-                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider shrink-0">Due {new Date(a.dueDate).toLocaleDateString()}</p>
+                                <div className="flex items-center gap-3 shrink-0">
+                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Due {new Date(a.dueDate).toLocaleDateString()}</p>
+                                    <Link href={`/teacher/assignments/${a.id}`}>
+                                        <Button variant="outline" className="font-black text-xs uppercase tracking-wider cursor-pointer">
+                                            Grade
+                                        </Button>
+                                    </Link>
+                                </div>
                             </CardContent>
                         </Card>
                     </motion.div>
