@@ -94,7 +94,7 @@ export default function StudyMaterialPrintPage() {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-muted/10 p-8 text-center">
                 <p className="text-sm text-muted-foreground">{error ?? "Not found."}</p>
-                <Link href="/teacher/sources">
+                <Link href="/teacher/studio?view=materials">
                     <Button variant="outline">
                         <FaArrowLeft size={12} /> Back to sources
                     </Button>
@@ -121,7 +121,7 @@ export default function StudyMaterialPrintPage() {
                         <Button onClick={() => window.print()} className="font-black text-xs uppercase tracking-wider">
                             <FaPrint size={13} /> Print
                         </Button>
-                        <Link href="/teacher/sources">
+                        <Link href="/teacher/studio?view=materials">
                             <Button variant="outline" className="font-black text-xs uppercase tracking-wider">
                                 <FaArrowLeft size={12} /> Back
                             </Button>

@@ -129,7 +129,7 @@ export default function NewTestPaperPage() {
                     endAt: mode === "ONLINE" ? new Date(endAt).toISOString() : undefined,
                 },
             });
-            router.push("/teacher/tests");
+            router.push("/teacher/studio?view=tests");
         } catch (err) {
             setError(err instanceof RequestError ? err.messages.join("; ") : "Could not generate the paper");
             setBusy(false);
@@ -140,7 +140,7 @@ export default function NewTestPaperPage() {
         <div className="space-y-6">
             <PageHeader title="Generate Test Paper" subtitle="Set the blueprint, then let the AI draft the questions" icon={FaClipboardList}
                 actions={
-                    <Link href="/teacher/tests">
+                    <Link href="/teacher/studio?view=tests">
                         <Button variant="outline" className="font-black text-xs uppercase tracking-wider cursor-pointer">
                             <FaArrowLeft size={12} /> Back to papers
                         </Button>
@@ -265,7 +265,7 @@ export default function NewTestPaperPage() {
                     <Button type="submit" disabled={busy || !valid} className="font-black text-xs uppercase tracking-wider">
                         {busy ? <><FaSpinner className="animate-spin" size={12} /> Generating…</> : <><FaClipboardList size={12} /> Generate Paper</>}
                     </Button>
-                    <Link href="/teacher/tests">
+                    <Link href="/teacher/studio?view=tests">
                         <Button type="button" variant="outline" className="font-black text-xs uppercase tracking-wider cursor-pointer">Cancel</Button>
                     </Link>
                 </div>

@@ -1,6 +1,6 @@
 // src/ai/sources/sources.service.ts — source-grounded assistant (spec 10
-// Feature C). Upload PDF/image → extract text → chunk → summarize; then ask
-// (RAG-lite keyword retrieval, top-k chunks → LLM, page-cited).
+// Feature C). Upload PDF/image → extract text → chunk → embed → summarize;
+// then ask (vector retrieval over the teacher's chunks → LLM, page-cited).
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
 import { UploadService } from '../../upload/upload.service';
@@ -368,14 +368,17 @@ export class SourcesService {
         });
     }
 
-    /** RAG-lite: keyword-retrieve top chunks, ask the LLM with page citations. */
+    /** Source-scoped RAG: vector-retrieve that document's top chunks and ask
+     *  the LLM with page citations. Shares RetrievalService with the notebook
+     *  ask so there is one retrieval implementation, not two. */
     async ask(id: string, userId: string, question: string) {
         const doc = await this.get(id, userId);
         if (doc.status !== 'READY') {
             throw new BadRequestException('Document is not ready yet');
         }
 
-        const top = this.retrieve(question, doc.chunks, 4);
+        const teacherId = await this.resolveTeacherId(userId);
+        const top = await this.retrieval.retrieve(teacherId, question, { sourceId: id, topK: 4 });
         if (top.length === 0) {
             return {
                 answer: 'I could not find relevant content in this document for that question.',
@@ -526,46 +529,6 @@ export class SourcesService {
             }
         }
         return out;
-    }
-
-    /** IDF-weighted keyword overlap (top-k chunks). No vector DB. */
-    private retrieve<T extends { content: string }>(
-        question: string,
-        chunks: T[],
-        topK: number,
-    ): T[] {
-        const qTokens = this.tokenize(question);
-        if (qTokens.length === 0) return [];
-        const df = new Map<string, number>();
-        for (const c of chunks) {
-            const seen = new Set(this.tokenize(c.content));
-            for (const t of seen) df.set(t, (df.get(t) ?? 0) + 1);
-        }
-        const N = chunks.length;
-        const scored = chunks.map((c) => {
-            const tokens = this.tokenize(c.content);
-            const tf = new Map<string, number>();
-            for (const t of tokens) tf.set(t, (tf.get(t) ?? 0) + 1);
-            let score = 0;
-            for (const q of qTokens) {
-                if (!tf.has(q)) continue;
-                const idf = Math.log(1 + N / (1 + (df.get(q) ?? 0)));
-                score += ((tf.get(q) ?? 0) / (tokens.length || 1)) * idf;
-            }
-            return { c, score };
-        });
-        return scored
-            .filter((s) => s.score > 0)
-            .sort((a, b) => b.score - a.score)
-            .slice(0, topK)
-            .map((s) => s.c);
-    }
-
-    private tokenize(text: string): string[] {
-        return text
-            .toLowerCase()
-            .split(/[^a-z0-9]+/)
-            .filter((t) => t.length > 2);
     }
 
     private async summarizeText(text: string) {

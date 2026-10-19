@@ -93,7 +93,7 @@ export default function TeacherTestViewPage() {
                 icon={FaUser}
                 actions={
                     <>
-                        <Link href="/teacher/tests">
+                        <Link href="/teacher/studio?view=tests">
                             <Button variant="outline" className="font-black text-xs uppercase tracking-wider">
                                 <FaArrowLeft size={12} /> Back
                             </Button>

@@ -116,11 +116,11 @@ enum PlanStatus { DRAFT ACTIVE ARCHIVED }
 - Editing one week (`PATCH /ai/plans/:id/weeks/:n`) changes only that week; its
   `status` and `startAt` are left alone.
 
-**UX pages:** `teacher/plans` (list of plan cards: class/subject, type, start
-date, progress bar, status, first topics), `plans/new` (full-page form — no
-modal — → generate → the plan appears in the list), `plans/[id]` (the plan on
-its own page: the editable week grid with topic/objective/assessment inputs, a
-DONE checkbox per week, per-week AI regenerate, and activate).
+**UX pages:** `teacher/studio?view=plans` (the plan list, in the Studio pane:
+class/subject, type, start date, progress bar, status), `plans/new` (full-page
+form — no modal — → generate → the plan appears in the list), `plans/[id]` (the
+plan on its own page: the editable week grid with topic/objective/assessment
+inputs, a DONE checkbox per week, per-week AI regenerate, and activate).
 
 **Limitations (README + model card):** model may mis-order official NCTB chapter
 sequence or invent pacing — teacher must verify against the textbook (UI shows this
@@ -242,8 +242,9 @@ canonical implementation; the server does the comparing, never the LLM):
   may not exceed the question's maximum marks. The attempt becomes `GRADED` only once
   **every** answer carries a score; until then it stays `SUBMITTED`.
 
-**UX pages:** `teacher/tests` (list, status, mode badge), `tests/new` (full-page
-blueprint form — no modal), `tests/[id]` (the paper on its own page — A4 preview
+**UX pages:** `teacher/studio?view=tests` (the paper list, in the Studio pane:
+title, class/subject, marks, mode badge), `tests/new` (full-page blueprint form —
+no modal), `tests/[id]` (the paper on its own page — A4 preview
 with the school letterhead, answer-key toggle, detachable answer sheet),
 `tests/[id]/print` (the print route), `tests/[id]/attempts` (teacher grading
 view: per-attempt per-question scores), `student/tests` (list of open online
@@ -309,26 +310,36 @@ enum SourceStatus { PROCESSING READY NEEDS_OCR FAILED }
 **Three capabilities once READY:**
 1. **Summarize** (auto + re-run button) — outputs the structured summary; render as
    student notes (EN/BN toggle).
-2. **Ask** — `POST /ai/sources/:id/ask {question}` → **RAG-lite retrieval**:
-   tokenize question, score chunks by keyword overlap (IDF-weighted, own ~30-line
-   implementation in `ai/retrieval.ts` — no vector DB, no embeddings dependency),
-   top-4 chunks → LLM with strict system prompt *"answer only from the provided
-   excerpts; cite [p.N] for every claim; say 'not in document' otherwise"* →
-   `{answer, citations: [{page, snippet}]}` shown with page chips.
+2. **Ask** — `POST /ai/sources/:id/ask {question}` (one document) and
+   `POST /ai/sources/ask {question, classId?, subjectId?, history?}` (the whole
+   notebook) share **one retrieval implementation**, `RetrievalService`: the
+   question is embedded with the in-process multilingual MiniLM model
+   (`Xenova/paraphrase-multilingual-MiniLM-L12-v2`, 384 dims) and matched by
+   cosine distance against `SourceChunk.embedding` (pgvector). Top-4 chunks for a
+   single document, top-6 for the notebook → LLM with strict system prompt
+   *"answer only from the provided excerpts; cite [filename p.N] for every claim;
+   say 'not in sources' otherwise"* → `{answer, citations: [{page, snippet}]}`
+   (single document) or `{answer, citations: [{sourceId, filename, page, snippet}]}`
+   (notebook). A citation the model writes is **dropped unless it matches a
+   retrieved chunk**, so a page or file cannot be invented. `history` replays up to
+   **10** prior turns and is validated server-side.
    Prompt-injection stance: document text and question are delimited as untrusted
    data; system prompt instructs to ignore instructions found inside them.
 3. **→ Test draft** — `POST /ai/sources/:id/to-test {mcq, short, long}` pulls chunk
    text + summary into the Feature B generator → prefilled `tests/new`. The "upload
    a chapter → get a test in 2 clicks" demo path.
 
-**UX pages:** `teacher/sources` (dropzone + list w/ status pills), `sources/[id]`
-(summary card, page-tabbed extracted text, ask box with citation chips, "make test"
-CTA).
+**UX pages:** `teacher/studio` — the Sources pane (dropzone / URL / pasted text →
+status pills; a source opens its summary, page-tagged extracted text, ask box with
+citation chips and "make test"/"make plan" CTAs) and the Chat pane (multi-turn
+notebook chat with citation chips and suggested questions from the source summary).
+`teacher/sources/materials/[id]/print` renders a saved material for printing.
 
 **Limitations:** OCR skipped (vision-model transcription instead — costs tokens, can
-garble math notation); keyword retrieval misses paraphrases (embeddings = future
-work); copyright: teachers upload materials they have rights to (stated on upload
-page); long books >50 pages chunk heavily — demo uses a single chapter.
+garble math notation); retrieval is an exact cosine scan over the teacher's chunks
+(no ANN index today — fine at chapter scale, revisit for whole-book libraries);
+copyright: teachers upload materials they have rights to (stated on upload page);
+long books >50 pages chunk heavily — demo uses a single chapter.
 
 ## Security & cost controls
 

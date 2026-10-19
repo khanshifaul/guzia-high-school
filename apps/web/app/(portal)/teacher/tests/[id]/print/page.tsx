@@ -97,7 +97,7 @@ export default function TeacherTestPrintPage() {
             <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-muted/10 p-8 text-center">
                 <h1 className="text-2xl font-black uppercase tracking-tight text-destructive">Print error</h1>
                 <p className="text-sm text-muted-foreground">{error ?? "This paper is not available."}</p>
-                <Link href="/teacher/tests">
+                <Link href="/teacher/studio?view=tests">
                     <Button variant="outline">
                         <FaArrowLeft size={12} /> Back to papers
                     </Button>

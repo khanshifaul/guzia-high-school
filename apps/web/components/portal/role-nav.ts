@@ -7,14 +7,12 @@ import {
     FaChalkboardUser,
     FaLayerGroup,
     FaUserCheck,
-    FaClipboardList,
     FaGraduationCap,
     FaMoneyBillWave,
     FaBullhorn,
     FaBrain,
     FaGear,
     FaCalendarDays,
-    FaBookOpen,
     FaListCheck,
     FaFileLines,
     FaFolderOpen,
@@ -91,11 +89,7 @@ export const TEACHER_NAV: NavSection[] = [
     },
     {
         title: "AI Tools",
-        items: [
-            { label: "Lesson Plans", href: "/teacher/plans", icon: FaBookOpen },
-            { label: "Test Papers", href: "/teacher/tests", icon: FaClipboardList },
-            { label: "Sources", href: "/teacher/sources", icon: FaFolderOpen },
-        ],
+        items: [{ label: "Studio", href: "/teacher/studio", icon: FaFolderOpen }],
     },
     {
         title: "Communication",

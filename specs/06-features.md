@@ -34,10 +34,10 @@ drawer sidebar). Bilingual labels throughout.
 | `assignments` (+`/new`) | `/assignments` | my assignments, create (subject of my class-subjects, due date) |
 | `assignments/[id]` | submissions | grading table: student, content (expandable), grade input 0..100 + feedback, save |
 | `notices` | POST `/notices` | class-audience notices |
-| `plans` (+`/new`, `/[id]`) | `/ai/plans*` | year/term plan: generate → editable week grid → activate; per-week regenerate; DONE checkboxes → progress bar (specs/10-A) |
-| `tests` (+`/new`, `/[id]`) | `/ai/tests*` | blueprint → generated paper; edit/add/delete questions, answer-key toggle, print view; "AI-generated — verify" badge (specs/10-B) |
-| `sources` (+`/[id]`) | `/ai/sources*` | dropzone upload (PDF/image) → status pills; summary card, page-tabbed text, ask box with citation chips, "make test from this" CTA (specs/10-C) |
-| `sources/materials/[id]/print` | GET `/ai/materials/:id` | a saved flashcard deck or mind map on **its own page**, for printing: no portal chrome, auto-prints once, A4. Flashcards print as a table (question + blank answer column, or the answer key with `?answers=1`); the mind map prints as an indented outline rooted at the topic. The sources list opens it in a new tab |
+| `studio` | `/ai/sources*`, `/ai/tests`, `/ai/plans`, `/ai/materials` | **one merged AI workspace** (replaces the former `sources`, `tests` and `plans` index pages): Sources pane (file/URL/text ingest → status pills → summary + extracted text), Chat pane (multi-turn, grounded in the teacher's sources, page-cited, scope by class/subject), Studio pane (tabs for papers, plans and study materials — generate + open each on its own page) |
+| `plans/new`, `plans/[id]` | `/ai/plans*` | year/term plan: generate → editable week grid → activate; per-week regenerate; DONE checkboxes → progress bar (specs/10-A) |
+| `tests/new`, `tests/[id]` | `/ai/tests*` | blueprint → generated paper; edit/add/delete questions, answer-key toggle, print view; "AI-generated — verify" badge (specs/10-B) |
+| `sources/materials/[id]/print` | GET `/ai/materials/:id` | a saved flashcard deck or mind map on **its own page**, for printing: no portal chrome, auto-prints once, A4. Flashcards print as a table (question + blank answer column, or the answer key with `?answers=1`); the mind map prints as an indented outline rooted at the topic. The Studio's Materials tab opens it from the list |
 
 ## Student portal (`(portal)/student/`)
 

@@ -133,7 +133,7 @@ export default function NewPlanPage() {
                     topicsHint: topicsHint.trim() || undefined,
                 },
             });
-            router.push("/teacher/plans");
+            router.push("/teacher/studio?view=plans");
         } catch (err) {
             setError(err instanceof RequestError ? err.messages.join("; ") : "Could not generate the plan");
             setBusy(false);
@@ -147,7 +147,7 @@ export default function NewPlanPage() {
                 subtitle="Set the term shape, then let the AI draft the weeks"
                 icon={FaBookOpen}
                 actions={
-                    <Link href="/teacher/plans">
+                    <Link href="/teacher/studio?view=plans">
                         <Button variant="outline" className="font-black text-xs uppercase tracking-wider cursor-pointer">
                             <FaArrowLeft size={12} /> Back to plans
                         </Button>
@@ -272,7 +272,7 @@ export default function NewPlanPage() {
                             <><FaBookOpen size={12} /> Generate Plan</>
                         )}
                     </Button>
-                    <Link href="/teacher/plans">
+                    <Link href="/teacher/studio?view=plans">
                         <Button type="button" variant="outline" className="font-black text-xs uppercase tracking-wider cursor-pointer">
                             Cancel
                         </Button>
