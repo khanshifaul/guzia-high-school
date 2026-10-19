@@ -12,8 +12,8 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { IsIn, IsString, Length } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsIn, IsOptional, IsString, Length } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { User } from '../../common/decorators/user.decorator';
 import { SourcesService } from './sources.service';
@@ -34,6 +34,16 @@ class IngestSourceDto {
     @IsString()
     @Length(1, 200000)
     text: string;
+
+    @ApiPropertyOptional({ description: 'Class this source belongs to' })
+    @IsOptional()
+    @IsString()
+    classId?: string;
+
+    @ApiPropertyOptional({ description: 'Subject this source belongs to' })
+    @IsOptional()
+    @IsString()
+    subjectId?: string;
 }
 
 @ApiTags('AI Sources')
@@ -63,14 +73,18 @@ export class SourcesController {
                 file: { type: 'string', format: 'binary' },
                 filename: { type: 'string' },
                 kind: { type: 'string', enum: ['PDF', 'IMAGE'] },
+                classId: { type: 'string' },
+                subjectId: { type: 'string' },
             },
         },
     })
     async uploadSource(
         @UploadedFile() file: { buffer: Buffer; originalname: string; mimetype: string } | undefined,
+        @Body('classId') classId: string | undefined,
+        @Body('subjectId') subjectId: string | undefined,
         @User() user: { id: string },
     ) {
-        return this.service.ingestUpload(user.id, file);
+        return this.service.ingestUpload(user.id, file, classId, subjectId);
     }
 
     @Roles('TEACHER')
@@ -83,6 +97,8 @@ export class SourcesController {
             filename: dto.filename,
             kind: dto.kind,
             pages: [{ page: 1, text: dto.text }],
+            classId: dto.classId,
+            subjectId: dto.subjectId,
         });
     }
 

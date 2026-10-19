@@ -34,8 +34,17 @@ import {
 import { PageHeader } from "@/components/shared/page-header";
 import { api, RequestError } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useMyTeacher } from "@/lib/teacher-session";
+import { myClasses } from "@/lib/teacher-classes";
+import { dedupeSubjects } from "@/lib/subjects";
 
-interface Source { id: string; filename: string; kind: string; pages: number | null; status: string; createdAt: string }
+interface Source {
+    id: string; filename: string; kind: string; pages: number | null; status: string; createdAt: string;
+    class: { id: string; name: string } | null;
+    subject: { id: string; name: string } | null;
+}
+interface ClassOption { id: string; name: string; subjects: { subject: { id: string; name: string }; teacher?: { id: string } | null }[] }
 interface SourceSummary {
     summary?: string;
     keyTopics?: string[];
@@ -50,6 +59,10 @@ const MAX_MB = 15;
 
 export default function TeacherSourcesPage() {
     const router = useRouter();
+    const { teacherId } = useMyTeacher();
+    const [classes, setClasses] = React.useState<ClassOption[]>([]);
+    const [classId, setClassId] = React.useState<string | null>(null);
+    const [subjectId, setSubjectId] = React.useState<string | null>(null);
     const [sources, setSources] = React.useState<Source[]>([]);
     const [loading, setLoading] = React.useState(true);
     const [detail, setDetail] = React.useState<SourceDetail | null>(null);
@@ -75,6 +88,34 @@ export default function TeacherSourcesPage() {
 
     React.useEffect(() => { load(); }, [load]);
 
+    // The teacher's own classes only; their picker drives the subject list.
+    React.useEffect(() => {
+        if (!teacherId) return;
+        api<{ classes: ClassOption[] }>("/classes")
+            .then((p) => {
+                const mine = myClasses(p.classes, teacherId);
+                setClasses(mine);
+                setClassId((prev) => (prev && mine.some((c) => c.id === prev) ? prev : (mine[0]?.id ?? null)));
+            })
+            .catch(() => setClasses([]));
+    }, [teacherId]);
+
+    const selectedClass = classes.find((c) => c.id === classId);
+
+    // Sources are organised by class → subject.
+    const groups = React.useMemo(() => {
+        const map = new Map<string, { className: string; subjectName: string; items: Source[] }>();
+        for (const s of sources) {
+            const className = s.class?.name ?? "Unassigned class";
+            const subjectName = s.subject?.name ?? "Unassigned subject";
+            const key = `${className}::${subjectName}`;
+            const group = map.get(key) ?? { className, subjectName, items: [] };
+            group.items.push(s);
+            map.set(key, group);
+        }
+        return [...map.values()];
+    }, [sources]);
+
     /** Upload a PDF/text file: stored in R2 (or local disk), extracted, summarized. */
     async function uploadFile(file: File) {
         if (file.size > MAX_MB * 1024 * 1024) {
@@ -86,6 +127,8 @@ export default function TeacherSourcesPage() {
         try {
             const fd = new FormData();
             fd.append("file", file);
+            if (classId) fd.append("classId", classId);
+            if (subjectId) fd.append("subjectId", subjectId);
             const res = await fetch("/api/ai/sources/upload", { method: "POST", body: fd, credentials: "include" });
             const data: unknown = await res.json().catch(() => null);
             if (!res.ok) {
@@ -111,7 +154,7 @@ export default function TeacherSourcesPage() {
         try {
             await api("/ai/sources/ingest", {
                 method: "POST",
-                body: { filename: filename || "Untitled.txt", kind: "PDF", text },
+                body: { filename: filename || "Untitled.txt", kind: "PDF", text, classId: classId ?? undefined, subjectId: subjectId ?? undefined },
             });
             setFeedback({ kind: "ok", msg: "Source ingested & summarized" });
             setOpen(false);
@@ -165,6 +208,16 @@ export default function TeacherSourcesPage() {
                         <DialogContent className="max-w-lg">
                             <DialogHeader><DialogTitle className="font-black uppercase tracking-tight">Add Source</DialogTitle></DialogHeader>
                             <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Select value={classId ?? undefined} onValueChange={(v) => { setClassId(v); setSubjectId(null); }}>
+                                        <SelectTrigger className="h-11"><SelectValue placeholder="Class" /></SelectTrigger>
+                                        <SelectContent>{classes.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                    <Select value={subjectId ?? undefined} onValueChange={setSubjectId}>
+                                        <SelectTrigger className="h-11"><SelectValue placeholder="Subject" /></SelectTrigger>
+                                        <SelectContent>{dedupeSubjects(selectedClass?.subjects).map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                                    </Select>
+                                </div>
                                 <div className="grid grid-cols-2 gap-2">
                                     <Button type="button" variant={mode === "file" ? "default" : "outline"} onClick={() => setMode("file")}
                                         className="h-9 text-xs font-black uppercase tracking-wider">
@@ -238,21 +291,32 @@ export default function TeacherSourcesPage() {
             {sources.length === 0 ? (
                 <EmptyState title="No sources" description="Upload a chapter or notes to summarize and generate plans or tests." />
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {sources.map((s) => (
-                        <motion.div key={s.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}>
-                            <Card className="border-border/60 shadow-sm cursor-pointer hover:border-primary/20 transition-all" onClick={() => openDetail(s.id)}>
-                                <CardHeader className="border-b border-border/60 pb-4 flex flex-row items-center justify-between">
-                                    <CardTitle className="text-sm font-black uppercase tracking-tight">{s.filename}</CardTitle>
-                                    <Badge className={s.status === "READY" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/20"}>
-                                        {s.status}
-                                    </Badge>
-                                </CardHeader>
-                                <CardContent className="p-4 text-xs text-muted-foreground">
-                                    {s.pages ?? "?"} page(s) · {new Date(s.createdAt).toLocaleDateString()}
-                                </CardContent>
-                            </Card>
-                        </motion.div>
+                <div className="space-y-8">
+                    {groups.map((g) => (
+                        <div key={`${g.className}::${g.subjectName}`} className="space-y-3">
+                            <div className="flex items-center gap-2 border-b border-border/60 pb-2">
+                                <h2 className="text-sm font-black uppercase tracking-tight">{g.className}</h2>
+                                <Badge variant="outline" className="text-[9px]">{g.subjectName}</Badge>
+                                <span className="text-[10px] text-muted-foreground">{g.items.length} file(s)</span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {g.items.map((s) => (
+                                    <motion.div key={s.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}>
+                                        <Card className="border-border/60 shadow-sm cursor-pointer hover:border-primary/20 transition-all" onClick={() => openDetail(s.id)}>
+                                            <CardHeader className="border-b border-border/60 pb-4 flex flex-row items-center justify-between">
+                                                <CardTitle className="text-sm font-black uppercase tracking-tight">{s.filename}</CardTitle>
+                                                <Badge className={s.status === "READY" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/20"}>
+                                                    {s.status}
+                                                </Badge>
+                                            </CardHeader>
+                                            <CardContent className="p-4 text-xs text-muted-foreground">
+                                                {s.pages ?? "?"} page(s) · {new Date(s.createdAt).toLocaleDateString()}
+                                            </CardContent>
+                                        </Card>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </div>
                     ))}
                 </div>
             )}

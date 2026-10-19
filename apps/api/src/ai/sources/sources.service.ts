@@ -31,7 +31,7 @@ export class SourcesService {
 
     async list(userId: string) {
         const teacherId = await this.resolveTeacherId(userId);
-        return this.prisma.sourceDocument.findMany({
+        const docs = await this.prisma.sourceDocument.findMany({
             where: { teacherId },
             orderBy: { createdAt: 'desc' },
             select: {
@@ -41,8 +41,36 @@ export class SourcesService {
                 pages: true,
                 status: true,
                 createdAt: true,
+                classId: true,
+                subjectId: true,
             },
         });
+
+        // SourceDocument stores classId/subjectId as plain columns (no relation),
+        // so resolve the display names in one extra lookup.
+        const classIds = [...new Set(docs.map((d) => d.classId).filter((id): id is string => !!id))];
+        const subjectIds = [...new Set(docs.map((d) => d.subjectId).filter((id): id is string => !!id))];
+        const [classes, subjects] = await Promise.all([
+            classIds.length
+                ? this.prisma.class.findMany({ where: { id: { in: classIds } }, select: { id: true, name: true } })
+                : [],
+            subjectIds.length
+                ? this.prisma.subject.findMany({ where: { id: { in: subjectIds } }, select: { id: true, name: true } })
+                : [],
+        ]);
+        const classById = new Map(classes.map((c) => [c.id, c]));
+        const subjectById = new Map(subjects.map((s) => [s.id, s]));
+
+        return docs.map((d) => ({
+            id: d.id,
+            filename: d.filename,
+            kind: d.kind,
+            pages: d.pages,
+            status: d.status,
+            createdAt: d.createdAt,
+            class: d.classId ? classById.get(d.classId) ?? null : null,
+            subject: d.subjectId ? subjectById.get(d.subjectId) ?? null : null,
+        }));
     }
 
     /** Ingest uploaded text (already extracted by the controller's multer +
@@ -52,6 +80,8 @@ export class SourcesService {
         filename: string;
         kind: 'PDF' | 'IMAGE';
         pages: { page: number; text: string }[];
+        classId?: string | null;
+        subjectId?: string | null;
     }) {
         const teacherId = await this.resolveTeacherId(opts.userId);
         const fullText = opts.pages.map((p) => p.text).join('\n');
@@ -67,6 +97,8 @@ export class SourcesService {
                 filename: opts.filename,
                 kind: opts.kind,
                 pages: opts.pages.length,
+                classId: opts.classId ?? null,
+                subjectId: opts.subjectId ?? null,
                 status: 'PROCESSING',
             },
         });
@@ -105,6 +137,8 @@ export class SourcesService {
     async ingestUpload(
         userId: string,
         file: { buffer: Buffer; originalname: string; mimetype: string } | undefined,
+        classId?: string,
+        subjectId?: string,
     ) {
         if (!file) throw new BadRequestException('No file provided (use form field "file")');
 
@@ -152,6 +186,8 @@ export class SourcesService {
             filename: file.originalname,
             kind: isPdf ? 'PDF' : 'PDF',
             pages,
+            classId,
+            subjectId,
         });
         // Attach the stored-file URL so the UI can link back to the original.
         return this.prisma.sourceDocument.update({
