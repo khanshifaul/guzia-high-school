@@ -50,7 +50,7 @@ export class UploadController {
             file.mimetype,
             folder || 'uploads',
         );
-        return { ...stored, usingR2: this.upload.usingR2 };
+        return { ...stored, remoteStorage: this.upload.usingRemoteStorage };
     }
 
     @Public()

@@ -1,6 +1,7 @@
 // src/upload/upload.service.ts — file storage for images & documents.
-// Uses Cloudflare R2 (S3-compatible) when configured; falls back to local
-// disk under uploads/ so the offline demo still works end-to-end.
+// Uses an S3-compatible object store (Backblaze B2, Cloudflare R2, MinIO, …)
+// when configured; falls back to local disk under uploads/ so the offline
+// demo still works end-to-end.
 import { BadRequestException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PutObjectCommand, GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
@@ -15,7 +16,7 @@ export interface StoredFile {
     url: string;
     size: number;
     contentType: string;
-    storage: 'r2' | 'local';
+    storage: 's3' | 'local';
 }
 
 const ALLOWED_MIME = new Set([
@@ -36,29 +37,47 @@ export class UploadService {
     private readonly localDir: string;
 
     constructor(private readonly config: ConfigService) {
+        // Generic S3-compatible config. The legacy CF_R2_* vars are honored as a
+        // fallback when the STORAGE_* vars are unset.
         const accountId = this.config.get<string>('CF_ACCOUNT_ID');
-        const accessKeyId = this.config.get<string>('CF_R2_ACCESS_KEY_ID');
-        const secretAccessKey = this.config.get<string>('CF_R2_SECRET_ACCESS_KEY');
-        this.bucket = this.config.get<string>('CF_R2_BUCKET_NAME') ?? 'guzia-uploads';
+        const r2Endpoint = accountId ? `https://${accountId}.r2.cloudflarestorage.com` : undefined;
+
+        const endpoint = this.config.get<string>('STORAGE_ENDPOINT') ?? r2Endpoint;
+        const region = this.config.get<string>('STORAGE_REGION') ?? 'auto';
+        const accessKeyId =
+            this.config.get<string>('STORAGE_ACCESS_KEY_ID') ?? this.config.get<string>('CF_R2_ACCESS_KEY_ID');
+        const secretAccessKey =
+            this.config.get<string>('STORAGE_SECRET_ACCESS_KEY') ?? this.config.get<string>('CF_R2_SECRET_ACCESS_KEY');
+        // Backblaze B2 requires path-style addressing; R2 accepts it too.
+        const forcePathStyle = this.config.get<string>('STORAGE_FORCE_PATH_STYLE') === 'true';
+
+        this.bucket =
+            this.config.get<string>('STORAGE_BUCKET') ??
+            this.config.get<string>('CF_R2_BUCKET_NAME') ??
+            'guzia-uploads';
+        // Explicit public base URL only (e.g. an R2/CDN domain). Otherwise files
+        // are served through the authenticated /api/files/:key route.
         this.publicBase =
+            this.config.get<string>('STORAGE_PUBLIC_URL') ??
             this.config.get<string>('CF_R2_PUBLIC_URL') ??
-            (accountId ? `https://${accountId}.r2.cloudflarestorage.com` : '');
+            '';
         this.localDir = resolve(process.cwd(), 'uploads');
 
-        if (accountId && accessKeyId && secretAccessKey) {
+        if (endpoint && accessKeyId && secretAccessKey) {
             this.client = new S3Client({
-                region: 'auto',
-                endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+                region,
+                endpoint,
                 credentials: { accessKeyId, secretAccessKey },
+                forcePathStyle,
             });
-            this.logger.log('R2 storage configured');
+            this.logger.log(`Object storage configured (${endpoint})`);
         } else {
             this.client = null;
-            this.logger.warn('R2 not configured — falling back to local disk uploads/');
+            this.logger.warn('Object storage not configured — falling back to local disk uploads/');
         }
     }
 
-    get usingR2(): boolean {
+    get usingRemoteStorage(): boolean {
         return this.client !== null;
     }
 
@@ -90,10 +109,10 @@ export class UploadService {
             );
             return {
                 key,
-                url: `${this.publicBase}/${this.bucket}/${key}`,
+                url: this.publicBase ? `${this.publicBase.replace(/\/$/, '')}/${key}` : `/api/files/${key}`,
                 size: buffer.byteLength,
                 contentType,
-                storage: 'r2',
+                storage: 's3',
             };
         }
 
