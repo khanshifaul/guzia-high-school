@@ -20,8 +20,21 @@ interface AnswerRow {
 interface PaperQuestion {
     id: string;
     type: string;
+    text: string;
+    options: unknown;
     answer: string;
+    explanation: string | null;
     marks: number;
+    order: number;
+}
+
+/** Apply a Prisma-style `select` projection, so a test can prove that a
+ *  query really did narrow the columns it returned. */
+function project<T extends Record<string, unknown>>(row: T, select?: Record<string, boolean>): T {
+    if (!select) return row;
+    const out: Record<string, unknown> = {};
+    for (const [key, keep] of Object.entries(select)) if (keep) out[key] = row[key];
+    return out as T;
 }
 
 interface FakeState {
@@ -37,11 +50,22 @@ interface FakeState {
 function serviceWith(state: FakeState): TestsService {
     const prisma = {
         questionPaper: {
-            findUnique: async () => {
+            findUnique: async ({ include }: { include?: { questions?: { select?: Record<string, boolean> } } } = {}) => {
                 if (!state.paper) return null;
-                return { ...state.paper, questions: state.paperQuestions };
+                const select = include?.questions?.select;
+                return {
+                    ...state.paper,
+                    questions: state.paperQuestions.map((q) => project(q as never, select)),
+                };
             },
-            findMany: async () => [],
+            findMany: async ({ include }: { include?: { questions?: { select?: Record<string, boolean> } } } = {}) => {
+                if (!state.paper) return [];
+                const select = include?.questions?.select;
+                return [{
+                    ...state.paper,
+                    questions: state.paperQuestions.map((q) => project(q as never, select)),
+                }];
+            },
         },
         question: {
             findUnique: async ({ where }: { where: { id: string } }) =>
@@ -52,22 +76,25 @@ function serviceWith(state: FakeState): TestsService {
                 state.studentClassId === where.classId ? { id: where.id, classId: where.classId } : null,
         },
         testAttempt: {
-            findUnique: async () =>
-                state.attempt
-                    ? {
-                        ...state.attempt,
-                        studentId: STUDENT_ID,
-                        answers: state.answers,
-                        paper: { ...(state.paper ?? {}), questions: state.paperQuestions },
-                    }
-                    : null,
+            findUnique: async ({ include }: { include?: { paper?: { include?: { questions?: { select?: Record<string, boolean> } } } } } = {}) => {
+                if (!state.attempt) return null;
+                const select = include?.paper?.include?.questions?.select;
+                return {
+                    ...state.attempt,
+                    studentId: STUDENT_ID,
+                    answers: state.answers,
+                    paper: {
+                        ...state.paper,
+                        questions: state.paperQuestions.map((q) => project(q as never, select)),
+                    },
+                };
+            },
             create: async ({ data }: { data: Record<string, unknown> }) => {
                 state.attempt = { id: 'attempt-1', status: 'IN_PROGRESS', startedAt: new Date(), ...data };
                 return state.attempt;
             },
             findMany: async () => [],
             update: async ({
-                where,
                 data,
             }: {
                 where: { id: string };
@@ -143,8 +170,26 @@ function baseState(overrides: Partial<FakeState> = {}): FakeState {
             endAt: new Date(Date.now() + 60_000),
         },
         paperQuestions: [
-            { id: 'q-mcq', type: 'MCQ', answer: 'b', marks: 1 },
-            { id: 'q-short', type: 'SHORT', answer: 'model', marks: 2 },
+            {
+                id: 'q-mcq',
+                type: 'MCQ',
+                text: 'What is 2 + 2?',
+                options: ['a', 'b'],
+                answer: 'b',
+                explanation: 'THE ANSWER KEY',
+                marks: 1,
+                order: 1,
+            },
+            {
+                id: 'q-short',
+                type: 'SHORT',
+                text: 'Explain photosynthesis.',
+                options: null,
+                answer: 'THE MODEL ANSWER',
+                explanation: 'THE EXPLANATION',
+                marks: 2,
+                order: 2,
+            },
         ],
         attempt: null,
         answers: [],
@@ -316,5 +361,40 @@ describe('normaliseQuestionText', () => {
         expect(normaliseQuestionText('Name the 3 types of folk song.')).toBe(
             'Name the 3 types of folk song.',
         );
+    });
+});
+
+describe('the answer key never reaches a student', () => {
+    it('availableForStudent returns the questions without the answer or the explanation', async () => {
+        const service = serviceWith(baseState());
+        const papers = await service.availableForStudent(STUDENT_ID);
+        expect(papers).toHaveLength(1);
+        const question = papers[0].questions[0];
+        expect(question).not.toHaveProperty('answer');
+        expect(question).not.toHaveProperty('explanation');
+        // The question itself is still there.
+        expect(question.text).toBe('What is 2 + 2?');
+        expect(question.marks).toBe(1);
+        expect(question.options).toEqual(['a', 'b']);
+    });
+
+    it('startAttempt returns the paper without the answer or the explanation', async () => {
+        const service = serviceWith(baseState());
+        const attempt = await service.startAttempt(PAPER_ID, STUDENT_ID);
+        expect(attempt).not.toBeNull();
+        const question = attempt!.paper.questions[0];
+        expect(question).not.toHaveProperty('answer');
+        expect(question).not.toHaveProperty('explanation');
+        expect(question.text).toBe('What is 2 + 2?');
+    });
+
+    it('no student-facing response carries the key in any question', async () => {
+        const service = serviceWith(baseState());
+        const papers = await service.availableForStudent(STUDENT_ID);
+        const attempt = await service.startAttempt(PAPER_ID, STUDENT_ID);
+        const serialised = JSON.stringify([papers, attempt]);
+        expect(serialised).not.toContain('THE ANSWER KEY');
+        expect(serialised).not.toContain('THE MODEL ANSWER');
+        expect(serialised).not.toContain('THE EXPLANATION');
     });
 });

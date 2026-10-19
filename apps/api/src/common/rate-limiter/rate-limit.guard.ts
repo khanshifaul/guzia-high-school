@@ -4,9 +4,9 @@
 import {
     CanActivate,
     ExecutionContext,
-    Injectable,
-    Logger,
     HttpException,
+    Injectable,
+    SetMetadata,
 } from '@nestjs/common';
 import { RateLimiterService } from './rate-limiter.service';
 
@@ -16,19 +16,27 @@ interface RateLimitMeta {
     maxRequests: number;
 }
 
+/** The metadata key the guard reads. The decorator and the guard must
+  *  agree on it — `Reflect.metadata(key, …)` keys by the *method name*, so
+  *  it can never be looked up again under 'rate-limit'. */
+export const RATE_LIMIT_KEY = 'rate-limit';
+
 /** Declares a rate limit on a route handler. */
 export const RateLimit = (scope: string, windowMs: number, maxRequests: number) =>
-    Reflect.metadata('rate-limit', { scope, windowMs, maxRequests });
+    SetMetadata(RATE_LIMIT_KEY, { scope, windowMs, maxRequests });
 
 @Injectable()
 export class RateLimitGuard implements CanActivate {
-    private readonly logger = new Logger(RateLimitGuard.name);
-
     constructor(private readonly limiter: RateLimiterService) {}
 
     async canActivate(context: ExecutionContext): Promise<boolean> {
+        // The handler's own limit wins; a class-level @RateLimit is the
+        // fallback, so a whole controller can be limited at once.
         const handler = context.getHandler();
-        const meta = Reflect.getMetadata('rate-limit', handler) as RateLimitMeta | undefined;
+        const controller = context.getClass();
+        const meta =
+            (Reflect.getMetadata(RATE_LIMIT_KEY, handler) as RateLimitMeta | undefined) ??
+            (Reflect.getMetadata(RATE_LIMIT_KEY, controller) as RateLimitMeta | undefined);
         if (!meta) return true;
 
         const req = context.switchToHttp().getRequest();

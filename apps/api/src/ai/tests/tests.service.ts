@@ -16,6 +16,20 @@ import { parseJsonObject } from '../llm/json.util';
 import { autoScore, totalScore } from './grading.util';
 import { GradeAnswerDto, SaveAnswerDto } from './dto';
 
+/**
+ * The question fields a student may see. `answer` and `explanation` are the
+ * answer key and must never travel to a student — the student page renders
+ * the question, its options and its marks, nothing else.
+ */
+const STUDENT_QUESTION_SELECT = {
+    id: true,
+    type: true,
+    text: true,
+    options: true,
+    marks: true,
+    order: true,
+} as const;
+
 const PaperSchema = z.object({
     title: z.string(),
     groups: z
@@ -246,7 +260,7 @@ export class TestsService {
             include: {
                 class: true,
                 subject: true,
-                questions: { orderBy: { order: 'asc' } },
+                questions: { select: STUDENT_QUESTION_SELECT, orderBy: { order: 'asc' } },
                 attempts: { where: { studentId } },
             },
             orderBy: { createdAt: 'desc' },
@@ -257,7 +271,7 @@ export class TestsService {
     async startAttempt(paperId: string, studentId: string) {
         const paper = await this.prisma.questionPaper.findUnique({
             where: { id: paperId },
-            include: { questions: { orderBy: { order: 'asc' } } },
+            include: { questions: { select: STUDENT_QUESTION_SELECT, orderBy: { order: 'asc' } } },
         });
         if (!paper || paper.mode !== 'ONLINE') throw new NotFoundException('Online test not found');
 
@@ -418,7 +432,7 @@ export class TestsService {
                     include: {
                         class: true,
                         subject: true,
-                        questions: { orderBy: { order: 'asc' } },
+                        questions: { select: STUDENT_QUESTION_SELECT, orderBy: { order: 'asc' } },
                     },
                 },
             },
