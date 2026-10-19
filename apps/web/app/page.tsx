@@ -14,8 +14,9 @@ import {
     FaGraduationCap, FaChalkboardUser, FaBookOpen, FaFlask, FaTrophy, FaUsers,
     FaUserGraduate, FaSchool, FaAward, FaCalendarCheck, FaMicroscope, FaLaptopCode,
     FaDumbbell, FaMusic, FaBook, FaQuoteLeft, FaStar, FaPersonRunning, FaUtensils,
-    FaBus, FaArrowRight, FaHeart, FaUserCheck, FaMoneyBillWave,
+    FaBus, FaArrowRight, FaHeart,
 } from "react-icons/fa6";
+import { ONLINE_SERVICES } from "@/lib/online-services";
 import { Navbar } from "@/components/public/navbar";
 import { Footer } from "@/components/public/footer";
 
@@ -425,17 +426,15 @@ export default function HomePage() {
                         <Reveal>
                             <motion.div variants={stagger} className="text-center mb-12">
                                 <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-2">Online Services</motion.h2>
-                                <motion.p variants={fadeIn} className="text-muted-foreground">Access the portal for admissions, attendance, results, fees, and AI assistance.</motion.p>
+                                <motion.p variants={fadeIn} className="text-muted-foreground">Apply, and follow your attendance, results and fees — each link opens the right page for you.</motion.p>
                             </motion.div>
                             <motion.div variants={stagger} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                                {[
-                                    { icon: FaUserCheck, title: "Online Admission", desc: "Apply and track admission online.", href: "/login" },
-                                    { icon: FaCalendarCheck, title: "Attendance", desc: "Daily attendance for students & parents.", href: "/login" },
-                                    { icon: FaGraduationCap, title: "Results & GPA", desc: "Published results with canonical GPA.", href: "/login" },
-                                    { icon: FaMoneyBillWave, title: "Fee Payment", desc: "View dues and payment history.", href: "/login" },
-                                ].map((s) => (
-                                    <motion.div key={s.title} variants={fadeInUp}>
-                                        <Link href={s.href}>
+                                {ONLINE_SERVICES.map((s) => (
+                                    <motion.div key={s.key} variants={fadeInUp}>
+                                        {/* The resolver sends each visitor to the
+                                            page for their role — or to the
+                                            login page, and back here after. */}
+                                        <Link href={`/portal/${s.key}`}>
                                             <Card className="h-full border-border/60 hover:border-primary/30 transition-colors group cursor-pointer">
                                                 <CardContent className="p-6 text-center">
                                                     <div className="inline-flex items-center justify-center size-12 rounded-xl bg-primary/10 mb-4 group-hover:bg-primary/20 transition-colors">
