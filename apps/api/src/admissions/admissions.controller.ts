@@ -29,18 +29,18 @@ export class AdmissionsController {
         return this.service.queue(status, className);
     }
 
-    @Roles('ADMIN')
-    @Get(':id')
-    @ApiOperation({ summary: 'Get a single application by id (admin)' })
-    findOne(@Param('id') id: string) {
-        return this.service.findOne(id);
-    }
-
     @Roles('STUDENT')
     @Get('me')
     @ApiOperation({ summary: 'Applicant: get their own application (self-scoped)' })
     me(@User() user: { id: string }) {
         return this.service.me(user.id);
+    }
+
+    @Roles('ADMIN')
+    @Get(':id')
+    @ApiOperation({ summary: 'Get a single application by id (admin)' })
+    findOne(@Param('id') id: string) {
+        return this.service.findOne(id);
     }
 
     @Roles('ADMIN')
