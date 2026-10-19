@@ -43,6 +43,23 @@ export interface ApplicationLetterhead {
     board: string;
 }
 
+/**
+ * Print the application sheet, once everything it needs is on screen.
+ *
+ * The dialog opens as soon as React paints, and two things can still be
+ * missing by then: the web font (the sheet would lay out in a fallback
+ * face) and the student photo (still in flight, so the printed form would
+ * lose it). Both callers — the print route and the success page — wait for
+ * the same two things.
+ */
+export async function printApplicationSheet(): Promise<void> {
+    await document.fonts.ready;
+    await Promise.all(
+        Array.from(document.images).map((img) => img.decode().catch(() => undefined)),
+    );
+    window.print();
+}
+
 /** One row of the sheet: a label and the value the applicant gave. */
 interface SheetRow {
     label: string;
@@ -156,6 +173,9 @@ export function AdmissionApplicationSheet({
         },
     ];
 
+    // The photo is printed in the letterhead, so its row says where it went
+    // rather than claiming it is merely filed. Without this the form would
+    // tell the school "No file attached" while a photo sits above it.
     const attachments = ATTACHMENT_KEYS
         .map((key) => ({ key, url: files[key] ?? receipt?.[key] }))
         .filter((a) => Boolean(a.url));
@@ -165,20 +185,26 @@ export function AdmissionApplicationSheet({
             className={cn(
                 "mx-auto bg-white text-black",
                 // A4 sheet. On screen it is a white page with a shadow; in print
-                // it becomes the page itself. The print variant drops the
-                // screen padding — the @page margin already spaces the
-                // document off the paper edge.
-                "w-[210mm] min-h-[297mm] p-[16mm] shadow-lg print:w-full print:min-h-0 print:p-0 print:shadow-none",
+                // it becomes the page itself. The margin lives on the sheet, not
+                // on @page: a print dialog set to "Margins: None" overrides the
+                // page margin and would push the form to the paper edge, but it
+                // cannot take away an element's own padding. The named page
+                // drops @page's 12mm so the two do not add up to 24mm.
+                "w-[210mm] min-h-[297mm] p-[16mm] shadow-lg print:w-full print:min-h-0 print:p-[12mm] print:shadow-none print:[page:admission-sheet]",
                 className,
             )}
         >
-            <SheetLetterhead letterhead={letterhead} applicationNo={appNo} />
+            <SheetLetterhead
+                letterhead={letterhead}
+                applicationNo={appNo}
+                photoUrl={files.photoUrl ?? receipt?.photoUrl}
+            />
 
             <SheetSection title={t("Student Information", "শিক্ষার্থীর তথ্য")} rows={student} />
             <SheetSection title={t("Parent Information", "অভিভাবকের তথ্য")} rows={family} />
             <SheetSection title={t("Guardian & Contact", "অভিভাবক ও যোগাযোগ")} rows={contact} />
 
-            <div className="mt-3 grid grid-cols-2 gap-4">
+            <div className="mt-3 grid grid-cols-2 gap-4 print:mt-2">
                 <SheetAddress title={t("Present Address", "বর্তমান ঠিকানা")} rows={present} summary={presentAddress(form)} />
                 <SheetAddress
                     title={t("Permanent Address", "স্থায়ী ঠিকানা")}
@@ -192,7 +218,7 @@ export function AdmissionApplicationSheet({
 
             {/* The attachments and the applicant's note sit side by side:
                 both are short, and the page has to hold everything. */}
-            <div className="mt-3 grid grid-cols-2 gap-4">
+            <div className="mt-3 grid grid-cols-2 gap-4 print:mt-2">
                 <section>
                     <h2 className="mb-1.5 border-b-2 border-black pb-1 text-[12px] font-black uppercase tracking-wider">
                         {t("Attachments", "সংযুক্তি")}
@@ -207,7 +233,11 @@ export function AdmissionApplicationSheet({
                                         {t(APPLICATION_ATTACHMENTS[a.key].label, APPLICATION_ATTACHMENTS[a.key].labelBn)}
                                     </span>
                                     <span className="flex-1 border-b border-dotted border-black/40" />
-                                    <span className="font-semibold">{t("Attached", "সংযুক্ত")}</span>
+                                    <span className="font-semibold">
+                                        {a.key === "photoUrl"
+                                            ? t("Printed above", "উপরে ছাপা")
+                                            : t("Attached", "সংযুক্ত")}
+                                    </span>
                                 </li>
                             ))}
                         </ul>
@@ -224,7 +254,7 @@ export function AdmissionApplicationSheet({
                 </section>
             </div>
 
-            <section className="mt-3 break-inside-avoid">
+            <section className="mt-3 break-inside-avoid print:mt-2">
                 <h2 className="mb-1.5 border-b-2 border-black pb-1 text-[12px] font-black uppercase tracking-wider">
                     {t("Declaration", "ঘোষণা")}
                 </h2>
@@ -234,7 +264,7 @@ export function AdmissionApplicationSheet({
                         "আমি ঘোষণা করছি যে প্রদত্ত তথ্য সত্য এবং প্রতিষ্ঠানের সকল নিয়ম-কানুন মেনে চলতে প্রতিশ্রুতিবদ্ধ।",
                     )}
                 </p>
-                <div className="mt-3 grid grid-cols-2 gap-8 text-[10px]">
+                <div className="mt-3 grid grid-cols-2 gap-8 text-[10px] print:mt-2">
                     <div>
                         <div className="h-7 border-b border-black" />
                         <p className="mt-1 font-bold">{t("Applicant's Signature", "আবেদনকারীর স্বাক্ষর")}</p>
@@ -246,7 +276,7 @@ export function AdmissionApplicationSheet({
                 </div>
             </section>
 
-            <footer className="mt-3 border-t border-black/30 pt-2 text-center text-[8.5px] leading-relaxed text-black/60">
+            <footer className="mt-3 border-t border-black/30 pt-2 text-center text-[8.5px] leading-relaxed text-black/60 print:mt-2">
                 <p>
                     {letterhead.schoolName} · EIIN {letterhead.eiin} · {letterhead.board}
                 </p>
@@ -265,14 +295,17 @@ export function AdmissionApplicationSheet({
 function SheetLetterhead({
     letterhead,
     applicationNo,
+    photoUrl,
 }: {
     letterhead: ApplicationLetterhead;
     applicationNo: string;
+    /** The student photo, printed in a box at the top right of the form. */
+    photoUrl?: string;
 }) {
     return (
         <header className="border-b-2 border-black pb-3">
             <div className="flex items-start justify-between gap-4">
-                <div>
+                <div className="min-w-0">
                     <h1 className="text-[18px] font-black uppercase leading-tight tracking-tight">
                         {letterhead.schoolName}
                     </h1>
@@ -293,6 +326,24 @@ function SheetLetterhead({
                         </p>
                     ) : null}
                 </div>
+                {/* The photo is part of the form, not decoration: the school
+                    keeps it with the application. The box always prints so the
+                    same space is left for it on a draft without a photo. */}
+                <div className="shrink-0 text-center">
+                    <div className="size-[26mm] border border-black bg-white">
+                        {photoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                                src={photoUrl}
+                                alt="Student photo"
+                                className="size-full object-cover print:block"
+                            />
+                        ) : null}
+                    </div>
+                    <p className="mt-0.5 text-[7.5px] font-bold uppercase tracking-wide text-black/60">
+                        Student Photo
+                    </p>
+                </div>
             </div>
         </header>
     );
@@ -301,7 +352,7 @@ function SheetLetterhead({
 /** A titled group of label/value rows. */
 function SheetSection({ title, rows }: { title: string; rows: SheetRow[] }) {
     return (
-        <section className="mt-3">
+        <section className="mt-3 print:mt-2">
             <h2 className="mb-1.5 border-b-2 border-black pb-1 text-[12px] font-black uppercase tracking-wider">{title}</h2>
             <SheetGrid rows={rows} />
         </section>

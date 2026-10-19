@@ -97,13 +97,31 @@ Endpoints enforce child linkage server-side.
   sheet is the *default* rendering of that route: no form controls, no navigation, no portal
   chrome, so what comes out of the printer is the application and nothing else. The
   screen-only toolbar (print / new application) is hidden on paper with `print:hidden`.
-  The sheet reuses the canonical A4 print conventions (`components/shared/test-paper.tsx` for
-  the layout, the `@media print` block in `globals.css` for the page size), so there is one
-  way to print a document in this project. It auto-prints once the sheet is ready, after
-  `document.fonts.ready`, guarded by a ref so the applicant sees exactly one print dialog.
-  The values come from the session (`admissionReceipt` + `admissionPrintData`), so no API
-  call is involved and the sheet can be reopened from the success screen
-  ("View Full Form"). Bilingual like the rest of the public site.
+  The sheet follows the project's canonical A4 print conventions (see
+  `components/shared/test-paper.tsx`; the `@media print` block in `globals.css` for the page
+  size), so there is one way to print a document in this project. It auto-prints once the
+  sheet is ready, after `document.fonts.ready` and after every image has decoded — a photo
+  still in flight would otherwise be missing from the paper — guarded by a ref so the
+  applicant sees exactly one print dialog. The values come from the session
+  (`admissionReceipt` + `admissionPrintData`), so no API call is involved.
+  **The student photo is printed on the sheet itself**, in a 26 mm box at the top right of
+  the letterhead, and the Attachments list calls it "Printed above" so the form never claims
+  nothing is attached while a photo sits above it.
+  **The sheet carries its own 12 mm margin** rather than relying on the `@page` margin: a
+  print dialog set to "Margins: None" overrides `@page` and would print the form flush to the
+  paper edge, but it cannot take away an element's own padding. The named page
+  `@page admission-sheet { margin: 0 }` drops `@page`'s 12 mm so the two do not stack. The
+  result is the same 12 mm margin on all four sides whatever the browser's margin setting is.
+  Bilingual like the rest of the public site.
+
+- **`/admission/success` shows the full application sheet by default**, not a receipt card —
+  the form is the applicant's copy, so it is on the page without a click. The page keeps one
+  button, **Print / Save as PDF**, which prints that sheet (photo included); "New Application"
+  and "View Full Form" are gone, because the form is already there and printing it is the one
+  thing left to do. Navbar, footer, the confirmation banner and the button are `print:hidden`,
+  and the page's `main` drops its own padding in print, so the sheet is again the only thing
+  on the paper. The receipt facts (application number, submitted status) stay in the
+  banner above it.
 
 ## Business logic (single implementations, unit-tested)
 

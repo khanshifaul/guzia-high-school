@@ -75,8 +75,9 @@ export interface ApplicationAttachment {
     /** The kind the upload endpoint stores the file under. */
     kind: string;
     accept: string;
-    /** Extra guidance shown under the upload box. */
+    /** The rule the file has to meet, shown under the upload box. */
     hint?: string;
+    hintBn?: string;
 }
 
 /** The attachments the academic step uploads. */
@@ -87,18 +88,23 @@ export const APPLICATION_ATTACHMENTS: Record<keyof ApplicationFiles, Application
         kind: "photo",
         accept: "image/*",
         hint: "Exactly 300×300 px, max 1 MB",
+        hintBn: "ঠিক ৩০০×৩০০ পিক্সেল, সর্বোচ্চ ১ MB",
     },
     birthCertUrl: {
         label: "Birth Certificate",
         labelBn: "জন্মনিবন্ধন",
         kind: "birthCert",
         accept: "image/*,application/pdf",
+        hint: "Image or PDF",
+        hintBn: "ছবি বা PDF",
     },
     testimonialUrl: {
         label: "Testimonial / Transfer Certificate",
         labelBn: "প্রশংসাপত্র / ট্রান্সফার সার্টিফিকেট",
         kind: "testimonial",
         accept: "image/*,application/pdf",
+        hint: "Image or PDF",
+        hintBn: "ছবি বা PDF",
     },
 };
 

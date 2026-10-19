@@ -37,6 +37,7 @@ import { Navbar } from "@/components/public/navbar";
 import { Footer } from "@/components/public/footer";
 import {
     AdmissionApplicationSheet,
+    printApplicationSheet,
     type ApplicationLetterhead,
 } from "@/components/shared/admission-application";
 import { ageFromDateOfBirth } from "@/lib/age";
@@ -153,18 +154,16 @@ export default function AdmissionClient({ print }: { print: boolean }) {
         }
     }, [print]);
 
-    // Auto-print once the sheet is ready — wait for fonts so the print does
-    // not fall back to a default face mid-layout. The ref guard keeps it to
-    // exactly one print dialog: React re-runs effects in development, and a
-    // second dialog would block the applicant behind two print previews.
+    // Auto-print once the sheet is ready — wait for the fonts and the photo,
+    // so the paper does not come out with a fallback face or a missing
+    // picture. The ref guard keeps it to exactly one print dialog: React
+    // re-runs effects in development, and a second dialog would block the
+    // applicant behind two print previews.
     const printed = React.useRef(false);
     React.useEffect(() => {
         if (!print || !restored || printed.current) return;
         printed.current = true;
-        (async () => {
-            await document.fonts.ready;
-            window.print();
-        })();
+        void printApplicationSheet();
     }, [print, restored]);
 
     const tn = (en: string, bn: string) => t(en, bn);
@@ -376,7 +375,7 @@ export default function AdmissionClient({ print }: { print: boolean }) {
                 {/* Toolbar — hidden on paper, so the sheet prints alone. */}
                 <div className="print:hidden sticky top-0 z-50 w-full border-b border-border/60 bg-white px-6 py-3 shadow-sm">
                     <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
-                        <Button onClick={() => window.print()} className="gap-2 font-black text-xs uppercase tracking-wider">
+                        <Button onClick={() => void printApplicationSheet()} className="gap-2 font-black text-xs uppercase tracking-wider">
                             <FaPrint size={12} />
                             {tn("Print / Save as PDF", "প্রিন্ট / PDF সংরক্ষণ")}
                         </Button>
@@ -678,7 +677,6 @@ export default function AdmissionClient({ print }: { print: boolean }) {
                                                             {ATTACHMENT_ICONS[kind]({ size: 10 })}
                                                             {meta.label}
                                                         </Label>
-                                                        {meta.hint ? <p className="text-[10px] text-muted-foreground">{meta.hint}</p> : null}
                                                         {url ? (
                                                             <div className="relative rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-3 text-center">
                                                                 {kind === "photoUrl" ? (
@@ -699,6 +697,11 @@ export default function AdmissionClient({ print }: { print: boolean }) {
                                                                     onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadFile(kind, file); }} />
                                                             </label>
                                                         )}
+                                                        {meta.hint ? (
+                                                            <p className="text-[10px] text-muted-foreground">
+                                                                {tn(meta.hint, meta.hintBn ?? meta.hint)}
+                                                            </p>
+                                                        ) : null}
                                                         {uploadErrors[kind] ? (
                                                             <p className="text-[10px] font-semibold text-destructive">{uploadErrors[kind]}</p>
                                                         ) : null}

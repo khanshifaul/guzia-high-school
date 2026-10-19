@@ -195,6 +195,18 @@ body {
         margin: 12mm;
     }
 
+    /* The admission sheet carries its own margin (see
+       components/shared/admission-application.tsx): a print dialog set to
+       "Margins: None" overrides the page margin above and would print the
+       form flush to the paper edge. An element's padding cannot be
+       overridden, so the sheet's own padding is the guarantee. Named pages
+       override the unnamed rule, so @page's 12mm does not stack on top of
+       the sheet's 12mm. */
+    @page admission-sheet {
+        size: A4 portrait;
+        margin: 0;
+    }
+
     html,
     body {
         background: #fff !important;
