@@ -10,53 +10,7 @@ import { DatabaseService } from '../database/database.service';
 import { LlmService } from './llm/llm.service';
 import { encrypt } from './llm/crypto.util';
 import { UpdateProviderConfigDto } from './dto/update-provider-config.dto';
-
-/** Hosts always allowed (local dev with Ollama / LM Studio). */
-const ALWAYS_ALLOWED_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
-
-/** True when host is a private/reserved IP that must be blocked by default. */
-function isPrivateOrReservedHost(host: string): boolean {
-    const h = host.toLowerCase();
-    if (ALWAYS_ALLOWED_HOSTS.has(h)) return false;
-    if (
-        h.startsWith('127.') ||
-        h.startsWith('10.') ||
-        /^172\.(1[6-9]|2[0-9]|3[01])\./.test(h) ||
-        h.startsWith('192.168.') ||
-        h.startsWith('169.254.') ||
-        h === '0.0.0.0'
-    ) {
-        return true;
-    }
-    // IPv6 unique local (fc00::/7), link-local (fe80::/10), loopback (::1).
-    if (h.startsWith('fc') || h.startsWith('fd') || h.startsWith('fe8')) return true;
-    return false;
-}
-
-/** Validate baseUrl host against SSRF allowlist. Returns error message or null. */
-function validateBaseUrlHost(baseUrl: string): string | null {
-    let url: URL;
-    try {
-        url = new URL(baseUrl);
-    } catch {
-        return 'Invalid base URL.';
-    }
-    if (!/^https?:$/.test(url.protocol)) {
-        return 'Only http:// and https:// base URLs are allowed.';
-    }
-    const host = url.hostname;
-    const allowed =
-        ALWAYS_ALLOWED_HOSTS.has(host) ||
-        !isPrivateOrReservedHost(host) ||
-        (process.env.ALLOWED_AI_HOSTS ?? '')
-            .split(',')
-            .map((s) => s.trim().toLowerCase())
-            .includes(host);
-    if (!allowed) {
-        return `Base URL host "${host}" is not allowlisted. Add it to ALLOWED_AI_HOSTS.`;
-    }
-    return null;
-}
+import { validateOutboundUrl } from '../common/net.util';
 
 @Injectable()
 export class ProviderConfigService {
@@ -92,7 +46,7 @@ export class ProviderConfigService {
         }
 
         if (dto.baseUrl !== undefined && dto.baseUrl.length > 0) {
-            const hostError = validateBaseUrlHost(dto.baseUrl);
+            const hostError = validateOutboundUrl(dto.baseUrl, process.env.ALLOWED_AI_HOSTS ?? '');
             if (hostError) throw new NotFoundException(hostError);
         }
 
@@ -151,7 +105,7 @@ export class ProviderConfigService {
             return { ok: false, error: 'baseUrl and textModel are required to test.' };
         }
 
-        const hostError = validateBaseUrlHost(baseUrl);
+        const hostError = validateOutboundUrl(baseUrl, process.env.ALLOWED_AI_HOSTS ?? "");
         if (hostError) return { ok: false, error: hostError };
 
         const started = Date.now();
@@ -201,7 +155,7 @@ export class ProviderConfigService {
             throw new NotFoundException('Set a base URL first, then fetch models.');
         }
 
-        const hostError = validateBaseUrlHost(baseUrl);
+        const hostError = validateOutboundUrl(baseUrl, process.env.ALLOWED_AI_HOSTS ?? "");
         if (hostError) throw new NotFoundException(hostError);
 
         try {

@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, Length } from 'class-validator';
+import { IsIn, IsOptional, IsString, IsUrl, Length } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { User } from '../../common/decorators/user.decorator';
@@ -46,6 +46,22 @@ class IngestSourceDto {
     subjectId?: string;
 }
 
+class FromUrlDto {
+    @ApiProperty({ example: 'https://www.nctb.gov.bd/site/page/...' })
+    @IsUrl({ require_tld: false })
+    url: string;
+
+    @ApiPropertyOptional({ description: 'Class this source belongs to' })
+    @IsOptional()
+    @IsString()
+    classId?: string;
+
+    @ApiPropertyOptional({ description: 'Subject this source belongs to' })
+    @IsOptional()
+    @IsString()
+    subjectId?: string;
+}
+
 @ApiTags('AI Sources')
 @Controller('ai/sources')
 export class SourcesController {
@@ -63,7 +79,7 @@ export class SourcesController {
     @Roles('TEACHER')
     @Post('upload')
     @RateLimit('ai:upload', 60_000, 5)
-    @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 15 * 1024 * 1024 } }))
+    @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 100 * 1024 * 1024 } }))
     @ApiOperation({ summary: 'Upload a PDF/text file → store (R2/local), extract, summarize' })
     @ApiConsumes('multipart/form-data')
     @ApiBody({
@@ -85,6 +101,14 @@ export class SourcesController {
         @User() user: { id: string },
     ) {
         return this.service.ingestUpload(user.id, file, classId, subjectId);
+    }
+
+    @Roles('TEACHER')
+    @Post('from-url')
+    @RateLimit('ai:upload', 60_000, 5)
+    @ApiOperation({ summary: 'Ingest a web page by URL (http/https)' })
+    fromUrl(@Body() dto: FromUrlDto, @User() user: { id: string }) {
+        return this.service.ingestUrl(user.id, dto.url, dto.classId, dto.subjectId);
     }
 
     @Roles('TEACHER')

@@ -25,7 +25,7 @@ export class UploadController {
 
     @Roles('ADMIN', 'TEACHER', 'STUDENT')
     @Post('upload')
-    @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 15 * 1024 * 1024 } }))
+    @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 100 * 1024 * 1024 } }))
     @ApiOperation({ summary: 'Upload an image or document (R2 or local disk)' })
     @ApiConsumes('multipart/form-data')
     @ApiBody({

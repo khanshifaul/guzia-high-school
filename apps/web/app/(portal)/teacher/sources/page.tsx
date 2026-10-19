@@ -55,7 +55,10 @@ interface SourceSummary {
 interface SourceDetail extends Source { summary: SourceSummary | null; chunks: { page: number | null; content: string }[] }
 interface AskResult { answer: string; citations: { page: number | null; snippet: string }[] }
 
-const MAX_MB = 15;
+const MAX_MB = 50;
+/** Direct API origin for uploads: a large multipart body exceeds the Next dev
+ *  proxy's limit, so post straight to the API (cookie is same-site). */
+const API_ORIGIN = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 export default function TeacherSourcesPage() {
     const router = useRouter();
@@ -71,7 +74,8 @@ export default function TeacherSourcesPage() {
     const [asking, setAsking] = React.useState(false);
 
     const [open, setOpen] = React.useState(false);
-    const [mode, setMode] = React.useState<"file" | "text">("file");
+    const [mode, setMode] = React.useState<"file" | "text" | "url">("file");
+    const [url, setUrl] = React.useState("");
     const [dragging, setDragging] = React.useState(false);
     const fileRef = React.useRef<HTMLInputElement>(null);
     const [filename, setFilename] = React.useState("");
@@ -129,7 +133,7 @@ export default function TeacherSourcesPage() {
             fd.append("file", file);
             if (classId) fd.append("classId", classId);
             if (subjectId) fd.append("subjectId", subjectId);
-            const res = await fetch("/api/ai/sources/upload", { method: "POST", body: fd, credentials: "include" });
+            const res = await fetch(`${API_ORIGIN}/api/ai/sources/upload`, { method: "POST", body: fd, credentials: "include" });
             const data: unknown = await res.json().catch(() => null);
             if (!res.ok) {
                 const messages =
@@ -162,6 +166,25 @@ export default function TeacherSourcesPage() {
             load();
         } catch (err) {
             setFeedback({ kind: "err", msg: err instanceof RequestError ? err.messages.join("; ") : "Ingest failed" });
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    async function ingestUrl() {
+        setBusy(true);
+        setFeedback(null);
+        try {
+            await api("/ai/sources/from-url", {
+                method: "POST",
+                body: { url: url.trim(), classId: classId ?? undefined, subjectId: subjectId ?? undefined },
+            });
+            setFeedback({ kind: "ok", msg: "Page fetched & summarized" });
+            setOpen(false);
+            setUrl("");
+            load();
+        } catch (err) {
+            setFeedback({ kind: "err", msg: err instanceof RequestError ? err.messages.join("; ") : "Fetch failed" });
         } finally {
             setBusy(false);
         }
@@ -218,14 +241,18 @@ export default function TeacherSourcesPage() {
                                         <SelectContent>{dedupeSubjects(selectedClass?.subjects).map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                                     </Select>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-3 gap-2">
                                     <Button type="button" variant={mode === "file" ? "default" : "outline"} onClick={() => setMode("file")}
                                         className="h-9 text-xs font-black uppercase tracking-wider">
-                                        <FaUpload size={11} /> Upload file
+                                        <FaUpload size={11} /> File
+                                    </Button>
+                                    <Button type="button" variant={mode === "url" ? "default" : "outline"} onClick={() => setMode("url")}
+                                        className="h-9 text-xs font-black uppercase tracking-wider">
+                                        <FaLink size={11} /> URL
                                     </Button>
                                     <Button type="button" variant={mode === "text" ? "default" : "outline"} onClick={() => setMode("text")}
                                         className="h-9 text-xs font-black uppercase tracking-wider">
-                                        <FaFileLines size={11} /> Paste text
+                                        <FaFileLines size={11} /> Text
                                     </Button>
                                 </div>
 
@@ -268,6 +295,21 @@ export default function TeacherSourcesPage() {
                                             }}
                                         />
                                     </div>
+                                ) : mode === "url" ? (
+                                    <>
+                                        <Input
+                                            placeholder="https://example.com/chapter"
+                                            value={url}
+                                            onChange={(e) => setUrl(e.target.value)}
+                                            className="h-11"
+                                        />
+                                        <Button onClick={ingestUrl} disabled={busy || !/^https?:\/\/\S+$/i.test(url.trim())} className="w-full h-11 font-black text-xs uppercase tracking-wider">
+                                            {busy ? <><FaSpinner className="animate-spin" size={12} /> Fetching…</> : <><FaLink size={12} /> Fetch & Summarize</>}
+                                        </Button>
+                                        <p className="text-[10px] text-muted-foreground">
+                                            Public http(s) page · max 2 MB · HTML or plain text
+                                        </p>
+                                    </>
                                 ) : (
                                     <>
                                         <Input placeholder="Filename (e.g. ch3-algebra.txt)" value={filename} onChange={(e) => setFilename(e.target.value)} className="h-11" />

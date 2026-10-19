@@ -27,8 +27,19 @@ const ALLOWED_MIME = new Set([
     'text/plain',
     'text/markdown',
     'text/x-markdown',
+    'text/csv',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/vnd.oasis.opendocument.text',
+    'application/vnd.oasis.opendocument.spreadsheet',
+    'application/vnd.oasis.opendocument.presentation',
+    'application/rtf',
+    'application/epub+zip',
 ]);
-const MAX_BYTES = 15 * 1024 * 1024; // 15 MB
 
 @Injectable()
 export class UploadService {
@@ -37,6 +48,7 @@ export class UploadService {
     private readonly bucket: string;
     private readonly publicBase: string;
     private readonly localDir: string;
+    private readonly maxBytes: number;
 
     constructor(private readonly config: ConfigService) {
         // Generic S3-compatible config. The legacy CF_R2_* vars are honored as a
@@ -64,6 +76,7 @@ export class UploadService {
             this.config.get<string>('CF_R2_PUBLIC_URL') ??
             '';
         this.localDir = resolve(process.cwd(), 'uploads');
+        this.maxBytes = Number(this.config.get<string>('MAX_UPLOAD_MB') ?? 50) * 1024 * 1024;
 
         if (endpoint && accessKeyId && secretAccessKey) {
             this.client = new S3Client({
@@ -93,8 +106,10 @@ export class UploadService {
         if (!ALLOWED_MIME.has(contentType)) {
             throw new BadRequestException(`Unsupported file type: ${contentType}`);
         }
-        if (buffer.byteLength > MAX_BYTES) {
-            throw new BadRequestException('File exceeds the 15 MB limit');
+        if (buffer.byteLength > this.maxBytes) {
+            throw new BadRequestException(
+                `File exceeds the ${Math.round(this.maxBytes / 1024 / 1024)} MB limit.`,
+            );
         }
 
         const safeName = originalName.replace(/[^a-zA-Z0-9._-]/g, '_');

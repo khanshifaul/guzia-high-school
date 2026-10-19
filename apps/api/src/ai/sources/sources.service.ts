@@ -7,7 +7,10 @@ import { UploadService } from '../../upload/upload.service';
 import { LlmService } from '../llm/llm.service';
 import { z } from 'zod';
 import { extractText } from 'unpdf';
+import { parseOffice } from 'officeparser';
 import { parseJsonObject } from '../llm/json.util';
+import { validateOutboundUrl } from '../../common/net.util';
+import { convertWithMarkItDown } from './markitdown.util';
 
 const SummarySchema = z.object({
     summary: z.string(),
@@ -145,14 +148,22 @@ export class SourcesService {
         const name = file.originalname.toLowerCase();
         const isPdf = file.mimetype === 'application/pdf' || name.endsWith('.pdf');
         const isImage = /^image\/(png|jpeg|webp)$/.test(file.mimetype) || /\.(png|jpe?g|webp)$/.test(name);
+        const isOffice = /\.(docx|pptx|xlsx|odt|ods|odp|rtf|epub)$/.test(name);
+        const isLegacyOffice = /\.(doc|ppt|xls)$/.test(name);
+        const isCsv = file.mimetype === 'text/csv' || name.endsWith('.csv');
         const isText =
             file.mimetype === 'text/plain' ||
             file.mimetype === 'text/markdown' ||
             file.mimetype === 'text/x-markdown' ||
             /\.(txt|md|markdown)$/.test(name);
-        if (!isPdf && !isImage && !isText) {
+        if (isLegacyOffice) {
             throw new BadRequestException(
-                'Unsupported file — upload a PDF, an image (PNG/JPEG/WebP), or a text/Markdown file.',
+                'Legacy .doc/.ppt/.xls are not supported — save them as .docx/.pptx/.xlsx first.',
+            );
+        }
+        if (!isPdf && !isImage && !isOffice && !isCsv && !isText) {
+            throw new BadRequestException(
+                'Unsupported file — upload a PDF, image (PNG/JPEG/WebP), Office/OpenDocument file, CSV, or text/Markdown.',
             );
         }
 
@@ -208,7 +219,33 @@ export class SourcesService {
                 throw new BadRequestException('No text detected in this image.');
             }
             pages = [{ page: 1, text: transcript }];
+        } else if (isOffice) {
+            // Prefer MarkItDown when installed; fall back to officeparser.
+            const markdown = await convertWithMarkItDown(file.buffer, file.originalname).catch(
+                (err: Error) => {
+                    this.logger.warn(
+                        `MarkItDown failed for ${file.originalname}: ${err.message} — falling back`,
+                    );
+                    return null;
+                },
+            );
+            let text = markdown?.trim() ? markdown : '';
+            if (!text) {
+                const ast = await parseOffice(file.buffer).catch((err: Error) => {
+                    this.logger.error(
+                        `Office parsing failed for ${file.originalname}: ${err.message}`,
+                    );
+                    throw new BadRequestException(`Could not read this document (${err.message})`);
+                });
+                const out = await ast.to('text');
+                text = String(out.value ?? '');
+            }
+            if (!text.trim()) {
+                throw new BadRequestException('No extractable text in this document.');
+            }
+            pages = [{ page: 1, text }];
         } else {
+            // Plain text, Markdown and CSV are already UTF-8 text.
             pages = [{ page: 1, text: file.buffer.toString('utf8') }];
         }
 
@@ -232,6 +269,50 @@ export class SourcesService {
                 },
             },
             include: { chunks: true },
+        });
+    }
+
+    /** Ingest a web page by URL (NotebookLM-style web source). */
+    async ingestUrl(userId: string, url: string, classId?: string, subjectId?: string) {
+        const urlError = validateOutboundUrl(url);
+        if (urlError) throw new BadRequestException(urlError);
+
+        const res = await fetch(url, {
+            redirect: 'follow',
+            signal: AbortSignal.timeout(15_000),
+            headers: { 'User-Agent': 'GuziaHighSchool/1.0 (source ingest)' },
+        }).catch((err: Error) => {
+            throw new BadRequestException(`Could not fetch that URL (${err.message})`);
+        });
+        if (!res.ok) throw new BadRequestException(`That URL returned HTTP ${res.status}`);
+
+        const MAX_URL_BYTES = 2 * 1024 * 1024;
+        const buf = Buffer.from(await res.arrayBuffer());
+        if (buf.byteLength > MAX_URL_BYTES) {
+            throw new BadRequestException('Page is too large to ingest (max 2 MB).');
+        }
+
+        const contentType = res.headers.get('content-type') ?? '';
+        let text: string;
+        if (contentType.includes('text/html') || contentType.includes('application/xhtml')) {
+            text = htmlToText(buf.toString('utf8'));
+        } else if (contentType.startsWith('text/')) {
+            text = buf.toString('utf8');
+        } else {
+            throw new BadRequestException(
+                `Unsupported content type "${contentType || 'unknown'}" — use a file upload instead.`,
+            );
+        }
+        if (!text.trim()) throw new BadRequestException('No text found at that URL.');
+
+        const parsed = new URL(url);
+        return this.ingest({
+            userId,
+            filename: `${parsed.hostname}${parsed.pathname}`.slice(0, 180),
+            kind: 'PDF',
+            pages: [{ page: 1, text }],
+            classId,
+            subjectId,
         });
     }
 
@@ -401,4 +482,20 @@ export class SourcesService {
         if (!teacher) throw new NotFoundException('No teacher profile for this user');
         return teacher.id;
     }
+}
+
+/** Strip HTML to readable text (drops scripts/styles, tags and entities). */
+function htmlToText(html: string): string {
+    return html
+        .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+        .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/\s+/g, ' ')
+        .trim();
 }
