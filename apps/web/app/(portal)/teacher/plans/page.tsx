@@ -29,12 +29,16 @@ import {
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/shared/page-header";
 import { api, RequestError } from "@/lib/api";
+import { dedupeSubjects } from "@/lib/subjects";
+import { useMyTeacher } from "@/lib/teacher-session";
+import { myClasses } from "@/lib/teacher-classes";
 
-interface ClassOption { id: string; name: string; subjects: { subject: { id: string; name: string } }[] }
+interface ClassOption { id: string; name: string; subjects: { subject: { id: string; name: string }; teacher?: { id: string } | null }[] }
 interface PlanWeek { week: number; startAt: string; topics: string[]; objective: string; assessment: string | null; status: string }
 interface Plan { id: string; title: string; type: string; status: string; weeks: PlanWeek[]; class: { name: string }; subject: { name: string } }
 
 export default function TeacherPlansPage() {
+    const { teacherId } = useMyTeacher();
     const [classes, setClasses] = React.useState<ClassOption[]>([]);
     const [plans, setPlans] = React.useState<Plan[]>([]);
     const [loading, setLoading] = React.useState(true);
@@ -44,6 +48,7 @@ export default function TeacherPlansPage() {
     const [subjectId, setSubjectId] = React.useState<string | null>(null);
     const [type, setType] = React.useState<"YEAR" | "TERM">("TERM");
     const [weeks, setWeeks] = React.useState("12");
+    const [topicsHint, setTopicsHint] = React.useState("");
     const [startDate, setStartDate] = React.useState(new Date().toISOString().slice(0, 10));
     const [busy, setBusy] = React.useState(false);
     const [feedback, setFeedback] = React.useState<{ kind: "ok" | "err"; msg: string } | null>(null);
@@ -58,11 +63,22 @@ export default function TeacherPlansPage() {
     }, []);
 
     React.useEffect(() => {
+        if (!teacherId) return;
         api<{ classes: ClassOption[] }>("/classes")
-            .then((p) => { setClasses(p.classes); if (p.classes.length > 0) setClassId(p.classes[0].id); })
+            .then((p) => {
+                const mine = myClasses(p.classes, teacherId);
+                setClasses(mine);
+                setClassId((prev) => (prev && mine.some((c) => c.id === prev) ? prev : (mine[0]?.id ?? null)));
+            })
             .catch(() => setClasses([]));
         load();
-    }, [load]);
+    }, [load, teacherId]);
+
+    // Prefill the focus topics when arriving from a source ("Make lesson plan").
+    React.useEffect(() => {
+        const t = new URLSearchParams(window.location.search).get("topics");
+        if (t) { setTopicsHint(t); setOpen(true); }
+    }, []);
 
     async function generate() {
         setBusy(true);
@@ -70,7 +86,7 @@ export default function TeacherPlansPage() {
         try {
             await api("/ai/plans/generate", {
                 method: "POST",
-                body: { classId, subjectId, type, startDate, weeks: Number(weeks) },
+                body: { classId, subjectId, type, startDate, weeks: Number(weeks), topicsHint: topicsHint.trim() || undefined },
             });
             setFeedback({ kind: "ok", msg: "Plan generated" });
             setOpen(false);
@@ -113,7 +129,7 @@ export default function TeacherPlansPage() {
                                 </Select>
                                 <Select value={subjectId ?? undefined} onValueChange={setSubjectId}>
                                     <SelectTrigger className="h-11"><SelectValue placeholder="Subject" /></SelectTrigger>
-                                    <SelectContent>{selectedClass?.subjects.map((cs) => <SelectItem key={cs.subject.id} value={cs.subject.id}>{cs.subject.name}</SelectItem>)}</SelectContent>
+                                    <SelectContent>{dedupeSubjects(selectedClass?.subjects).map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                                 </Select>
                                 <div className="grid grid-cols-3 gap-3">
                                     <Select value={type} onValueChange={(v) => setType(v as "YEAR" | "TERM")}>
@@ -123,6 +139,7 @@ export default function TeacherPlansPage() {
                                     <Input type="number" min={1} max={52} value={weeks} onChange={(e) => setWeeks(e.target.value)} className="h-11" placeholder="Weeks" />
                                     <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-11" />
                                 </div>
+                                <Input placeholder="Focus topics (optional, comma-separated)" value={topicsHint} onChange={(e) => setTopicsHint(e.target.value)} className="h-11" />
                                 <Button onClick={generate} disabled={busy || !subjectId} className="w-full h-11 font-black text-xs uppercase tracking-wider">
                                     {busy ? <><FaSpinner className="animate-spin" size={12} /> Generating…</> : "Generate with AI"}
                                 </Button>

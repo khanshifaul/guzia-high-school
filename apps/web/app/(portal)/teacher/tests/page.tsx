@@ -27,12 +27,16 @@ import {
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/shared/page-header";
 import { api, RequestError } from "@/lib/api";
+import { dedupeSubjects } from "@/lib/subjects";
+import { useMyTeacher } from "@/lib/teacher-session";
+import { myClasses } from "@/lib/teacher-classes";
 
-interface ClassOption { id: string; name: string; subjects: { subject: { id: string; name: string } }[] }
+interface ClassOption { id: string; name: string; subjects: { subject: { id: string; name: string }; teacher?: { id: string } | null }[] }
 interface Question { id: string; type: string; text: string; options: string[] | null; answer: string; explanation: string | null; difficulty: string; marks: number; order: number }
 interface Paper { id: string; title: string; durationMinutes: number; totalMarks: number; status: string; questions: Question[]; class: { name: string }; subject: { name: string }; _count?: { questions: number } }
 
 export default function TeacherTestsPage() {
+    const { teacherId } = useMyTeacher();
     const [classes, setClasses] = React.useState<ClassOption[]>([]);
     const [papers, setPapers] = React.useState<Paper[]>([]);
     const [loading, setLoading] = React.useState(true);
@@ -61,11 +65,22 @@ export default function TeacherTestsPage() {
     }, []);
 
     React.useEffect(() => {
+        if (!teacherId) return;
         api<{ classes: ClassOption[] }>("/classes")
-            .then((p) => { setClasses(p.classes); if (p.classes.length > 0) setClassId(p.classes[0].id); })
+            .then((p) => {
+                const mine = myClasses(p.classes, teacherId);
+                setClasses(mine);
+                setClassId((prev) => (prev && mine.some((c) => c.id === prev) ? prev : (mine[0]?.id ?? null)));
+            })
             .catch(() => setClasses([]));
         load();
-    }, [load]);
+    }, [load, teacherId]);
+
+    // Prefill topics when arriving from a source ("Make test paper").
+    React.useEffect(() => {
+        const t = new URLSearchParams(window.location.search).get("topics");
+        if (t) { setTopics(t); setOpen(true); }
+    }, []);
 
     async function generate() {
         setBusy(true);
@@ -115,7 +130,7 @@ export default function TeacherTestsPage() {
                                 </Select>
                                 <Select value={subjectId ?? undefined} onValueChange={setSubjectId}>
                                     <SelectTrigger className="h-11"><SelectValue placeholder="Subject" /></SelectTrigger>
-                                    <SelectContent>{selectedClass?.subjects.map((cs) => <SelectItem key={cs.subject.id} value={cs.subject.id}>{cs.subject.name}</SelectItem>)}</SelectContent>
+                                    <SelectContent>{dedupeSubjects(selectedClass?.subjects).map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                                 </Select>
                                 <Input placeholder="Topics (comma-separated)" value={topics} onChange={(e) => setTopics(e.target.value)} className="h-11" />
                                 <div className="grid grid-cols-4 gap-2">

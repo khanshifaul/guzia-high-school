@@ -29,14 +29,18 @@ import {
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/shared/page-header";
 import { api, RequestError } from "@/lib/api";
+import { dedupeSubjects } from "@/lib/subjects";
+import { useMyTeacher } from "@/lib/teacher-session";
+import { myClasses } from "@/lib/teacher-classes";
 
-interface ClassOption { id: string; name: string; subjects: { subject: { id: string; name: string } }[] }
+interface ClassOption { id: string; name: string; subjects: { subject: { id: string; name: string }; teacher?: { id: string } | null }[] }
 interface Assignment {
     id: string; title: string; description: string | null; dueDate: string;
     subject: { name: string }; _count: { submissions: number };
 }
 
 export default function TeacherAssignmentsPage() {
+    const { teacherId } = useMyTeacher();
     const [classes, setClasses] = React.useState<ClassOption[]>([]);
     const [classId, setClassId] = React.useState<string | null>(null);
     const [assignments, setAssignments] = React.useState<Assignment[]>([]);
@@ -53,11 +57,16 @@ export default function TeacherAssignmentsPage() {
     const [feedback, setFeedback] = React.useState<{ kind: "ok" | "err"; msg: string } | null>(null);
 
     React.useEffect(() => {
+        if (!teacherId) return;
         api<{ classes: ClassOption[] }>("/classes")
-            .then((p) => { setClasses(p.classes); if (p.classes.length > 0) setClassId(p.classes[0].id); })
+            .then((p) => {
+                const mine = myClasses(p.classes, teacherId);
+                setClasses(mine);
+                setClassId((prev) => (prev && mine.some((c) => c.id === prev) ? prev : (mine[0]?.id ?? null)));
+            })
             .catch(() => setClasses([]))
             .finally(() => setLoading(false));
-    }, []);
+    }, [teacherId]);
 
     const selectedClass = classes.find((c) => c.id === classId);
 
@@ -110,8 +119,8 @@ export default function TeacherAssignmentsPage() {
                                 <Select value={subjectId ?? undefined} onValueChange={setSubjectId}>
                                     <SelectTrigger className="h-11"><SelectValue placeholder="Subject" /></SelectTrigger>
                                     <SelectContent>
-                                        {selectedClass?.subjects.map((cs) => (
-                                            <SelectItem key={cs.subject.id} value={cs.subject.id}>{cs.subject.name}</SelectItem>
+                                        {dedupeSubjects(selectedClass?.subjects).map((s) => (
+                                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>

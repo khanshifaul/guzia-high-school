@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/shared/page-header";
 import { api, RequestError } from "@/lib/api";
+import { dedupeSubjects } from "@/lib/subjects";
 
 interface Exam { id: string; name: string; published: boolean; class: { id: string; name: string; subjects: { subjectId: string; subject: { id: string; name: string } }[] } }
 interface Student { id: string; rollNo: number; fullName: string }
@@ -44,7 +45,7 @@ export default function TeacherGradesPage() {
     }, []);
 
     const exam = exams.find((e) => e.id === examId);
-    const subjects = exam?.class.subjects.map((cs) => cs.subject) ?? [];
+    const subjects = dedupeSubjects(exam?.class.subjects);
 
     React.useEffect(() => {
         if (!exam) return;
