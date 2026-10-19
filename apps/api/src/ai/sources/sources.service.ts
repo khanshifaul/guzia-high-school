@@ -434,28 +434,7 @@ export class SourcesService {
 
         const answer = await this.llm.complete({ system, user, maxTokens: 900 });
 
-        // One citation per (source, page) pair; retrieval may return several
-        // chunks from the same page.
-        const seen = new Set<string>();
-        const citations: {
-            sourceId: string;
-            filename: string;
-            page: number | null;
-            snippet: string;
-        }[] = [];
-        for (const hit of top) {
-            const key = `${hit.sourceId}:${hit.page ?? 'none'}`;
-            if (seen.has(key)) continue;
-            seen.add(key);
-            citations.push({
-                sourceId: hit.sourceId,
-                filename: hit.filename,
-                page: hit.page,
-                snippet: hit.content.slice(0, 160),
-            });
-        }
-
-        return { answer, citations };
+        return { answer, citations: this.verifyNotebookCitations(answer, top) };
     }
 
     /** Backfill embeddings for chunks ingested before pgvector was wired up. */
@@ -490,6 +469,36 @@ export class SourcesService {
             });
         }
         return citations;
+    }
+
+    /**
+     * Keep only [filename p.N] citations that match a retrieved chunk, so the
+     * model cannot invent a source or a page. One citation per (source, page).
+     */
+    private verifyNotebookCitations(
+        answer: string,
+        chunks: { sourceId: string; filename: string; page: number | null; content: string }[],
+    ): { sourceId: string; filename: string; page: number | null; snippet: string }[] {
+        const index = new Map<string, (typeof chunks)[number]>();
+        for (const chunk of chunks) {
+            index.set(`${chunk.filename}::${chunk.page ?? '?'}`, chunk);
+        }
+        const seen = new Set<string>();
+        const out: { sourceId: string; filename: string; page: number | null; snippet: string }[] = [];
+        for (const match of answer.matchAll(/\[([^\[\]]+?) p\.(\d+)\]/g)) {
+            const hit = index.get(`${match[1]}::${match[2]}`);
+            if (!hit) continue; // hallucinated source/page — drop it
+            const key = `${hit.sourceId}:${hit.page ?? '?'}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            out.push({
+                sourceId: hit.sourceId,
+                filename: hit.filename,
+                page: hit.page,
+                snippet: hit.content.slice(0, 160),
+            });
+        }
+        return out;
     }
 
     /** Chunk page-tagged text into ~1200-char windows with overlap. */
