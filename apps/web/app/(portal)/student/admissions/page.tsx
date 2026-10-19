@@ -4,7 +4,7 @@
 // admission application (read-only). Only the logged-in applicant can see it.
 
 import * as React from "react";
-import { FaUserCheck, FaFileLines, FaGraduationCap, FaSpinner } from "react-icons/fa6";
+import { FaUserCheck, FaFileLines, FaGraduationCap } from "react-icons/fa6";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";

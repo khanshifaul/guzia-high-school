@@ -19,12 +19,12 @@ function isPrivateOrReservedHost(host: string): boolean {
     const h = host.toLowerCase();
     if (ALWAYS_ALLOWED_HOSTS.has(h)) return false;
     if (
-        /^127\./.test(h) ||
-        /^10\./.test(h) ||
+        h.startsWith('127.') ||
+        h.startsWith('10.') ||
         /^172\.(1[6-9]|2[0-9]|3[01])\./.test(h) ||
-        /^192\.168\./.test(h) ||
-        /^169\.254\./.test(h) ||
-        /^0\.0\.0\.0$/.test(h)
+        h.startsWith('192.168.') ||
+        h.startsWith('169.254.') ||
+        h === '0.0.0.0'
     ) {
         return true;
     }
