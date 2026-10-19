@@ -23,6 +23,7 @@ import { validateOutboundUrl } from '../../common/net.util';
 import { convertWithMarkItDown } from './markitdown.util';
 import { RetrievalService } from './retrieval.service';
 import { NeedsOcrError, ocrPdf } from './ocr.util';
+import { stripRunningHeads } from './text-clean.util';
 
 const SummarySchema = z.object({
     summary: z.string(),
@@ -37,6 +38,10 @@ const EMPTY_ANSWER =
 
 const CHUNK_CHARS = 1200;
 const CHUNK_OVERLAP = 150;
+/** Long documents are summarized in windows, then the notes are merged. */
+const SUMMARY_WINDOW_CHARS = 6000;
+const SUMMARY_MAX_WINDOWS = 12;
+const SUMMARY_INPUT_CHARS = 16000;
 
 @Injectable()
 export class SourcesService implements OnModuleInit {
@@ -167,8 +172,12 @@ export class SourcesService implements OnModuleInit {
         fileMeta?: Record<string, unknown>,
     ): Promise<void> {
         try {
+            // Drop repeated running heads/footers before they reach the
+            // embeddings, retrieval or the summary.
+            const cleaned = stripRunningHeads(pages);
+
             // Chunk with page tags preserved.
-            const chunks = this.chunk(pages);
+            const chunks = this.chunk(cleaned);
             await this.prisma.sourceChunk.createMany({
                 data: chunks.map((c) => ({ documentId: docId, page: c.page, content: c.text })),
             });
@@ -185,7 +194,7 @@ export class SourcesService implements OnModuleInit {
             // usable, so the document becomes READY either way.
             let summary: Record<string, unknown> | null = null;
             try {
-                summary = (await this.summarizeText(pages.map((p) => p.text).join('\n'))) as unknown as Record<
+                summary = (await this.summarizeText(cleaned.map((p) => p.text).join('\n'))) as unknown as Record<
                     string,
                     unknown
                 >;
@@ -726,28 +735,76 @@ export class SourcesService implements OnModuleInit {
         return out;
     }
 
+    /**
+     * Summarize a document. A 200-page textbook does not fit one prompt, so
+     * long text is condensed window by window first; the final JSON call then
+     * sees a page of notes instead of a truncated first chapter.
+     */
     private async summarizeText(text: string) {
-        const truncated = text.slice(0, 8000);
-        const system =
-            'Summarize the following school source material as JSON: {"summary": string, ' +
-            '"keyTopics": string[], "glossary": [{"term": string, "definition": string}], ' +
-            '"suggestedQuestions": string[]}. Respond only with JSON.';
-        const raw = await this.llm.complete({
-            system,
-            user: truncated,
-            json: true,
-            maxTokens: 1200,
-            mockFixture: 'summary',
-        });
-        let json: unknown;
-        try {
-            json = parseJsonObject(raw);
-        } catch {
-            throw new BadRequestException('AI returned invalid summary JSON');
+        const windows = windowText(text, SUMMARY_WINDOW_CHARS, SUMMARY_MAX_WINDOWS);
+        if (windows.length <= 1) return this.summaryJson(windows[0] ?? '');
+
+        const notes: string[] = [];
+        for (const [index, window] of windows.entries()) {
+            try {
+                const note = await this.llm.complete({
+                    system:
+                        'Condense these textbook pages into 5-8 factual bullet points. ' +
+                        'Keep names, terms and definitions verbatim. Name the unit or topic ' +
+                        'the pages belong to. Output only the bullets.',
+                    user: window,
+                    maxTokens: 600,
+                });
+                if (note.trim()) notes.push(`Part ${index + 1}:\n${note.trim()}`);
+            } catch (err) {
+                this.logger.warn(`Summary window ${index + 1} failed: ${(err as Error).message}`);
+            }
         }
-        const parsed = SummarySchema.safeParse(json);
-        if (!parsed.success) throw new BadRequestException('AI summary JSON shape mismatch');
-        return parsed.data;
+        if (notes.length === 0) return this.summaryJson(text);
+
+        const digest = notes.join('\n\n');
+        try {
+            return await this.summaryJson(digest);
+        } catch (err) {
+            // The notes are a real summary; keep them rather than losing the
+            // whole section because the provider broke the JSON contract.
+            this.logger.warn(
+                `Summary JSON failed, storing the notes instead: ${(err as Error).message}`,
+            );
+            return {
+                summary: digest.slice(0, 2000),
+                keyTopics: [],
+                glossary: [],
+                suggestedQuestions: [],
+            };
+        }
+    }
+
+    /** One JSON summary call, retried once when the provider breaks the JSON. */
+    private async summaryJson(text: string) {
+        const system =
+            'You are given notes from different parts of ONE school source, labelled ' +
+            '"Part N". Write one JSON object that covers ALL parts: {"summary": string, ' +
+            '"keyTopics": string[], "glossary": [{"term": string, "definition": string}], ' +
+            '"suggestedQuestions": string[]}. Do not describe only the first part. ' +
+            'Respond with the JSON object only, starting with { and ending with }; ' +
+            'no prose, no markdown fence.';
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+            const raw = await this.llm.complete({
+                system,
+                user: text.slice(0, SUMMARY_INPUT_CHARS),
+                json: true,
+                maxTokens: 2500,
+                mockFixture: 'summary',
+            });
+            try {
+                const parsed = SummarySchema.safeParse(parseJsonObject(raw));
+                if (parsed.success) return parsed.data;
+            } catch {
+                // Empty or prose reply: try once more, then surface a 400.
+            }
+        }
+        throw new BadRequestException('AI returned invalid summary JSON');
     }
 
     /** JWT carries the User id; the FK references the Teacher row. Resolve it. */
@@ -767,4 +824,30 @@ function htmlToText(html: string): string {
         .replace(/&#39;/g, "'")
         .replace(/\s+/g, ' ')
         .trim();
+}
+
+/**
+ * Split text into windows of at most `size` chars on paragraph boundaries.
+ * When the document is longer than `maxWindows * size`, the windows are spread
+ * evenly instead of truncated at the front, so the summary covers every unit
+ * of a long textbook rather than only its opening chapters.
+ */
+function windowText(text: string, size: number, maxWindows: number): string[] {
+    const trimmed = text.trim();
+    if (trimmed.length <= size) return [trimmed];
+
+    const count = Math.min(maxWindows, Math.ceil(trimmed.length / size));
+    const stride = count <= 1 ? 0 : Math.max(1, Math.floor((trimmed.length - size) / (count - 1)));
+    const windows: string[] = [];
+
+    for (let index = 0; index < count; index += 1) {
+        const start = Math.min(index * stride, trimmed.length - size);
+        let end = Math.min(start + size, trimmed.length);
+        if (end < trimmed.length) {
+            const breakAt = trimmed.lastIndexOf('\n\n', end);
+            if (breakAt > start + size / 2) end = breakAt;
+        }
+        windows.push(trimmed.slice(start, end));
+    }
+    return windows;
 }

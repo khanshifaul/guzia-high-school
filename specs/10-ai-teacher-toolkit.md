@@ -55,6 +55,14 @@ model AiProviderConfig {
 - **Default:** seed fills DeepSeek (`deepseek-chat`) so the demo needs one key; the
   admin can repoint at a local Ollama (`http://localhost:11434/v1`) live — the
   **Test connection** button proves it (latency + raw reply; accepts unsaved form values).
+- **Keyless fallback:** with no usable DB key, `KILO_GATEWAY_URL` + `KILO_API_TOKEN`
+  + `KILO_MODEL` serve the same OpenAI-compatible endpoint. `kilo-auto/free` is a
+  lottery: it can route to a reasoning model (observed: `minimax/minimax-m3.1-flash:free`)
+  that spends the entire `max_tokens` budget on reasoning and returns **empty
+  content** — `reasoning:{enabled:false}`, `reasoning:{effort:"minimal"}` and
+  `reasoning_effort:"none"` are all ignored. Pin a non-reasoning free model
+  (default in `.env.example`: `nvidia/nemotron-3-super-120b-a12b:free`); the
+  gateway logs `returned no text (finish_reason=…)` when this happens.
 - **Config applies ≤60s** (TTL cache; save invalidates immediately). No restart.
 - **JSON mode:** all generator calls use `response_format: {type: "json_object"}` +
   response validated with a zod schema. Parse/validate failure → **one retry**, then
@@ -287,9 +295,16 @@ polls the list while anything is `PROCESSING`, and a boot-time sweep marks a
    the same chunk → embed → summarize tail. Both binaries are optional; when
    absent the row stays `NEEDS_OCR` and the message says so. (162-page scan
    measured: ~2 min, zero API cost.)
-3. Text → chunk (~1200 chars, page-preserving overlap 150) → `SourceChunk` rows.
-4. Auto-summarize: structured summary `{keyTopics[], glossary[{term,definition}],
-   summary, suggestedQuestions[5]}` → stored on document.
+3. Page furniture → dropped (`text-clean.util.ts`): a line repeated at the top or
+   bottom of ≥40% of pages (running head, footer, bare number) is removed before
+   chunking, so scans do not embed "English For Today 6" into every chunk. Only
+   page edges are considered; body text is untouched.
+4. Text → chunk (~1200 chars, page-preserving overlap 150) → `SourceChunk` rows.
+5. Auto-summarize: structured summary `{keyTopics[], glossary[{term,definition}],
+   summary, suggestedQuestions[5]}` → stored on document. Long text is condensed
+   in ~6000-char windows (max 8) into bullet notes first, then one JSON call sees
+   the notes; a malformed JSON answer is retried once. A failed summary still
+   leaves the chunks usable.
 
 **DB:**
 ```prisma
@@ -329,8 +344,12 @@ enum SourceStatus { PROCESSING READY NEEDS_OCR FAILED }
    `Xenova/paraphrase-multilingual-MiniLM-L12-v2`, 384 dims — the default and
    the only one that supports Bangla; `nvidia` = OpenAI-compatible
    `/embeddings`, `nvidia/nemotron-3-embed-1b`, 2048 dims) and matched by
-   cosine distance against `SourceChunk.embedding` (pgvector). Top-4 chunks for a
-   single document, top-6 for the notebook → LLM with strict system prompt
+   cosine distance against `SourceChunk.embedding` (pgvector) **and** ranked by
+   Postgres full-text search (`to_tsvector('simple', content)`, question words
+   OR-ed), then the two ranked lists are merged with reciprocal rank fusion
+   (K=60). Vectors catch paraphrases; full text catches exact names, numbers and
+   "Lesson 3". When the keyword arm errors, retrieval falls back to vectors.
+   Top-4 chunks for a single document, top-6 for the notebook → LLM with strict system prompt
    *"answer only from the provided excerpts; cite [filename p.N] for every claim;
    say 'not in sources' otherwise"* → `{answer, citations: [{page, snippet}]}`
    (single document) or `{answer, citations: [{sourceId, filename, page, snippet}]}`
@@ -354,8 +373,9 @@ notebook chat with citation chips and suggested questions from the source summar
 `teacher/sources/materials/[id]/print` renders a saved material for printing.
 
 **Limitations:** OCR skipped (vision-model transcription instead — costs tokens, can
-garble math notation); retrieval is an exact cosine scan over the teacher's chunks
-(no ANN index today — fine at chapter scale, revisit for whole-book libraries);
+garble math notation); neither retrieval arm uses an ANN index today, so both are
+exact scans over the teacher's chunks (fine at chapter scale — add HNSW and a GIN
+index before whole-library deployments);
 copyright: teachers upload materials they have rights to (stated on upload page);
 long books >50 pages chunk heavily — demo uses a single chapter.
 
