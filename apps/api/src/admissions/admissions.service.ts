@@ -28,6 +28,14 @@ export class AdmissionsService {
      * on-screen so the applicant can save/print even without email).
      */
     async submit(dto: SubmitApplicationDto) {
+
+        // Honeypot: the field is hidden from people and must stay empty.
+        // A bot that fills every input it sees gets a generic rejection and
+        // never reaches the database.
+        if (dto.website && dto.website.trim() !== '') {
+            throw new BadRequestException('Application could not be submitted.');
+        }
+
         const email = dto.email.trim();
         const existing = await this.prisma.user.findUnique({ where: { email } });
         if (existing) {
@@ -53,9 +61,11 @@ export class AdmissionsService {
             },
         });
 
+        // The honeypot is a spam trap, not part of the application.
+        const { website: _honeypot, ...formData } = dto;
         const application = await this.prisma.admissionApplication.create({
             data: {
-                formData: { ...dto },
+                formData,
                 status: 'SUBMITTED',
                 userId: user.id,
             },

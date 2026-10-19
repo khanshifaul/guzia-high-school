@@ -203,4 +203,13 @@ export class SubmitApplicationDto {
 
   @ApiPropertyOptional({ description: 'Additional note' })
   @IsOptional() @IsString() @Length(0, 500) note?: string;
+
+  // ─── Spam trap ───
+  @ApiPropertyOptional({
+    description: 'Honeypot — must stay empty. Bots that fill every field are rejected.',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  website?: string;
 }
