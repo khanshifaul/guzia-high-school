@@ -23,7 +23,6 @@ export class StudentsService {
 
   async findAll(params: { search?: string; classId?: string; sectionId?: string }) {
     const where = {
-      status: 'ACTIVE' as const,
       ...(params.classId ? { classId: params.classId } : {}),
       ...(params.sectionId ? { sectionId: params.sectionId } : {}),
       ...(params.search
