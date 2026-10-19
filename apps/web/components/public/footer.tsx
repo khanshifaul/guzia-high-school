@@ -3,7 +3,8 @@
 // components/public/footer.tsx — public footer following the MyLab/guzia
 // reference design (4 columns: brand+social · quick links · resources ·
 // contact+legal), plus the Important Links bar and a "Developed by" credit.
-// Contact, socials, EIIN/board, and links are admin-controlled via /site-settings.
+// Contact, socials, EIIN/board, and links are admin-controlled via /site-settings;
+// the "Developed by" credit is hardcoded in code (see lib/site-config.ts).
 
 import Link from "next/link";
 import {
@@ -11,7 +12,7 @@ import {
     FaMapMarkerAlt, FaPhone, FaEnvelope,
 } from "react-icons/fa";
 import { useLanguage } from "@/lib/language-context";
-import { useSiteConfig } from "@/lib/site-config";
+import { DEVELOPED_BY, DEVELOPED_BY_URL, useSiteConfig } from "@/lib/site-config";
 import { EmergencyHotlines } from "@/components/public/emergency-hotlines";
 
 const navLinks = [
@@ -146,8 +147,8 @@ export function Footer() {
                     <p>© {new Date().getFullYear()} {language === "bn" ? cfg.schoolNameBn : cfg.schoolName}. {t("All rights reserved.", "সর্বস্বত্ব সংরক্ষিত।")}</p>
                     <p className="mt-4 md:mt-0">
                         {t("Developed by", "নির্মাণ")}{" "}
-                        <a href={cfg.developedByUrl} target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:underline">
-                            {cfg.developedBy}
+                        <a href={DEVELOPED_BY_URL} target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:underline">
+                            {DEVELOPED_BY}
                         </a>
                     </p>
                 </div>

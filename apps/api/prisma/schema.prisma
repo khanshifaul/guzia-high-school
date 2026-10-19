@@ -563,8 +563,6 @@ model SiteSetting {
   established   String   @default("1958")
   tagline       String   @default("A combined secondary school in Guzia, Bogura — serving the community since 1958.")
   taglineBn     String   @default("১৯৫৮ সাল থেকে বগুড়ার গুজিয়ায় প্রতিষ্ঠিত একটি সহ-শিক্ষা মাধ্যমিক বিদ্যালয়।")
-  developedBy   String   @default("Shifaul Islam")
-  developedByUrl String  @default("https://shifaul.dev")
   facebookUrl   String   @default("")
   twitterUrl    String   @default("")
   instagramUrl  String   @default("")

@@ -99,6 +99,62 @@ describe('AdmissionsService.submit', () => {
         expect(state.applications).toHaveLength(0);
     });
 
+    describe('the derived age', () => {
+        // The age depends on today's date, so the clock is pinned: on
+        // 20 October 2026 the applicant born 12 May 2014 is 12.
+        const DOB = '2014-05-12';
+        const TODAY = new Date(2026, 9, 20, 12, 0, 0);
+
+        beforeEach(() => {
+            jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'] });
+            jest.setSystemTime(TODAY);
+        });
+
+        afterEach(() => {
+            jest.useRealTimers();
+        });
+
+        it('stores the age derived from the date of birth', async () => {
+            const state = baseState();
+            const service = buildService(state);
+            await service.submit({ ...APPLICANT, dateOfBirth: DOB });
+
+            expect(state.applications[0].formData.age).toBe(12);
+        });
+
+        it('ignores an age the client tried to send, and stores its own', async () => {
+            const state = baseState();
+            const service = buildService(state);
+            // A client that sends a stale or forged age must not be believed.
+            await service.submit({
+                ...APPLICANT,
+                dateOfBirth: DOB,
+                age: 99,
+            } as never);
+
+            expect(state.applications[0].formData.age).toBe(12);
+        });
+
+        it('stores no age when there is no date of birth', async () => {
+            const state = baseState();
+            const service = buildService(state);
+            await service.submit({ ...APPLICANT });
+
+            expect(state.applications[0].formData).not.toHaveProperty('age');
+        });
+
+        it('refuses a date of birth outside the admission age window', async () => {
+            const state = baseState();
+            const service = buildService(state);
+            // A 40-year-old is not a school applicant — a data-entry slip.
+            await expect(
+                service.submit({ ...APPLICANT, dateOfBirth: '1985-01-01' }),
+            ).rejects.toBeInstanceOf(BadRequestException);
+            expect(state.users).toHaveLength(0);
+            expect(state.applications).toHaveLength(0);
+        });
+    });
+
     describe('the honeypot', () => {
         it('rejects a filled honeypot without writing anything', async () => {
             const state = baseState();

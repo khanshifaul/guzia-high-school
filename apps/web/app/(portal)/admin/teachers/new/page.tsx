@@ -43,21 +43,6 @@ export default function NewTeacherPage() {
         }
     }
 
-    const Field = ({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) => {
-        const id = React.useId();
-        const child = React.isValidElement(children)
-            ? React.cloneElement(children as React.ReactElement<Record<string, unknown>>, { id, required: required || undefined })
-            : children;
-        return (
-            <div className="space-y-1.5">
-                <Label htmlFor={id} className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
-                    {label} {required ? <span className="text-primary">*</span> : null}
-                </Label>
-                {child}
-            </div>
-        );
-    };
-
     return (
         <div className="space-y-6">
             <PageHeader title="Add Teacher" subtitle="Create a new staff account" icon={FaChalkboardUser}
@@ -131,6 +116,30 @@ export default function NewTeacherPage() {
                     </form>
                 </CardContent>
             </Card>
+        </div>
+    );
+}
+
+/**
+ * A labelled form field. The label is wired to the input with a generated
+ * id, so clicking the label focuses the input.
+ *
+ * This lives at module scope on purpose: defined inside the page component,
+ * every render produced a new component identity, so React unmounted and
+ * remounted the whole form on every keystroke and typing lost focus after
+ * each character.
+ */
+function Field({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) {
+    const id = React.useId();
+    const child = React.isValidElement(children)
+        ? React.cloneElement(children as React.ReactElement<Record<string, unknown>>, { id, required: required || undefined })
+        : children;
+    return (
+        <div className="space-y-1.5">
+            <Label htmlFor={id} className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
+                {label} {required ? <span className="text-primary">*</span> : null}
+            </Label>
+            {child}
         </div>
     );
 }

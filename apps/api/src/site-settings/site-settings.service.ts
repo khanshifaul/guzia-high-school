@@ -24,8 +24,6 @@ export class SiteSettingsService {
         return this.prisma.siteSetting.create({
             data: {
                 id: 'singleton',
-                developedBy: 'Shifaul Islam',
-                developedByUrl: 'https://shifaul.dev',
                 importantLinks: DEFAULT_LINKS,
             },
         });

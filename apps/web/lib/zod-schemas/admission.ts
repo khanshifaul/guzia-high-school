@@ -15,6 +15,8 @@
 
 import { z } from "zod";
 
+import { ageFromDateOfBirth, isAdmissibleAge } from "../age";
+
 export const RELIGIONS = ["islam", "hinduism", "christianity", "buddhism", "other"] as const;
 export const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] as const;
 export const GROUPS = ["science", "humanities", "business"] as const;
@@ -59,8 +61,15 @@ export const studentStepSchema = z.object({
         .min(2, { message: "Enter the student's name" })
         .max(120),
     studentNameBn: optionalText,
-    dateOfBirth: isoDate.optional().or(z.literal("")),
-    age: z.coerce.number().int().min(1).max(30).optional().or(z.literal("")),
+    // The age is derived from the date of birth, never typed in, so the
+    // step checks that the date of birth lands in the school's age window
+    // rather than checking a typed age.
+    dateOfBirth: isoDate
+        .optional()
+        .or(z.literal(""))
+        .refine((v) => v === "" || isAdmissibleAge(ageFromDateOfBirth(v)), {
+            message: "The date of birth does not match the age range for admission",
+        }),
     gender: z.enum(GENDERS).optional().or(z.literal("")),
     birthCertNo: z.string().trim().max(40).optional(),
     religion: z.enum(RELIGIONS).optional().or(z.literal("")),
@@ -182,7 +191,7 @@ export type AdmissionStepKey = (typeof ADMISSION_STEPS)[number]["key"];
 
 /** The fields each step owns. The review step lists them in this order. */
 export const STEP_FIELDS = {
-    student: ["studentName", "studentNameBn", "dateOfBirth", "age", "gender", "birthCertNo", "religion", "nationality", "bloodGroup"],
+    student: ["studentName", "studentNameBn", "dateOfBirth", "gender", "birthCertNo", "religion", "nationality", "bloodGroup"],
     guardian: ["fatherName", "fatherNameBn", "fatherProfession", "fatherNid", "fatherPhone",
         "motherName", "motherNameBn", "motherProfession", "motherNid", "motherPhone",
         "guardianName", "guardianRelation", "localGuardianProfession", "guardianNid",

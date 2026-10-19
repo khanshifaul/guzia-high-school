@@ -98,7 +98,7 @@ List endpoints accept `?page=1&limit=20` (where applicable) and return
 ### admissions (the showcase workflow)
 | Method | Path | Roles | Notes |
 |---|---|---|---|
-| POST `/admissions` **public** | — | 4-step form payload (AdmissionApplicationDto, zod-mirrored client-side); `website` honeypot field — if it is non-blank the submit is refused with 400 and nothing is written, and it is never persisted |
+| POST `/admissions` **public** | — | 4-step form payload (AdmissionApplicationDto, zod-mirrored client-side); `website` honeypot field — if it is non-blank the submit is refused with 400 and nothing is written, and it is never persisted. The payload carries no `age`: the age is derived server-side from `dateOfBirth` and stored in `formData`; a date of birth outside the admission age window is refused with 400 |
 | GET `/admissions?status=SUBMITTED` | ADMIN | review queue |
 | POST `/admissions/:id/review` | ADMIN | `{decision: APPROVED|REJECTED, note?}`; on APPROVE runs transaction: create Student (admissionNo auto `GHS-2026-NNN`, rollNo next) + User (email from form, password = generated + returned once to admin for handout) + link; on REJECT just status. Re-review → 409 |
 

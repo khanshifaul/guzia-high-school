@@ -33,7 +33,6 @@ export class UpdateSiteSettingsDto {
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(1, 20) established?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(1, 300) tagline?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(1, 300) taglineBn?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() @Length(1, 120) developedBy?: string;
 
   @ApiPropertyOptional() @IsOptional() @IsUrl({ require_tld: false }) facebookUrl?: string;
   @ApiPropertyOptional() @IsOptional() @IsUrl({ require_tld: false }) twitterUrl?: string;

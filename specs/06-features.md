@@ -75,6 +75,10 @@ Endpoints enforce child linkage server-side.
   Submit validates the whole application, not just the declaration, so a field changed after
   its step was passed (a blank permanent address, say) still sends the applicant back to the
   step that owns it (`stepForField`).
+  The age is **derived from the date of birth**, never typed in: the wizard shows it read-only
+  next to the date of birth, and the server recomputes it on submit (`common/age.util.ts`),
+  so a client cannot store an age that disagrees with the date of birth. A date of birth
+  outside the admission age window is refused with 400.
 
 ## Business logic (single implementations, unit-tested)
 

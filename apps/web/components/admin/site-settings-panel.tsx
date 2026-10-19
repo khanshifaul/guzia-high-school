@@ -37,8 +37,8 @@ interface ImportantLink { label: string; labelBn?: string; href: string }
 interface SiteSettings {
     schoolName: string; schoolNameBn: string; phone: string; hotline: string;
     email: string; eiin: string; board: string; address: string; addressBn: string;
-    established: string; tagline: string; taglineBn: string; developedBy: string;
-    developedByUrl: string; facebookUrl: string; twitterUrl: string;
+    established: string; tagline: string; taglineBn: string;
+    facebookUrl: string; twitterUrl: string;
     instagramUrl: string; youtubeUrl: string; linkedinUrl: string; websiteUrl: string;
     mapEmbedUrl: string;
     importantLinks: ImportantLink[];
@@ -56,8 +56,6 @@ const FIELDS: { key: keyof Omit<SiteSettings, "importantLinks">; label: string; 
     { key: "addressBn", label: "Address (BN)" },
     { key: "tagline", label: "Tagline (EN)" },
     { key: "taglineBn", label: "Tagline (BN)" },
-    { key: "developedBy", label: "Developed by" },
-    { key: "developedByUrl", label: "Developer URL" },
     { key: "facebookUrl", label: "Facebook URL" },
     { key: "twitterUrl", label: "Twitter URL" },
     { key: "instagramUrl", label: "Instagram URL" },

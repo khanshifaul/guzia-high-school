@@ -7,6 +7,7 @@ import * as bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
 import { DatabaseService } from '../database/database.service';
 import { EmailService } from '../email/email.service';
+import { ageFromDateOfBirth, isAdmissibleAge } from '../common/age.util';
 import { SubmitApplicationDto } from './dto/submit-application.dto';
 import { AdmissionDecision, ReviewApplicationDto } from './dto/review-application.dto';
 import { EditApplicationDto } from './dto/edit-application.dto';
@@ -36,6 +37,19 @@ export class AdmissionsService {
             throw new BadRequestException('Application could not be submitted.');
         }
 
+        // The age is DERIVED from the date of birth, never taken from the
+        // client: an age the applicant typed can disagree with their date
+        // of birth, and the school needs the two to agree. A date of birth
+        // outside the school's age window is a data-entry slip, not a real
+        // applicant, so it is refused here rather than left for an admin to
+        // spot in the queue.
+        const age = ageFromDateOfBirth(dto.dateOfBirth);
+        if (dto.dateOfBirth && !isAdmissibleAge(age)) {
+            throw new BadRequestException(
+                'The date of birth does not match the age range for admission.',
+            );
+        }
+
         const email = dto.email.trim();
         const existing = await this.prisma.user.findUnique({ where: { email } });
         if (existing) {
@@ -61,11 +75,14 @@ export class AdmissionsService {
             },
         });
 
-        // The honeypot is a spam trap, not part of the application.
+        // The honeypot is a spam trap, not part of the application. The age
+        // is not a field of the DTO at all — it is spread in LAST below, so
+        // a client that sent one anyway has it overwritten by the age the
+        // server derived from the date of birth.
         const { website: _honeypot, ...formData } = dto;
         const application = await this.prisma.admissionApplication.create({
             data: {
-                formData,
+                formData: age === null ? formData : { ...formData, age },
                 status: 'SUBMITTED',
                 userId: user.id,
             },

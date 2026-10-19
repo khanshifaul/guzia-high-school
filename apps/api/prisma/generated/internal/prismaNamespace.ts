@@ -3521,8 +3521,6 @@ export const SiteSettingScalarFieldEnum = {
   established: 'established',
   tagline: 'tagline',
   taglineBn: 'taglineBn',
-  developedBy: 'developedBy',
-  developedByUrl: 'developedByUrl',
   facebookUrl: 'facebookUrl',
   twitterUrl: 'twitterUrl',
   instagramUrl: 'instagramUrl',

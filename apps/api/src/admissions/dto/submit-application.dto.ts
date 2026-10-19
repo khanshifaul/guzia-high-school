@@ -39,9 +39,9 @@ export class SubmitApplicationDto {
   @IsISO8601()
   dateOfBirth?: string;
 
-  @ApiPropertyOptional({ example: 11, description: 'Age in years' })
-  @IsOptional()
-  age?: number;
+  // No `age` field: the age is derived from `dateOfBirth` by the server
+  // (src/common/age.util.ts), so a client cannot store an age that
+  // disagrees with the date of birth.
 
   @ApiPropertyOptional({ enum: ['male', 'female', 'other'] })
   @IsOptional()

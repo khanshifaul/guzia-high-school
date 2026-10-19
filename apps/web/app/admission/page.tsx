@@ -38,6 +38,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Navbar } from "@/components/public/navbar";
 import { Footer } from "@/components/public/footer";
+import { ageFromDateOfBirth } from "@/lib/age";
 import { useLanguage } from "@/lib/language-context";
 import { useSiteConfig } from "@/lib/site-config";
 import { api, RequestError } from "@/lib/api";
@@ -72,7 +73,7 @@ const PREVIOUS_CLASSES = ["Playgroup", "Nursery", "KG", "Class 1", "Class 2", "C
 
 /** Every field the wizard collects, in one flat record. */
 interface FormState {
-    studentName: string; studentNameBn: string; dateOfBirth: string; age: string; gender: string;
+    studentName: string; studentNameBn: string; dateOfBirth: string; gender: string;
     birthCertNo: string; religion: string; nationality: string; bloodGroup: string;
     fatherName: string; fatherNameBn: string; fatherProfession: string; fatherNid: string; fatherPhone: string;
     motherName: string; motherNameBn: string; motherProfession: string; motherNid: string; motherPhone: string;
@@ -95,7 +96,7 @@ interface Receipt extends Files {
 }
 
 const EMPTY: FormState = {
-    studentName: "", studentNameBn: "", dateOfBirth: "", age: "", gender: "", birthCertNo: "",
+    studentName: "", studentNameBn: "", dateOfBirth: "", gender: "", birthCertNo: "",
     religion: "", nationality: "Bangladeshi", bloodGroup: "",
     fatherName: "", fatherNameBn: "", fatherProfession: "", fatherNid: "", fatherPhone: "",
     motherName: "", motherNameBn: "", motherProfession: "", motherNid: "", motherPhone: "",
@@ -131,6 +132,11 @@ export default function AdmissionPage() {
     const [errors, setErrors] = React.useState<Record<string, string>>({});
 
     const tn = (en: string, bn: string) => t(en, bn);
+
+    // The age is derived from the date of birth, never typed in. This is a
+    // preview for the applicant; the server recomputes the age on submit
+    // (apps/api/src/common/age.util.ts) and stores that one.
+    const derivedAge = ageFromDateOfBirth(form.dateOfBirth);
     // Editing a field clears its error, so a message never outlives the
     // mistake that caused it.
     const clearError = (k: string) => setErrors((e) => {
@@ -250,7 +256,6 @@ export default function AdmissionPage() {
             if (typeof v === "string" && v.trim()) body[k] = v.trim();
             else if (typeof v === "string" && ["religion", "bloodGroup", "group", "quota", "admissionType", "previousClass", "guardianRelation"].includes(k) && v) body[k] = v;
         }
-        if (form.age) body.age = Number(form.age) || undefined;
         body.permanentSameAsPresent = same;
         if (same) {
             body.permanentVillage = form.presentVillage; body.permanentRoad = form.presentRoad;
@@ -284,7 +289,7 @@ export default function AdmissionPage() {
             [tn("Student Name (EN)", "নাম (ইংরেজি)"), receipt.studentName],
             [tn("Student Name (BN)", "নাম (বাংলা)"), form.studentNameBn || "—"],
             [tn("Date of Birth", "জন্মতারিখ"), form.dateOfBirth || "—"],
-            [tn("Age", "বয়স"), form.age || "—"],
+            [tn("Age", "বয়স"), derivedAge === null ? "—" : String(derivedAge)],
             [tn("Gender", "লিঙ্গ"), form.gender ? tn(form.gender, GENDER_BN[form.gender] ?? form.gender) : "—"],
             [tn("Birth Cert. No.", "জন্মনিবন্ধন নং"), form.birthCertNo || "—"],
             [tn("Religion", "ধর্ম"), form.religion ? tn(form.religion, RELIGION_BN[form.religion] ?? form.religion) : "—"],
@@ -393,32 +398,6 @@ export default function AdmissionPage() {
     }
 
     // ─── FORM ───
-    const Field = ({ label, children, span2, error }: { label: string; children: React.ReactNode; span2?: boolean; error?: string }) => {
-        const id = React.useId();
-        const child = React.isValidElement(children)
-            ? React.cloneElement(children as React.ReactElement<Record<string, unknown>>, { id })
-            : children;
-        return (
-            <div className={`space-y-1.5 ${span2 ? "md:col-span-2" : ""}`}>
-                <Label htmlFor={id} className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">{label}</Label>
-                {child}
-                {error ? <p className="text-[11px] font-semibold text-destructive">{error}</p> : null}
-            </div>
-        );
-    };
-    const Section = ({ title, titleBn, children }: { title: string; titleBn: string; children: React.ReactNode }) => (
-        <section>
-            <p className="text-[10px] font-black text-primary uppercase tracking-wider mb-4">{tn(title, titleBn)}</p>
-            {children}
-        </section>
-    );
-    const Toggle = ({ value, current, onPick, label }: { value: string; current: string; onPick: (v: string) => void; label: string }) => (
-        <button type="button" onClick={() => onPick(value)}
-            className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-colors cursor-pointer ${current === value ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"}`}>
-            {label}
-        </button>
-    );
-
     const stepKey = ADMISSION_STEPS[step].key;
     const isLast = step === ADMISSION_STEPS.length - 1;
 
@@ -492,7 +471,7 @@ export default function AdmissionPage() {
                             </div>
 
                             {stepKey === "student" ? (
-                                <Section title="Student Information" titleBn="শিক্ষার্থীর তথ্য">
+                                <Section title={tn("Student Information", "শিক্ষার্থীর তথ্য")}>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <Field label={`${tn("Student Name (English)", "নাম (ইংরেজি)")} *`} error={errors.studentName}>
                                             <Input className="h-11" value={form.studentName} onChange={(e) => set("studentName", e.target.value)} />
@@ -503,8 +482,14 @@ export default function AdmissionPage() {
                                         <Field label={tn("Date of Birth", "জন্মতারিখ")} error={errors.dateOfBirth}>
                                             <Input className="h-11" type="date" value={form.dateOfBirth} onChange={(e) => set("dateOfBirth", e.target.value)} />
                                         </Field>
-                                        <Field label={tn("Age", "বয়স")} error={errors.age}>
-                                            <Input className="h-11" type="number" min={0} max={30} value={form.age} onChange={(e) => set("age", e.target.value)} />
+                                        <Field label={tn("Age", "বয়স")}>
+                                            <Input
+                                                className="h-11 bg-muted/40"
+                                                type="text"
+                                                readOnly
+                                                value={derivedAge === null ? "" : String(derivedAge)}
+                                                placeholder={tn("Calculated from the date of birth", "জন্মতারিখ থেকে হিসাব করা হয়")}
+                                            />
                                         </Field>
                                         <Field label={tn("Gender", "লিঙ্গ")} error={errors.gender}>
                                             <div className="flex gap-2">
@@ -538,7 +523,7 @@ export default function AdmissionPage() {
 
                             {stepKey === "guardian" ? (
                                 <div className="space-y-8">
-                                    <Section title="Parent Information" titleBn="অভিভাবকের তথ্য">
+                                    <Section title={tn("Parent Information", "অভিভাবকের তথ্য")}>
                                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-2">{tn("Father", "পিতা")}</p>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
                                             <Field label={tn("Father Name", "পিতার নাম")}><Input className="h-11" value={form.fatherName} onChange={(e) => set("fatherName", e.target.value)} /></Field>
@@ -557,7 +542,7 @@ export default function AdmissionPage() {
                                         </div>
                                     </Section>
 
-                                    <Section title="Guardian & Contact" titleBn="অভিভাবক ও যোগাযোগ">
+                                    <Section title={tn("Guardian & Contact", "অভিভাবক ও যোগাযোগ")}>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <Field label={`${tn("Guardian Name", "অভিভাবকের নাম")} *`} error={errors.guardianName}>
                                                 <Input className="h-11" value={form.guardianName} onChange={(e) => set("guardianName", e.target.value)} />
@@ -584,7 +569,7 @@ export default function AdmissionPage() {
                                         </div>
                                     </Section>
 
-                                    <Section title="Present Address" titleBn="বর্তমান ঠিকানা">
+                                    <Section title={tn("Present Address", "বর্তমান ঠিকানা")}>
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                             <Field label={tn("Village / House", "গ্রাম / বাড়ি")}><Input className="h-11" value={form.presentVillage} onChange={(e) => set("presentVillage", e.target.value)} /></Field>
                                             <Field label={tn("Road No.", "রোড নং")}><Input className="h-11" value={form.presentRoad} onChange={(e) => set("presentRoad", e.target.value)} /></Field>
@@ -597,7 +582,7 @@ export default function AdmissionPage() {
                                         </div>
                                     </Section>
 
-                                    <Section title="Permanent Address" titleBn="স্থায়ী ঠিকানা">
+                                    <Section title={tn("Permanent Address", "স্থায়ী ঠিকানা")}>
                                         <label className="flex items-center gap-2.5 mb-4 cursor-pointer">
                                             <Checkbox checked={form.permanentSameAsPresent} onCheckedChange={(v) => setBoolean("permanentSameAsPresent", v === true)} />
                                             <span className="text-xs font-semibold">{tn("Same as present address", "বর্তমান ঠিকানার মতোই")}</span>
@@ -624,7 +609,7 @@ export default function AdmissionPage() {
 
                             {stepKey === "academic" ? (
                                 <div className="space-y-8">
-                                    <Section title="Academic & Admission" titleBn="একাডেমিক ও ভর্তি">
+                                    <Section title={tn("Academic & Admission", "একাডেমিক ও ভর্তি")}>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <Field label={`${tn("Class Applied for", "যে শ্রেণিতে আবেদন")} *`} error={errors.classWanted} span2>
                                                 <div className="grid grid-cols-5 gap-2">
@@ -666,7 +651,7 @@ export default function AdmissionPage() {
                                         </div>
                                     </Section>
 
-                                    <Section title="Attachments" titleBn="সংযুক্তি">
+                                    <Section title={tn("Attachments", "সংযুক্তি")}>
                                         <p className="text-[11px] text-muted-foreground mb-4">{tn("Photo, birth certificate, and testimonial (optional but recommended).", "ছবি, জন্মনিবন্ধন ও প্রশংসাপত্র (ঐচ্ছিক কিন্তু আমরূপ)।")}</p>
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                             {(Object.keys(UPLOAD_META) as (keyof Files)[]).map((kind) => {
@@ -709,7 +694,7 @@ export default function AdmissionPage() {
 
                             {stepKey === "review" ? (
                                 <div className="space-y-6">
-                                    <Section title="Review Your Application" titleBn="আপনার আবেদন পর্যালোচনা করুন">
+                                    <Section title={tn("Review Your Application", "আপনার আবেদন পর্যালোচনা করুন")}>
                                         <p className="text-[11px] text-muted-foreground mb-4">{tn("Check the details below. Use Edit to go back to a step and change something.", "নিচের তথ্য যাচাই করুন। কিছু পরিবর্তন করতে সংশ্লিষ্ট ধাপে ফিরে যান।")}</p>
                                         <div className="space-y-4">
                                             <ReviewGroup
@@ -719,7 +704,7 @@ export default function AdmissionPage() {
                                                     [tn("Name (EN)", "নাম (ইংরেজি)"), form.studentName],
                                                     [tn("Name (BN)", "নাম (বাংলা)"), form.studentNameBn],
                                                     [tn("Date of Birth", "জন্মতারিখ"), form.dateOfBirth],
-                                                    [tn("Age", "বয়স"), form.age],
+                                                    [tn("Age", "বয়স"), derivedAge === null ? "—" : String(derivedAge)],
                                                     [tn("Gender", "লিঙ্গ"), form.gender ? tn(form.gender, GENDER_BN[form.gender] ?? form.gender) : ""],
                                                     [tn("Birth Cert. No.", "জন্মনিবন্ধন নং"), form.birthCertNo],
                                                     [tn("Religion", "ধর্ম"), form.religion ? tn(form.religion, RELIGION_BN[form.religion] ?? form.religion) : ""],
@@ -808,6 +793,69 @@ export default function AdmissionPage() {
             </main>
             <Footer />
         </div>
+    );
+}
+
+/**
+ * A labelled form field. The label is wired to the input with a generated
+ * id, so clicking the label focuses the input.
+ *
+ * These three live at module scope on purpose: defined inside the page
+ * component, every render produced a new component identity, so React
+ * unmounted and remounted the whole form on every keystroke and typing
+ * lost focus after each character.
+ */
+function Field({
+    label,
+    children,
+    span2,
+    error,
+}: {
+    label: string;
+    children: React.ReactNode;
+    span2?: boolean;
+    error?: string;
+}) {
+    const id = React.useId();
+    const child = React.isValidElement(children)
+        ? React.cloneElement(children as React.ReactElement<Record<string, unknown>>, { id })
+        : children;
+    return (
+        <div className={`space-y-1.5 ${span2 ? "md:col-span-2" : ""}`}>
+            <Label htmlFor={id} className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">{label}</Label>
+            {child}
+            {error ? <p className="text-[11px] font-semibold text-destructive">{error}</p> : null}
+        </div>
+    );
+}
+
+/** A titled group of fields within a step. */
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+    return (
+        <section>
+            <p className="text-[10px] font-black text-primary uppercase tracking-wider mb-4">{title}</p>
+            {children}
+        </section>
+    );
+}
+
+/** One of a set of exclusive choices (gender, religion, …). */
+function Toggle({
+    value,
+    current,
+    onPick,
+    label,
+}: {
+    value: string;
+    current: string;
+    onPick: (v: string) => void;
+    label: string;
+}) {
+    return (
+        <button type="button" onClick={() => onPick(value)}
+            className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-colors cursor-pointer ${current === value ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"}`}>
+            {label}
+        </button>
     );
 }
 

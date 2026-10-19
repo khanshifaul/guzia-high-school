@@ -425,8 +425,6 @@ async function main(): Promise<void> {
     create: {
       id: "singleton",
       ...schoolIdentity,
-      developedBy: "Shifaul Islam",
-      developedByUrl: "https://shifaul.dev",
       importantLinks: [
         { label: "Ministry of Education", labelBn: "শিক্ষা মন্ত্রণালয়", href: "https://moedu.gov.bd" },
         { label: "Rajshahi Education Board", labelBn: "রাজশাহী শিক্ষা বোর্ড", href: "https://rajshahieducationboard.gov.bd" },

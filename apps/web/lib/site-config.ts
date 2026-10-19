@@ -5,6 +5,11 @@
 
 import * as React from "react";
 
+// The developer credit is intentionally hardcoded in code — it is NOT
+// admin-editable and is not part of the stored site settings.
+export const DEVELOPED_BY = "Shifaul Islam";
+export const DEVELOPED_BY_URL = "https://shifaul.dev";
+
 export interface ImportantLink {
     label: string;
     labelBn?: string;
@@ -24,8 +29,6 @@ export interface SiteConfig {
     established: string;
     tagline: string;
     taglineBn: string;
-    developedBy: string;
-    developedByUrl: string;
     facebookUrl: string;
     twitterUrl: string;
     instagramUrl: string;
@@ -49,8 +52,6 @@ const FALLBACK: SiteConfig = {
     established: "1958",
     tagline: "A combined secondary school in Guzia, Bogura — serving the community since 1958.",
     taglineBn: "১৯৫৮ সাল থেকে বগুড়ার গুজিয়ায় প্রতিষ্ঠিত একটি সহ-শিক্ষা মাধ্যমিক বিদ্যালয়।",
-    developedBy: "Shifaul Islam",
-    developedByUrl: "https://shifaul.dev",
     facebookUrl: "",
     twitterUrl: "",
     instagramUrl: "",
