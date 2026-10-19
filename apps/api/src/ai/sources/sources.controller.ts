@@ -62,6 +62,23 @@ class FromUrlDto {
     subjectId?: string;
 }
 
+class AskSourcesDto {
+    @ApiProperty({ example: 'Explain the causes of the 1857 rebellion.' })
+    @IsString()
+    @Length(1, 500)
+    question: string;
+
+    @ApiPropertyOptional({ description: 'Only search sources for this class' })
+    @IsOptional()
+    @IsString()
+    classId?: string;
+
+    @ApiPropertyOptional({ description: 'Only search sources for this subject' })
+    @IsOptional()
+    @IsString()
+    subjectId?: string;
+}
+
 @ApiTags('AI Sources')
 @Controller('ai/sources')
 export class SourcesController {
@@ -124,6 +141,22 @@ export class SourcesController {
             classId: dto.classId,
             subjectId: dto.subjectId,
         });
+    }
+
+    @Roles('TEACHER')
+    @Post('ask')
+    @RateLimit('ai:generate', 60_000, 10)
+    @ApiOperation({ summary: "Ask across all of a teacher's sources (page-cited)" })
+    askAll(@Body() dto: AskSourcesDto, @User() user: { id: string }) {
+        return this.service.askNotebook(user.id, dto.question, dto.classId, dto.subjectId);
+    }
+
+    @Roles('TEACHER')
+    @Post('reindex')
+    @RateLimit('ai:generate', 60_000, 10)
+    @ApiOperation({ summary: 'Embed source chunks that are missing vectors (backfill)' })
+    reindex(@User() user: { id: string }) {
+        return this.service.reindex(user.id);
     }
 
     @Roles('TEACHER')

@@ -13,7 +13,9 @@ import { PlansController } from './plans/plans.controller';
 import { TestsService } from './tests/tests.service';
 import { TestsController } from './tests/tests.controller';
 import { SourcesService } from './sources/sources.service';
+import { RetrievalService } from './sources/retrieval.service';
 import { SourcesController } from './sources/sources.controller';
+import { EmbeddingsService } from './embeddings/embeddings.service';
 
 @Module({
     imports: [UploadModule],
@@ -31,9 +33,18 @@ import { SourcesController } from './sources/sources.controller';
         PlansService,
         TestsService,
         SourcesService,
+        RetrievalService,
+        EmbeddingsService,
         RateLimiterService,
     ],
-    exports: [AtRiskService, LlmService, ProviderConfigService, RateLimiterService],
+    exports: [
+        AtRiskService,
+        LlmService,
+        ProviderConfigService,
+        RateLimiterService,
+        EmbeddingsService,
+        RetrievalService,
+    ],
 })
 export class AiModule implements OnModuleInit {
     constructor(private readonly limiter: RateLimiterService) {}

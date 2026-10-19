@@ -2,7 +2,7 @@ name: guzia-high-school
 
 services:
   postgres:
-    image: postgres:18-alpine
+    image: pgvector/pgvector:pg18
     restart: unless-stopped
     environment:
       POSTGRES_USER: ghs

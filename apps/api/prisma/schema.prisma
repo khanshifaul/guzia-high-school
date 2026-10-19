@@ -483,6 +483,7 @@ model SourceChunk {
   document   SourceDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
   page       Int?
   content    String
+  embedding  Unsupported("vector(384)")?
 }
 
 model SiteSetting {

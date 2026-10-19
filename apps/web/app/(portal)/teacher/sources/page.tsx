@@ -54,6 +54,10 @@ interface SourceSummary {
 }
 interface SourceDetail extends Source { summary: SourceSummary | null; chunks: { page: number | null; content: string }[] }
 interface AskResult { answer: string; citations: { page: number | null; snippet: string }[] }
+interface AskAcrossResult {
+    answer: string;
+    citations: { sourceId: string; filename: string; page: number | null; snippet: string }[];
+}
 
 const MAX_MB = 50;
 /** Direct API origin for uploads: a large multipart body exceeds the Next dev
@@ -72,6 +76,9 @@ export default function TeacherSourcesPage() {
     const [question, setQuestion] = React.useState("");
     const [askResult, setAskResult] = React.useState<AskResult | null>(null);
     const [asking, setAsking] = React.useState(false);
+    const [notebookQuestion, setNotebookQuestion] = React.useState("");
+    const [notebookAnswer, setNotebookAnswer] = React.useState<AskAcrossResult | null>(null);
+    const [notebookAsking, setNotebookAsking] = React.useState(false);
 
     const [open, setOpen] = React.useState(false);
     const [mode, setMode] = React.useState<"file" | "text" | "url">("file");
@@ -211,6 +218,25 @@ export default function TeacherSourcesPage() {
         }
     }
 
+    /** Ask one question across every uploaded source, with page citations. */
+    async function askAcrossSources() {
+        const q = notebookQuestion.trim();
+        if (!q || notebookAsking) return;
+        setNotebookAsking(true);
+        setNotebookAnswer(null);
+        try {
+            const r = await api<AskAcrossResult>("/ai/sources/ask", {
+                method: "POST",
+                body: { question: q, classId: classId ?? undefined, subjectId: subjectId ?? undefined },
+            });
+            setNotebookAnswer(r);
+        } catch (err) {
+            setNotebookAnswer({ answer: err instanceof RequestError ? err.messages.join("; ") : "Ask failed", citations: [] });
+        } finally {
+            setNotebookAsking(false);
+        }
+    }
+
     /** Carry the source's key topics into the lesson-plan or test-paper builder. */
     function useFor(target: "plans" | "tests") {
         const topics = detail?.summary?.keyTopics ?? [];
@@ -329,6 +355,46 @@ export default function TeacherSourcesPage() {
                     {feedback.msg}
                 </div>
             ) : null}
+
+            <Card className="border-border/60 shadow-sm">
+                <CardHeader className="border-b border-border/60 pb-4">
+                    <CardTitle className="text-sm font-black uppercase tracking-tight">Ask across all sources</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 space-y-3">
+                    <div className="flex gap-2">
+                        <Input
+                            placeholder="e.g. Compare how both chapters explain photosynthesis"
+                            value={notebookQuestion}
+                            onChange={(e) => setNotebookQuestion(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Enter") void askAcrossSources(); }}
+                            className="h-11"
+                        />
+                        <Button onClick={() => void askAcrossSources()} disabled={notebookAsking || !notebookQuestion.trim()}
+                            className="font-black text-xs uppercase tracking-wider">
+                            {notebookAsking ? <FaSpinner className="animate-spin" size={12} /> : <><FaPaperPlane size={12} /> Ask</>}
+                        </Button>
+                    </div>
+                    {notebookAnswer ? (
+                        <div className="p-4 rounded-xl border border-border/60 space-y-3">
+                            <p className="text-sm">{notebookAnswer.answer}</p>
+                            {notebookAnswer.citations.length > 0 ? (
+                                <div className="space-y-2 pt-2 border-t border-border/60">
+                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Citations</p>
+                                    {notebookAnswer.citations.map((c, i) => (
+                                        <div key={`${c.sourceId}-${i}`} className="flex flex-wrap items-baseline gap-2 text-xs">
+                                            <span className="font-black uppercase tracking-wider text-[9px]">{c.filename}</span>
+                                            <span className="text-muted-foreground/50 text-[9px]">·</span>
+                                            <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] shrink-0">p.{c.page ?? "?"}</Badge>
+                                            <span className="text-muted-foreground/50 text-[9px]">·</span>
+                                            <span className="text-muted-foreground">{c.snippet}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : null}
+                        </div>
+                    ) : null}
+                </CardContent>
+            </Card>
 
             {sources.length === 0 ? (
                 <EmptyState title="No sources" description="Upload a chapter or notes to summarize and generate plans or tests." />
