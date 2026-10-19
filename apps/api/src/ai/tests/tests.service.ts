@@ -6,6 +6,7 @@ import { DatabaseService } from '../../database/database.service';
 import { Prisma } from 'prisma/generated/client';
 import { LlmService } from '../llm/llm.service';
 import { z } from 'zod';
+import { parseJsonObject } from '../llm/json.util';
 
 const PaperSchema = z.object({
     title: z.string(),
@@ -132,7 +133,7 @@ export class TestsService {
     ) {
         let json: unknown;
         try {
-            json = JSON.parse(raw);
+            json = parseJsonObject(raw);
         } catch {
             throw new BadRequestException('AI returned invalid JSON; try again');
         }

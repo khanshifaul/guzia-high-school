@@ -37,9 +37,9 @@ import { cn } from "@/lib/utils";
 
 interface Source { id: string; filename: string; kind: string; pages: number | null; status: string; createdAt: string }
 interface SourceSummary {
-    summary: string;
-    keyTopics: string[];
-    suggestedQuestions: string[];
+    summary?: string;
+    keyTopics?: string[];
+    suggestedQuestions?: string[];
     fileUrl?: string;
     storage?: string;
 }
@@ -264,12 +264,17 @@ export default function TeacherSourcesPage() {
                     {detail?.summary ? (
                         <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-2">
                             <p className="text-[10px] font-black text-primary uppercase tracking-wider">Summary</p>
-                            <p className="text-sm">{detail.summary.summary}</p>
-                            <div className="flex flex-wrap gap-1.5 pt-1">
-                                {detail.summary.keyTopics.map((t) => (
-                                    <Badge key={t} className="bg-primary/10 text-primary border-primary/20 text-[9px]">{t}</Badge>
-                                ))}
-                            </div>
+                            <p className="text-sm">
+                                {detail.summary.summary ??
+                                    "No summary yet — the AI summarize step did not run for this upload."}
+                            </p>
+                            {(detail.summary.keyTopics?.length ?? 0) > 0 ? (
+                                <div className="flex flex-wrap gap-1.5 pt-1">
+                                    {detail.summary.keyTopics?.map((t) => (
+                                        <Badge key={t} className="bg-primary/10 text-primary border-primary/20 text-[9px]">{t}</Badge>
+                                    ))}
+                                </div>
+                            ) : null}
                             {detail.summary.fileUrl ? (
                                 <a href={detail.summary.fileUrl} target="_blank" rel="noreferrer"
                                     className="inline-flex items-center gap-1 text-[10px] font-bold text-primary uppercase tracking-wider hover:underline">

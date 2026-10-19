@@ -6,6 +6,7 @@ import { DatabaseService } from '../../database/database.service';
 import { Prisma } from 'prisma/generated/client';
 import { LlmService } from '../llm/llm.service';
 import { z } from 'zod';
+import { parseJsonObject } from '../llm/json.util';
 
 // Concrete week shape so Prisma accepts it as InputJsonValue (a bare
 // Record<string, unknown> lacks the index signature Prisma requires).
@@ -102,7 +103,7 @@ export class PlansService {
     private parsePlan(raw: string, expectedWeeks: number) {
         let json: unknown;
         try {
-            json = JSON.parse(raw);
+            json = parseJsonObject(raw);
         } catch {
             throw new BadRequestException('AI returned invalid JSON; try again');
         }

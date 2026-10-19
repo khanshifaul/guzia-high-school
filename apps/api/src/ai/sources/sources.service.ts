@@ -1,11 +1,13 @@
 // src/ai/sources/sources.service.ts — source-grounded assistant (spec 10
 // Feature C). Upload PDF/image → extract text → chunk → summarize; then ask
 // (RAG-lite keyword retrieval, top-k chunks → LLM, page-cited).
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
 import { UploadService } from '../../upload/upload.service';
 import { LlmService } from '../llm/llm.service';
 import { z } from 'zod';
+import { extractText } from 'unpdf';
+import { parseJsonObject } from '../llm/json.util';
 
 const SummarySchema = z.object({
     summary: z.string(),
@@ -19,6 +21,8 @@ const CHUNK_OVERLAP = 150;
 
 @Injectable()
 export class SourcesService {
+    private readonly logger = new Logger(SourcesService.name);
+
     constructor(
         private readonly prisma: DatabaseService,
         private readonly llm: LlmService,
@@ -80,7 +84,10 @@ export class SourcesService {
                 where: { id: doc.id },
                 data: { summary, status: 'READY' },
             });
-        } catch {
+        } catch (err) {
+            this.logger.warn(
+                `Auto-summarize failed for ${opts.filename}: ${(err as Error).message}`,
+            );
             await this.prisma.sourceDocument.update({
                 where: { id: doc.id },
                 data: { status: 'READY' },
@@ -122,9 +129,14 @@ export class SourcesService {
         // Extract text: unpdf for PDFs, direct decode for text.
         let pages: { page: number; text: string }[];
         if (isPdf) {
-            const { extractText } = await import('unpdf');
-            const doc = await extractText(file.buffer, { mergePages: false });
-            const raw = (doc.text as string[]) ?? [];
+            // pdf.js requires a Uint8Array; it rejects Node Buffers. This is a
+            // zero-copy view over the same bytes.
+            const bytes = new Uint8Array(file.buffer.buffer, file.buffer.byteOffset, file.buffer.byteLength);
+            const doc = await extractText(bytes, { mergePages: false }).catch((err: Error) => {
+                this.logger.error(`PDF extraction failed for ${file.originalname}: ${err.message}`);
+                throw new BadRequestException(`Could not read this PDF (${err.message})`);
+            });
+            const raw = Array.isArray(doc.text) ? doc.text : [doc.text];
             pages = raw.map((text, i) => ({ page: i + 1, text })).filter((p) => p.text.trim());
             if (pages.length === 0) {
                 throw new BadRequestException(
@@ -307,7 +319,7 @@ export class SourcesService {
         });
         let json: unknown;
         try {
-            json = JSON.parse(raw);
+            json = parseJsonObject(raw);
         } catch {
             throw new BadRequestException('AI returned invalid summary JSON');
         }
