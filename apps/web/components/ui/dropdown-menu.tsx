@@ -46,7 +46,7 @@ function DropdownMenu({ children, open: controlledOpen, onOpenChange, defaultOpe
 
     return (
         <DropdownMenuContext.Provider value={{ open, onOpenChange: setOpen, triggerRef }}>
-            <div className={cn("relative inline-block text-left", className)}>
+            <div className={cn("relative inline-block text-left w-full", className)}>
                 {children}
             </div>
         </DropdownMenuContext.Provider>
