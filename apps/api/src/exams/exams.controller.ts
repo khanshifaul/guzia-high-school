@@ -13,11 +13,19 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { ExamsService } from './exams.service';
 import { CreateExamDto, SubmitMarksDto } from './dto';
 import type { Band } from './grading.util';
+import { User } from '../common/decorators/user.decorator';
+import {
+    StudentAccessService,
+    type StudentAccessViewer,
+} from '../common/access/student-access.service';
 
 @ApiTags('Exams')
 @Controller('exams')
 export class ExamsController {
-    constructor(private readonly service: ExamsService) {}
+    constructor(
+        private readonly service: ExamsService,
+        private readonly access: StudentAccessService,
+    ) {}
 
     @Roles('ADMIN', 'TEACHER')
     @Get()
@@ -52,13 +60,22 @@ export class ExamsController {
 
     @Roles('ADMIN', 'TEACHER', 'STUDENT', 'PARENT')
     @Get(':id/report-card/:studentId')
-    reportCard(@Param('id') id: string, @Param('studentId') studentId: string) {
+    async reportCard(
+        @Param('id') id: string,
+        @Param('studentId') studentId: string,
+        @User() user: { id: string; role: StudentAccessViewer['role'] },
+    ) {
+        await this.access.assertCanViewStudent(studentId, { userId: user.id, role: user.role });
         return this.service.reportCard(id, studentId);
     }
 
     @Roles('ADMIN', 'TEACHER', 'STUDENT', 'PARENT')
     @Get('results/student/:studentId')
-    resultsForStudent(@Param('studentId') studentId: string) {
+    async resultsForStudent(
+        @Param('studentId') studentId: string,
+        @User() user: { id: string; role: StudentAccessViewer['role'] },
+    ) {
+        await this.access.assertCanViewStudent(studentId, { userId: user.id, role: user.role });
         return this.service.resultsForStudent(studentId);
     }
 

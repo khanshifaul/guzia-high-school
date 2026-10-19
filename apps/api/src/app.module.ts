@@ -27,6 +27,7 @@ import { AccessTokenGuard } from './common/guards/access-token.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { RateLimitGuard } from './common/rate-limiter/rate-limit.guard';
 import { HealthController } from './health.controller';
+import { AccessModule } from './common/access/access.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { HealthController } from './health.controller';
       validationSchema,
       envFilePath: ['.env.local', '.env'],
     }),
+    AccessModule,
     DatabaseModule,
     AuthModule,
     ClassesModule,

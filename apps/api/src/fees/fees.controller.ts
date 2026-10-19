@@ -5,11 +5,18 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { User } from '../common/decorators/user.decorator';
 import { FeesModuleService } from './fees.service';
 import { CreateFeeHeadDto, GenerateInvoicesDto, RecordPaymentDto } from './dto';
+import {
+    StudentAccessService,
+    type StudentAccessViewer,
+} from '../common/access/student-access.service';
 
 @ApiTags('Fees')
 @Controller('fees')
 export class FeesController {
-    constructor(private readonly service: FeesModuleService) {}
+    constructor(
+        private readonly service: FeesModuleService,
+        private readonly access: StudentAccessService,
+    ) {}
 
     @Roles('ADMIN')
     @Get('heads')
@@ -33,7 +40,12 @@ export class FeesController {
     @Roles('ADMIN', 'STUDENT', 'PARENT')
     @Get('ledger/:studentId')
     @ApiOperation({ summary: 'Student fee ledger (invoices + payments + due)' })
-    studentLedger(@Param('studentId') studentId: string) {
+    async studentLedger(
+        @Param('studentId') studentId: string,
+        @User() user: { id: string; role: StudentAccessViewer['role'] },
+    ) {
+        // A role check is not enough: a parent may only read their own child.
+        await this.access.assertCanViewStudent(studentId, { userId: user.id, role: user.role });
         return this.service.studentLedger(studentId);
     }
 

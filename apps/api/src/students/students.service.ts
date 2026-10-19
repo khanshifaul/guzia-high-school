@@ -5,10 +5,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import * as bcrypt from 'bcryptjs';
 import { DatabaseService } from '../database/database.service';
+import * as bcrypt from 'bcryptjs';
 import { gradeSubject, cgpa as computeCgpa } from '../exams/grading.util';
 import { CreateStudentDto, UpdateStudentDto } from './dto';
+import {
+  StudentAccessService,
+  type StudentAccessViewer,
+} from '../common/access/student-access.service';
 
 const STUDENT_INCLUDE = {
   user: { select: { id: true, email: true, fullName: true, status: true } },
@@ -17,9 +21,15 @@ const STUDENT_INCLUDE = {
   parent: { include: { user: { select: { fullName: true, email: true } } } },
 } as const;
 
+/** The authenticated caller, as far as student access is concerned. */
+export type StudentViewer = StudentAccessViewer;
+
 @Injectable()
 export class StudentsService {
-  constructor(private readonly prisma: DatabaseService) {}
+  constructor(
+    private readonly prisma: DatabaseService,
+    private readonly access: StudentAccessService,
+  ) {}
 
   async findAll(params: { search?: string; classId?: string; sectionId?: string }) {
     const where = {
@@ -44,7 +54,81 @@ export class StudentsService {
     return { data: students, meta: { total: students.length } };
   }
 
-  async findOne(id: string) {
+  /**
+   * Students in the classes a teacher actually teaches.
+   *
+   * A teacher's scope comes from `ClassSubject` (teacher → class → section):
+   * a teacher may only read the roster of a class where they are assigned to
+   * teach a subject. ADMIN keeps the unrestricted `findAll`.
+   */
+  async findAllForTeacher(
+    teacherUserId: string,
+    params: { search?: string; classId?: string; sectionId?: string },
+  ) {
+    const teacher = await this.prisma.teacher.findUnique({ where: { userId: teacherUserId } });
+    if (!teacher) throw new NotFoundException('No teacher profile for this user');
+
+    // The classes/sections this teacher is assigned to. A teacher with no
+    // assignment sees nothing.
+    const assignments = await this.prisma.classSubject.findMany({
+      where: { teacherId: teacher.id },
+      select: { classId: true, sectionId: true },
+    });
+    const classIds = [...new Set(assignments.map((a) => a.classId))];
+    if (classIds.length === 0) return { data: [], meta: { total: 0 } };
+
+    // Narrowing to one class/section the teacher does not teach must return
+    // nothing rather than silently fall back to their whole scope.
+    if (params.classId && !classIds.includes(params.classId)) {
+      return { data: [], meta: { total: 0 } };
+    }
+    if (params.sectionId) {
+      const allowed = new Set(
+        assignments
+          .filter((a) => !params.classId || a.classId === params.classId)
+          .map((a) => a.sectionId),
+      );
+      if (!allowed.has(params.sectionId)) return { data: [], meta: { total: 0 } };
+    }
+
+    const scope = params.sectionId
+      ? { sectionId: params.sectionId }
+      : { classId: { in: classIds } };
+
+    const where = {
+      ...scope,
+      ...(params.classId && !params.sectionId ? { classId: params.classId } : {}),
+      ...(params.search
+        ? {
+            OR: [
+              { fullName: { contains: params.search, mode: 'insensitive' as const } },
+              { admissionNo: { contains: params.search, mode: 'insensitive' as const } },
+            ],
+          }
+        : {}),
+    };
+
+    const students = await this.prisma.student.findMany({
+      where,
+      include: STUDENT_INCLUDE,
+      orderBy: [{ class: { name: 'asc' } }, { rollNo: 'asc' }],
+    });
+
+    return { data: students, meta: { total: students.length } };
+  }
+
+  /**
+   * One student with their stats and transcript.
+   *
+   * Access is decided server-side, never by the caller:
+   *  - ADMIN: any student.
+   *  - TEACHER: a student in a class the teacher teaches.
+   *  - STUDENT: only themselves.
+   *  - PARENT: only their own children.
+   *  - anyone else: 403.
+   */
+  async findOne(id: string, viewer?: StudentViewer) {
+    if (viewer) await this.access.assertCanViewStudent(id, viewer);
     const student = await this.prisma.student.findUnique({
       where: { id },
       include: {
@@ -76,6 +160,7 @@ export class StudentsService {
       transcript,
     };
   }
+
 
   /** Published-exam transcript with canonical letters/points + CGPA. */
   async buildTranscript(studentId: string, bands?: { minPercent: number; maxPercent: number; letter: string; point: number }[]) {

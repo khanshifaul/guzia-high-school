@@ -50,9 +50,18 @@ export default function TeacherGradesPage() {
     React.useEffect(() => {
         if (!exam) return;
         setLoadingStudents(true);
+        setFeedback(null);
         api<{ data: Student[] }>(`/students?classId=${exam.class.id}`)
             .then((p) => setStudents(p.data))
-            .catch(() => setStudents([]))
+            .catch((err) => {
+                // Do not swallow this: an empty roster reads as "no students",
+                // which hides a permissions or fetch failure.
+                setStudents([]);
+                setFeedback({
+                    kind: "err",
+                    msg: err instanceof RequestError ? err.messages.join("; ") : "Could not load the class roster",
+                });
+            })
             .finally(() => setLoadingStudents(false));
     }, [exam]);
 

@@ -12,7 +12,8 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
-import { StudentsService } from './students.service';
+import { User } from '../common/decorators/user.decorator';
+import { StudentsService, type StudentViewer } from './students.service';
 import { BulkCreateStudentsDto, CreateStudentDto, UpdateStudentDto } from './dto';
 
 @ApiTags('Students')
@@ -20,22 +21,33 @@ import { BulkCreateStudentsDto, CreateStudentDto, UpdateStudentDto } from './dto
 export class StudentsController {
   constructor(private readonly service: StudentsService) {}
 
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'TEACHER')
   @Get()
-  @ApiOperation({ summary: 'List students (search/filter)' })
+  @ApiOperation({
+    summary: 'List students (search/filter)',
+    description:
+      'ADMIN sees every student. TEACHER sees only the rosters of the classes they teach.',
+  })
   findAll(
+    @User() user: { id: string; role: string },
     @Query('search') search?: string,
     @Query('classId') classId?: string,
     @Query('sectionId') sectionId?: string,
   ) {
-    return this.service.findAll({ search, classId, sectionId });
+    const params = { search, classId, sectionId };
+    return user.role === 'TEACHER'
+      ? this.service.findAllForTeacher(user.id, params)
+      : this.service.findAll(params);
   }
 
-  @Public()
   @Get(':id')
-  @ApiOperation({ summary: 'Student detail with stats + transcript' })
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+  @ApiOperation({
+    summary: 'Student detail with stats + transcript',
+    description:
+      'Access is checked server-side: ADMIN sees any student, TEACHER the students they teach, STUDENT themselves, PARENT their own children.',
+  })
+  findOne(@Param('id') id: string, @User() user: { id: string; role: StudentViewer['role'] }) {
+    return this.service.findOne(id, { userId: user.id, role: user.role });
   }
 
   @Roles('ADMIN')
