@@ -15,6 +15,8 @@ interface SelectContextValue {
     searchable: boolean
     disabled: boolean
     label: string
+    /** Selected value → its option's display text. */
+    labels: Map<string, string>
 }
 
 const SelectContext = React.createContext<SelectContextValue | null>(null)
@@ -68,9 +70,32 @@ function Select({ children, value: controlledValue, onValueChange, defaultValue 
         if (!open) setQuery("")
     }, [open])
 
+    // Resolve each option's value → label by walking the JSX tree. The options
+    // cannot register themselves: SelectContent renders null while closed, so
+    // they are not mounted. Matched by displayName to keep declaration order.
+    const labels = React.useMemo(() => {
+        const map = new Map<string, string>()
+        const walk = (node: React.ReactNode): void => {
+            if (node == null || typeof node === "boolean") return
+            if (Array.isArray(node)) {
+                for (const child of node) walk(child)
+                return
+            }
+            if (!React.isValidElement(node)) return
+            const props = node.props as { value?: unknown; children?: React.ReactNode }
+            const type = node.type as { displayName?: string }
+            if (type?.displayName === "SelectItem" && typeof props.value === "string") {
+                map.set(props.value, getNodeText(props.children))
+            }
+            walk(props.children)
+        }
+        walk(children)
+        return map
+    }, [children])
+
     return (
         <SelectContext.Provider
-            value={{ value, onValueChange: setValue, open, setOpen, triggerRef, query, setQuery, searchable, disabled, label }}
+            value={{ value, onValueChange: setValue, open, setOpen, triggerRef, query, setQuery, searchable, disabled, label, labels }}
         >
             <div className="relative">
                 {children}
@@ -132,9 +157,14 @@ function SelectValue({ placeholder }: SelectValueProps) {
     const context = React.useContext(SelectContext)
     if (!context) throw new Error("SelectValue must be used within Select")
 
+    // Always show the option's label — never the raw value.
+    const text = context.value
+        ? context.labels.get(context.value) ?? context.value
+        : placeholder
+
     return (
         <span className={cn(!context.value && "text-muted-foreground")}>
-            {context.value || placeholder}
+            {text}
         </span>
     )
 }
