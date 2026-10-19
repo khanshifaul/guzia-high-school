@@ -1,5 +1,6 @@
 // src/app.module.ts — app wiring: env validation at boot, global DB,
-// auth module, global guards (auth first, then roles), health route.
+// auth module, global guards (auth first, then roles, then rate limit),
+// health route.
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
@@ -24,6 +25,7 @@ import { ContactModule } from './contact/contact.module';
 import { GalleryModule } from './gallery/gallery.module';
 import { AccessTokenGuard } from './common/guards/access-token.guard';
 import { RolesGuard } from './common/guards/roles.guard';
+import { RateLimitGuard } from './common/rate-limiter/rate-limit.guard';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -56,6 +58,7 @@ import { HealthController } from './health.controller';
   providers: [
     { provide: APP_GUARD, useClass: AccessTokenGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: RateLimitGuard },
   ],
 })
 export class AppModule {}

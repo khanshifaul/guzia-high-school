@@ -18,6 +18,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { User } from '../../common/decorators/user.decorator';
 import { SourcesService } from './sources.service';
 import { UploadService } from '../../upload/upload.service';
+import { RateLimit } from '../../common/rate-limiter/rate-limit.guard';
 
 class IngestSourceDto {
     @ApiProperty({ example: 'ch3-algebra.txt' })
@@ -51,13 +52,18 @@ export class SourcesController {
 
     @Roles('TEACHER')
     @Post('upload')
+    @RateLimit('ai:upload', 60_000, 5)
     @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 15 * 1024 * 1024 } }))
     @ApiOperation({ summary: 'Upload a PDF/text file → store (R2/local), extract, summarize' })
     @ApiConsumes('multipart/form-data')
     @ApiBody({
         schema: {
             type: 'object',
-            properties: { file: { type: 'string', format: 'binary' } },
+            properties: {
+                file: { type: 'string', format: 'binary' },
+                filename: { type: 'string' },
+                kind: { type: 'string', enum: ['PDF', 'IMAGE'] },
+            },
         },
     })
     async uploadSource(
@@ -69,14 +75,13 @@ export class SourcesController {
 
     @Roles('TEACHER')
     @Post('ingest')
+    @RateLimit('ai:generate', 60_000, 10)
     @ApiOperation({ summary: 'Ingest source text, chunk + auto-summarize' })
     ingest(@Body() dto: IngestSourceDto, @User() user: { id: string }) {
         return this.service.ingest({
             userId: user.id,
             filename: dto.filename,
             kind: dto.kind,
-            // Single-page ingest: the whole text is page 1 for now (PDF/page
-            // splitting wires in later per spec 10).
             pages: [{ page: 1, text: dto.text }],
         });
     }
@@ -89,12 +94,14 @@ export class SourcesController {
 
     @Roles('TEACHER')
     @Post(':id/summarize')
+    @RateLimit('ai:generate', 60_000, 10)
     summarize(@Param('id') id: string, @User() user: { id: string }) {
         return this.service.summarize(id, user.id);
     }
 
     @Roles('TEACHER')
     @Post(':id/ask')
+    @RateLimit('ai:generate', 60_000, 10)
     @ApiOperation({ summary: 'Ask a question about a source (page-cited)' })
     ask(
         @Param('id') id: string,

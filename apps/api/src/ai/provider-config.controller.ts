@@ -5,6 +5,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { User } from '../common/decorators/user.decorator';
 import { ProviderConfigService } from './provider-config.service';
 import { UpdateProviderConfigDto } from './dto/update-provider-config.dto';
+import { RateLimit } from '../common/rate-limiter/rate-limit.guard';
 
 @ApiTags('AI Provider')
 @Controller('ai/provider-config')
@@ -20,6 +21,7 @@ export class ProviderConfigController {
 
     @Roles('ADMIN')
     @Put()
+    @RateLimit('ai:generate', 60_000, 10)
     @ApiOperation({ summary: 'Update provider config (key write-only, encrypted)' })
     update(@Body() dto: UpdateProviderConfigDto, @User() user: { id: string }) {
         return this.service.update(dto, user.id);
@@ -27,6 +29,7 @@ export class ProviderConfigController {
 
     @Roles('ADMIN')
     @Post('test')
+    @RateLimit('ai:generate', 60_000, 10)
     @ApiOperation({ summary: 'Test connection (accepts unsaved form values)' })
     test(@Body() dto: UpdateProviderConfigDto) {
         return this.service.testConnection(dto);
@@ -34,6 +37,7 @@ export class ProviderConfigController {
 
     @Roles('ADMIN')
     @Post('models')
+    @RateLimit('ai:generate', 60_000, 10)
     @ApiOperation({ summary: 'Fetch available models from the provider (OpenAI /models)' })
     listModels(@Body() dto: UpdateProviderConfigDto) {
         return this.service.listModels(dto);

@@ -4,6 +4,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { User } from '../../common/decorators/user.decorator';
 import { PlansService, GeneratePlanDto, type PlanWeek } from './plans.service';
+import { RateLimit } from '../../common/rate-limiter/rate-limit.guard';
 
 @ApiTags('AI Plans')
 @Controller('ai/plans')
@@ -18,6 +19,7 @@ export class PlansController {
 
     @Roles('TEACHER')
     @Post('generate')
+    @RateLimit('ai:generate', 60_000, 10)
     @ApiOperation({ summary: 'Generate an editable year/term plan (AI)' })
     generate(@Body() dto: GeneratePlanDto, @User() user: { id: string }) {
         return this.service.generate(dto, user.id);

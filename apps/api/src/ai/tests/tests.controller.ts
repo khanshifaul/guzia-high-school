@@ -5,6 +5,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { User } from '../../common/decorators/user.decorator';
 import { TestsService } from './tests.service';
 import { GeneratePaperDto } from './dto/generate-paper.dto';
+import { RateLimit } from '../../common/rate-limiter/rate-limit.guard';
 
 @ApiTags('AI Tests')
 @Controller('ai/tests')
@@ -19,6 +20,7 @@ export class TestsController {
 
     @Roles('TEACHER')
     @Post('generate')
+    @RateLimit('ai:generate', 60_000, 10)
     @ApiOperation({ summary: 'Generate an editable test paper (AI)' })
     generate(@Body() dto: GeneratePaperDto, @User() user: { id: string }) {
         return this.service.generate(dto, user.id);

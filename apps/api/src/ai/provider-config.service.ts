@@ -1,11 +1,62 @@
-// src/ai/provider-config.service.ts — admin CRUD for the LLM provider row.
+// src/ai/provider-config.service.ts — admin CRUD for the LLM provider config.
 // The API key is write-only + encrypted at rest; GET returns a masked hint.
+// SSRF protection: baseUrl host is checked against an allowlist — private IP
+// ranges and link-local addresses are blocked unless explicitly allowlisted
+// via ALLOWED_AI_HOSTS (comma-separated). localhost/127.0.0.1/::1 always
+// allowed for local Ollama / LM Studio.
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DatabaseService } from '../database/database.service';
 import { LlmService } from './llm/llm.service';
 import { encrypt } from './llm/crypto.util';
 import { UpdateProviderConfigDto } from './dto/update-provider-config.dto';
+
+/** Hosts always allowed (local dev with Ollama / LM Studio). */
+const ALWAYS_ALLOWED_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
+
+/** True when host is a private/reserved IP that must be blocked by default. */
+function isPrivateOrReservedHost(host: string): boolean {
+    const h = host.toLowerCase();
+    if (ALWAYS_ALLOWED_HOSTS.has(h)) return false;
+    if (
+        /^127\./.test(h) ||
+        /^10\./.test(h) ||
+        /^172\.(1[6-9]|2[0-9]|3[01])\./.test(h) ||
+        /^192\.168\./.test(h) ||
+        /^169\.254\./.test(h) ||
+        /^0\.0\.0\.0$/.test(h)
+    ) {
+        return true;
+    }
+    // IPv6 unique local (fc00::/7), link-local (fe80::/10), loopback (::1).
+    if (h.startsWith('fc') || h.startsWith('fd') || h.startsWith('fe8')) return true;
+    return false;
+}
+
+/** Validate baseUrl host against SSRF allowlist. Returns error message or null. */
+function validateBaseUrlHost(baseUrl: string): string | null {
+    let url: URL;
+    try {
+        url = new URL(baseUrl);
+    } catch {
+        return 'Invalid base URL.';
+    }
+    if (!/^https?:$/.test(url.protocol)) {
+        return 'Only http:// and https:// base URLs are allowed.';
+    }
+    const host = url.hostname;
+    const allowed =
+        ALWAYS_ALLOWED_HOSTS.has(host) ||
+        !isPrivateOrReservedHost(host) ||
+        (process.env.ALLOWED_AI_HOSTS ?? '')
+            .split(',')
+            .map((s) => s.trim().toLowerCase())
+            .includes(host);
+    if (!allowed) {
+        return `Base URL host "${host}" is not allowlisted. Add it to ALLOWED_AI_HOSTS.`;
+    }
+    return null;
+}
 
 @Injectable()
 export class ProviderConfigService {
@@ -38,6 +89,11 @@ export class ProviderConfigService {
         if (dto.apiKey && dto.apiKey.length > 0) {
             apiKeyEnc = encrypt(dto.apiKey, secret);
             apiKeyHint = maskKey(dto.apiKey);
+        }
+
+        if (dto.baseUrl !== undefined && dto.baseUrl.length > 0) {
+            const hostError = validateBaseUrlHost(dto.baseUrl);
+            if (hostError) throw new NotFoundException(hostError);
         }
 
         const updated = await this.prisma.aiProviderConfig.update({
@@ -95,6 +151,9 @@ export class ProviderConfigService {
             return { ok: false, error: 'baseUrl and textModel are required to test.' };
         }
 
+        const hostError = validateBaseUrlHost(baseUrl);
+        if (hostError) return { ok: false, error: hostError };
+
         const started = Date.now();
         try {
             const { OpenAI } = await import('openai');
@@ -141,6 +200,9 @@ export class ProviderConfigService {
         if (!baseUrl) {
             throw new NotFoundException('Set a base URL first, then fetch models.');
         }
+
+        const hostError = validateBaseUrlHost(baseUrl);
+        if (hostError) throw new NotFoundException(hostError);
 
         try {
             const { OpenAI } = await import('openai');

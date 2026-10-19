@@ -101,8 +101,12 @@ export class SourcesService {
     ) {
         if (!file) throw new BadRequestException('No file provided (use form field "file")');
 
-        const isPdf = file.mimetype === 'application/pdf' || file.originalname.toLowerCase().endsWith('.pdf');
-        const isText = file.mimetype === 'text/plain' || file.originalname.toLowerCase().endsWith('.txt');
+        const isPdf =
+            file.mimetype === 'application/pdf' ||
+            file.originalname.toLowerCase().endsWith('.pdf');
+        const isText =
+            file.mimetype === 'text/plain' ||
+            file.originalname.toLowerCase().endsWith('.txt');
         if (!isPdf && !isText) {
             throw new BadRequestException('Only PDF and plain-text (.txt) files are supported');
         }
@@ -198,13 +202,39 @@ export class SourcesService {
         const user = `Excerpts:\n${excerpts}\n\nQuestion: ${question}`;
 
         const answer = await this.llm.complete({ system, user, maxTokens: 800 });
+        const verifiedCitations = this.verifyCitations(answer, top);
         return {
             answer,
-            citations: top.map((c) => ({
-                page: c.page,
-                snippet: c.content.slice(0, 160),
-            })),
+            citations: verifiedCitations,
         };
+    }
+
+    /**
+     * Extract [p.N] citations from the LLM answer and keep only those whose
+     * page number exists among the retrieved chunks. This prevents the LLM
+     * from fabricating page citations.
+     */
+    private verifyCitations(
+        answer: string,
+        chunks: { page: number | null; content: string }[],
+    ): { page: number | null; snippet: string }[] {
+        const retrievedPages = new Set(
+            chunks.map((c) => c.page).filter((p): p is number => typeof p === 'number'),
+        );
+        const seen = new Set<number>();
+        const citations: { page: number | null; snippet: string }[] = [];
+        const citedPages = [...answer.matchAll(/\[p\.(\d+)\]/g)].map((m) => Number(m[1]));
+        for (const page of citedPages) {
+            if (seen.has(page)) continue;
+            if (!retrievedPages.has(page)) continue; // hallucinated page — drop it
+            seen.add(page);
+            const chunk = chunks.find((c) => c.page === page);
+            citations.push({
+                page,
+                snippet: chunk ? chunk.content.slice(0, 160) : '',
+            });
+        }
+        return citations;
     }
 
     /** Chunk page-tagged text into ~1200-char windows with overlap. */
@@ -268,7 +298,13 @@ export class SourcesService {
             'Summarize the following school source material as JSON: {"summary": string, ' +
             '"keyTopics": string[], "glossary": [{"term": string, "definition": string}], ' +
             '"suggestedQuestions": string[]}. Respond only with JSON.';
-        const raw = await this.llm.complete({ system, user: truncated, json: true, maxTokens: 1200, mockFixture: 'summary' });
+        const raw = await this.llm.complete({
+            system,
+            user: truncated,
+            json: true,
+            maxTokens: 1200,
+            mockFixture: 'summary',
+        });
         let json: unknown;
         try {
             json = JSON.parse(raw);
