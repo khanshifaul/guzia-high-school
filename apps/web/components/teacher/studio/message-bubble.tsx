@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/lib/studio";
 import { CitationChip } from "./citation-chip";
+import { Markdown } from "./markdown";
 
 export function MessageBubble({
     message,
@@ -30,7 +31,11 @@ export function MessageBubble({
                         : "bg-muted/60 border border-border/60 rounded-bl-sm",
                 )}
             >
-                <p className="whitespace-pre-wrap">{message.content}</p>
+                {mine ? (
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                ) : (
+                    <Markdown>{message.content}</Markdown>
+                )}
                 {!mine && citations.length > 0 ? (
                     <div className="mt-2 flex flex-wrap gap-1.5">
                         {citations.map((citation, index) => (

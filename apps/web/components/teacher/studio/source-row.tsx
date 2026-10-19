@@ -14,10 +14,18 @@ export function statusStyle(status: string): string {
     return "bg-amber-500/10 text-amber-600 border-amber-500/20";
 }
 
-export function SourceRow({ source, onDetach }: { source: StudioSource; onDetach: () => void }) {
+export function SourceRow({
+    source,
+    onOpen,
+    onDetach,
+}: {
+    source: StudioSource;
+    onOpen: () => void;
+    onDetach: () => void;
+}) {
     return (
-        <div className="flex items-start gap-2 rounded-lg border border-border/60 p-2">
-            <div className="min-w-0 flex-1">
+        <div className="flex items-start gap-2 rounded-lg border border-border/60 p-2 transition-colors hover:border-primary/40">
+            <button type="button" onClick={onOpen} className="min-w-0 flex-1 text-left cursor-pointer">
                 <p className="truncate text-xs font-semibold">{source.filename}</p>
                 <div className="mt-1 flex items-center gap-1.5">
                     <Badge className={cn(statusStyle(source.status), "text-[8px]")}>{source.status}</Badge>
@@ -29,7 +37,7 @@ export function SourceRow({ source, onDetach }: { source: StudioSource; onDetach
                 {source.status === "FAILED" ? (
                     <p className="mt-1 text-[9px] text-rose-600">Processing failed — remove and upload again.</p>
                 ) : null}
-            </div>
+            </button>
             <button
                 type="button"
                 aria-label={`Detach ${source.filename}`}

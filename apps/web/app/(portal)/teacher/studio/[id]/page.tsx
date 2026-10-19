@@ -6,7 +6,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { FaArrowLeft, FaPaperclip, FaPen, FaSpinner, FaTrash, FaXmark } from "react-icons/fa6";
+import { FaArrowLeft, FaPaperclip, FaPen, FaSpinner, FaTrash, FaUpload, FaXmark } from "react-icons/fa6";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,10 +17,13 @@ import { MessageBubble } from "@/components/teacher/studio/message-bubble";
 import { SourceRow } from "@/components/teacher/studio/source-row";
 import { AttachSheet } from "@/components/teacher/studio/attach-sheet";
 import { StudioPane, type StudioView } from "@/components/teacher/studio/studio-pane";
+import { SourceDetailDialog } from "@/components/teacher/studio/source-detail-dialog";
 import { api, RequestError } from "@/lib/api";
 import { workspaceScope, type ChatMessage, type Citation, type StudioSource, type WorkspaceDetail } from "@/lib/studio";
 
 const RATE_LIMIT_COOLDOWN_MS = 10_000;
+/** A dropped file is uploaded to the API directly (the Next proxy caps bodies). */
+const API_ORIGIN = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 function WorkspaceSkeleton() {
     return (
@@ -65,6 +68,10 @@ function WorkspaceView() {
     const [titleDraft, setTitleDraft] = React.useState("");
     const [clearing, setClearing] = React.useState(false);
     const [cited, setCited] = React.useState<{ citation: Citation; text: string } | null>(null);
+    const [detailSourceId, setDetailSourceId] = React.useState<string | null>(null);
+    const [feedback, setFeedback] = React.useState<string | null>(null);
+    const [dragging, setDragging] = React.useState(false);
+    const [uploading, setUploading] = React.useState(false);
 
     const [view, setView] = React.useState<StudioView>("tests");
     const listRef = React.useRef<HTMLDivElement>(null);
@@ -147,6 +154,45 @@ function WorkspaceView() {
         } finally {
             setAsking(false);
             setPending(null);
+        }
+    }
+
+    /**
+     * WhatsApp-style drop: the file goes to the library and is attached here
+     * in one move. The upload itself returns immediately (PROCESSING) and the
+     * source becomes searchable when the background ingest finishes.
+     */
+    async function dropFile(file: File) {
+        if (!detail || uploading) return;
+        setUploading(true);
+        setError(null);
+        try {
+            const body = new FormData();
+            body.append("file", file);
+            if (detail.classId) body.append("classId", detail.classId);
+            if (detail.subjectId) body.append("subjectId", detail.subjectId);
+            const response = await fetch(`${API_ORIGIN}/api/ai/sources/upload`, {
+                method: "POST",
+                body,
+                credentials: "include",
+            });
+            const created = (await response.json().catch(() => null)) as
+                | { id?: string; message?: string | string[] }
+                | null;
+            if (!response.ok || !created?.id) {
+                const message = Array.isArray(created?.message) ? created?.message.join("; ") : created?.message;
+                throw new Error(message ?? `Upload failed (${response.status})`);
+            }
+            await api(`/workspaces/${detail.id}/sources`, {
+                method: "POST",
+                body: { sourceIds: [created.id] },
+            });
+            setFeedback(`${file.name} added — processing…`);
+            load();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Could not upload that file");
+        } finally {
+            setUploading(false);
         }
     }
 
@@ -280,6 +326,13 @@ function WorkspaceView() {
                 </div>
             </div>
 
+            {feedback ? (
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-2.5 text-[11px] font-bold text-emerald-600">
+                    <span>{feedback}</span>
+                    <button type="button" onClick={() => setFeedback(null)} aria-label="Dismiss"><FaXmark size={10} /></button>
+                </div>
+            ) : null}
+
             {error ? (
                 <div className="flex items-center justify-between gap-3 rounded-xl border border-destructive/20 bg-destructive/10 p-2.5 text-[11px] font-bold text-destructive">
                     <span>{error}</span>
@@ -287,21 +340,26 @@ function WorkspaceView() {
                 </div>
             ) : null}
 
-            <div className="grid grid-cols-1 xl:grid-cols-[260px_minmax(0,1fr)_340px] gap-4 items-start">
+            <div className="grid grid-cols-1 xl:grid-cols-[260px_minmax(0,1fr)_340px] gap-4 items-stretch xl:h-[calc(100dvh-11rem)] xl:min-h-[520px]">
                 {/* Sources */}
-                <aside className="rounded-xl border border-border/60 bg-card">
+                <aside className="flex min-h-0 flex-col rounded-xl border border-border/60 bg-card xl:h-full">
                     <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
                         <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Sources</span>
                         <span className="text-[10px] text-muted-foreground">{detail.sources.length}</span>
                     </div>
-                    <div className="space-y-1.5 p-2">
+                    <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-2">
                         {detail.sources.length === 0 ? (
                             <p className="px-1 py-6 text-center text-[11px] text-muted-foreground">
                                 Attach a source to start asking.
                             </p>
                         ) : (
                             detail.sources.map((source) => (
-                                <SourceRow key={source.id} source={source} onDetach={() => void detach(source)} />
+                                <SourceRow
+                                    key={source.id}
+                                    source={source}
+                                    onOpen={() => setDetailSourceId(source.id)}
+                                    onDetach={() => void detach(source)}
+                                />
                             ))
                         )}
                         <button
@@ -315,8 +373,32 @@ function WorkspaceView() {
                 </aside>
 
                 {/* Conversation */}
-                <section className="flex min-h-[520px] flex-col rounded-xl border border-border/60 bg-card">
-                    <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto p-3" style={{ maxHeight: "58vh" }}>
+                <section
+                    onDragOver={(event) => {
+                        event.preventDefault();
+                        if (!uploading) setDragging(true);
+                    }}
+                    onDragLeave={(event) => {
+                        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false);
+                    }}
+                    onDrop={(event) => {
+                        event.preventDefault();
+                        setDragging(false);
+                        const file = event.dataTransfer.files?.[0];
+                        if (file) void dropFile(file);
+                    }}
+                    className="relative flex min-h-[520px] flex-col rounded-xl border border-border/60 bg-card xl:h-full xl:min-h-0"
+                >
+                    {dragging ? (
+                        <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary bg-background/85 px-4 text-center">
+                            <FaUpload className="text-primary" size={22} />
+                            <p className="text-sm font-semibold">Drop to add this file to the workspace</p>
+                            <p className="text-[11px] text-muted-foreground">
+                                PDF · image · text — it joins the library and is attached here
+                            </p>
+                        </div>
+                    ) : null}
+                    <div ref={listRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
                         {messages.length === 0 && !asking ? (
                             <div className="flex h-full flex-col items-center justify-center gap-2 py-10 text-center">
                                 <p className="text-sm font-semibold">Ask your sources anything</p>
@@ -369,10 +451,11 @@ function WorkspaceView() {
                 </section>
 
                 {/* Studio */}
-                <aside className="rounded-xl border border-border/60 bg-card">
+                <aside className="flex min-h-0 flex-col rounded-xl border border-border/60 bg-card xl:h-full">
                     <div className="border-b border-border/60 px-3 py-2">
                         <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Studio</span>
                     </div>
+                    <div className="min-h-0 flex-1 overflow-y-auto">
                     <StudioPane
                         workspaceId={detail.id}
                         classId={detail.classId}
@@ -384,6 +467,7 @@ function WorkspaceView() {
                         }}
                         topics={topics.slice(0, 300)}
                     />
+                    </div>
                 </aside>
             </div>
 
@@ -394,6 +478,8 @@ function WorkspaceView() {
                 attachedIds={detail.sources.map((source) => source.id)}
                 onAttached={load}
             />
+
+            <SourceDetailDialog sourceId={detailSourceId} onClose={() => setDetailSourceId(null)} />
 
             {/* A citation opens the cited page's text. */}
             <Dialog open={cited !== null} onOpenChange={(open) => (open ? null : setCited(null))}>

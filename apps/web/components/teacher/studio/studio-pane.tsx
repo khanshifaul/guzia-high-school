@@ -145,7 +145,7 @@ export function StudioPane({
                     {loading ? <Skeleton className="h-16" /> : papers.length === 0 ? (
                         <p className="py-3 text-center text-[11px] text-muted-foreground">No papers yet.</p>
                     ) : (
-                        <div className="space-y-1.5 max-h-[46vh] overflow-y-auto pr-1">
+                        <div className="space-y-1.5">
                             {papers.map((paper) => (
                                 <div key={paper.id} className="rounded-lg border border-border/60 p-2.5 space-y-1.5">
                                     <div className="flex items-start justify-between gap-2">
@@ -186,7 +186,7 @@ export function StudioPane({
                     {loading ? <Skeleton className="h-16" /> : plans.length === 0 ? (
                         <p className="py-3 text-center text-[11px] text-muted-foreground">No plans yet.</p>
                     ) : (
-                        <div className="space-y-1.5 max-h-[46vh] overflow-y-auto pr-1">
+                        <div className="space-y-1.5">
                             {plans.map((plan) => {
                                 const done = plan.weeks.filter((week) => week.status === "DONE").length;
                                 const percent = plan.weeks.length ? Math.round((done / plan.weeks.length) * 100) : 0;
@@ -231,7 +231,7 @@ export function StudioPane({
                     {loading ? <Skeleton className="h-16" /> : materials.length === 0 ? (
                         <p className="py-3 text-center text-[11px] text-muted-foreground">No materials yet.</p>
                     ) : (
-                        <div className="space-y-1.5 max-h-[46vh] overflow-y-auto pr-1">
+                        <div className="space-y-1.5">
                             {materials.map((material) => (
                                 <div key={material.id} className="flex items-center gap-1.5 rounded-lg border border-border/60 p-2">
                                     <Link href={`/teacher/sources/materials/${material.id}/print?workspaceId=${workspaceId}`}
