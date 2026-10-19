@@ -237,6 +237,9 @@ export default function AdmissionPage() {
             const fieldErrorsOfForm = fieldErrors(result.error);
             setErrors(fieldErrorsOfForm);
             const first = Object.keys(fieldErrorsOfForm)[0];
+            (window as unknown as { __dbg2?: unknown }).__dbg2 = {
+                fieldErrorsOfForm, first, target: first ? stepForField(first) : null,
+            };
             if (first) {
                 setStep(stepForField(first));
                 window.scrollTo({ top: 0, behavior: "smooth" });
