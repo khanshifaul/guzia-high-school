@@ -28,8 +28,8 @@ export default function StudentAttendancePage() {
 
     React.useEffect(() => {
         if (!studentId) return;
-        api<{ data: AttendanceResp }>(`/attendance/student/${studentId}`)
-            .then((p) => setData(p.data))
+        api<AttendanceResp>(`/attendance/student/${studentId}`)
+            .then((p) => setData(p))
             .catch(() => setData({ records: [], attendancePct: 0, total: 0 }))
             .finally(() => setLoading(false));
     }, [studentId]);

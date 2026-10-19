@@ -71,8 +71,8 @@ export default function TeacherSourcesPage() {
     }
 
     async function openDetail(id: string) {
-        const p = await api<{ data: SourceDetail }>(`/ai/sources/${id}`);
-        setDetail(p.data);
+        const p = await api<SourceDetail>(`/ai/sources/${id}`);
+        setDetail(p);
         setAskResult(null);
         setQuestion("");
     }
@@ -82,8 +82,8 @@ export default function TeacherSourcesPage() {
         setAsking(true);
         setAskResult(null);
         try {
-            const r = await api<{ data: AskResult }>(`/ai/sources/${detail.id}/ask`, { method: "POST", body: { question } });
-            setAskResult(r.data);
+            const r = await api<AskResult>(`/ai/sources/${detail.id}/ask`, { method: "POST", body: { question } });
+            setAskResult(r);
         } catch (err) {
             setAskResult({ answer: err instanceof RequestError ? err.messages.join("; ") : "Ask failed", citations: [] });
         } finally {

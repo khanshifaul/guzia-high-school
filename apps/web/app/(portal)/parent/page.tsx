@@ -22,8 +22,8 @@ export default function ParentDashboard() {
     React.useEffect(() => {
         if (!selected) return;
         setLoadingStats(true);
-        api<{ data: { stats: Stats } }>(`/students/${selected}`)
-            .then((p) => setStats(p.data.stats))
+        api<{ stats: Stats }>(`/students/${selected}`)
+            .then((p) => setStats(p.stats))
             .catch(() => setStats(null))
             .finally(() => setLoadingStats(false));
     }, [selected]);

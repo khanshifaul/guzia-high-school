@@ -26,8 +26,8 @@ export default function ParentProgressPage() {
     React.useEffect(() => {
         if (!selected) return;
         setLoadingResults(true);
-        api<{ data: ResultsResp }>(`/exams/results/student/${selected}`)
-            .then((p) => setData(p.data))
+        api<ResultsResp>(`/exams/results/student/${selected}`)
+            .then((p) => setData(p))
             .catch(() => setData({ exams: [], cgpa: 0 }))
             .finally(() => setLoadingResults(false));
     }, [selected]);

@@ -28,8 +28,8 @@ export default function ParentAttendancePage() {
     React.useEffect(() => {
         if (!selected) return;
         setLoadingData(true);
-        api<{ data: AttendanceResp }>(`/attendance/student/${selected}`)
-            .then((p) => setData(p.data))
+        api<AttendanceResp>(`/attendance/student/${selected}`)
+            .then((p) => setData(p))
             .catch(() => setData({ records: [], attendancePct: 0, total: 0 }))
             .finally(() => setLoadingData(false));
     }, [selected]);

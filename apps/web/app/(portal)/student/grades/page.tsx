@@ -33,8 +33,8 @@ export default function StudentGradesPage() {
 
     React.useEffect(() => {
         if (!studentId) return;
-        api<{ data: ResultsResp }>(`/exams/results/student/${studentId}`)
-            .then((p) => setData(p.data))
+        api<ResultsResp>(`/exams/results/student/${studentId}`)
+            .then((p) => setData(p))
             .catch(() => setData({ exams: [], cgpa: 0 }))
             .finally(() => setLoading(false));
     }, [studentId]);

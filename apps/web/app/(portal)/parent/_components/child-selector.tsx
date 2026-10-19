@@ -29,8 +29,8 @@ export function useMyChildren() {
                 if (ids.length === 0) return;
                 const results = await Promise.all(
                     ids.map((id) =>
-                        api<{ data: { id: string; fullName: string; class: { name: string } } }>(`/students/${id}`)
-                            .then((s) => ({ id: s.data.id, fullName: s.data.fullName, className: s.data.class.name }))
+                        api<{ id: string; fullName: string; class: { name: string } }>(`/students/${id}`)
+                            .then((s) => ({ id: s.id, fullName: s.fullName, className: s.class.name }))
                             .catch(() => null),
                     ),
                 );

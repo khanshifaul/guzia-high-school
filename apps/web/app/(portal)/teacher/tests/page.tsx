@@ -91,8 +91,8 @@ export default function TeacherTestsPage() {
     }
 
     async function openDetail(id: string) {
-        const p = await api<{ data: Paper }>(`/ai/tests/${id}`);
-        setDetail(p.data);
+        const p = await api<Paper>(`/ai/tests/${id}`);
+        setDetail(p);
         setShowAnswers(false);
     }
 

@@ -35,8 +35,8 @@ export default function StudentFeesPage() {
 
     React.useEffect(() => {
         if (!studentId) return;
-        api<{ data: LedgerResp }>(`/fees/ledger/${studentId}`)
-            .then((p) => setData(p.data))
+        api<LedgerResp>(`/fees/ledger/${studentId}`)
+            .then((p) => setData(p))
             .catch(() => setData({ invoices: [], payments: [], totalDue: 0 }))
             .finally(() => setLoading(false));
     }, [studentId]);

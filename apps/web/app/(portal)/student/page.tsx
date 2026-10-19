@@ -34,16 +34,16 @@ export default function StudentDashboard() {
         let cancelled = false;
         setLoading(true);
         Promise.all([
-            api<{ data: AttendanceResp }>(`/attendance/student/${studentId}`),
-            api<{ data: ResultsResp }>(`/exams/results/student/${studentId}`),
-            api<{ data: LedgerResp }>(`/fees/ledger/${studentId}`),
+            api<AttendanceResp>(`/attendance/student/${studentId}`),
+            api<ResultsResp>(`/exams/results/student/${studentId}`),
+            api<LedgerResp>(`/fees/ledger/${studentId}`),
             api<{ data: Notice[] }>("/notices"),
         ])
             .then(([att, res, led, not]) => {
                 if (cancelled) return;
-                setAttendance(att.data);
-                setResults(res.data);
-                setLedger(led.data);
+                setAttendance(att);
+                setResults(res);
+                setLedger(led);
                 setNotices(not.data.slice(0, 5));
                 setError(null);
             })

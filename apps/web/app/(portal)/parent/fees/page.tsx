@@ -31,8 +31,8 @@ export default function ParentFeesPage() {
     React.useEffect(() => {
         if (!selected) return;
         setLoadingData(true);
-        api<{ data: LedgerResp }>(`/fees/ledger/${selected}`)
-            .then((p) => setData(p.data))
+        api<LedgerResp>(`/fees/ledger/${selected}`)
+            .then((p) => setData(p))
             .catch(() => setData({ invoices: [], payments: [], totalDue: 0 }))
             .finally(() => setLoadingData(false));
     }, [selected]);
