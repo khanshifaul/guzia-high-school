@@ -13,7 +13,8 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, IsUrl, Length } from 'class-validator';
+import { IsArray, IsIn, IsOptional, IsString, IsUrl, Length, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { User } from '../../common/decorators/user.decorator';
@@ -63,6 +64,17 @@ class FromUrlDto {
     subjectId?: string;
 }
 
+class AskTurnDto {
+    @ApiProperty({ enum: ['user', 'assistant'] })
+    @IsIn(['user', 'assistant'])
+    role: 'user' | 'assistant';
+
+    @ApiProperty()
+    @IsString()
+    @Length(1, 4000)
+    content: string;
+}
+
 class AskSourcesDto {
     @ApiProperty({ example: 'Explain the causes of the 1857 rebellion.' })
     @IsString()
@@ -78,6 +90,16 @@ class AskSourcesDto {
     @IsOptional()
     @IsString()
     subjectId?: string;
+
+    @ApiPropertyOptional({
+        description: 'Prior conversation turns, oldest first (max 10)',
+        type: [AskTurnDto],
+    })
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => AskTurnDto)
+    history?: AskTurnDto[];
 }
 
 @ApiTags('AI Sources')
@@ -149,7 +171,7 @@ export class SourcesController {
     @RateLimit('ai:generate', 60_000, 10)
     @ApiOperation({ summary: "Ask across all of a teacher's sources (page-cited)" })
     askAll(@Body() dto: AskSourcesDto, @User() user: { id: string }) {
-        return this.service.askNotebook(user.id, dto.question, dto.classId, dto.subjectId);
+        return this.service.askNotebook(user.id, dto.question, dto.classId, dto.subjectId, dto.history);
     }
 
     @Roles('TEACHER')

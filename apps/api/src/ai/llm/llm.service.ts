@@ -24,6 +24,11 @@ export interface LlmImage {
     base64: string;
 }
 
+export interface LlmTurn {
+    role: 'user' | 'assistant';
+    content: string;
+}
+
 export interface LlmCompleteOpts {
     system: string;
     user: string;
@@ -34,9 +39,14 @@ export interface LlmCompleteOpts {
     vision?: boolean;
     /** Images attached to the user message (vision models only). */
     images?: LlmImage[];
+    /** Prior conversation turns, oldest first, inserted before the user message. */
+    history?: LlmTurn[];
     /** Which mock fixture to return when the mock provider is active. Callers
      *  declare intent explicitly — substring-sniffing the prompt is fragile. */
-    mockFixture?: 'plan' | 'paper' | 'summary';
+    mockFixture?: 'plan' | 'week' | 'paper' | 'summary';
+    /** Sizes the mock fixture to the caller's requested counts so the
+     *  offline demo satisfies the same shape validation as a real LLM reply. */
+    mockCounts?: { weeks?: number; mcq?: number; short?: number; long?: number };
 }
 
 /** Transient HTTP/network statuses worth one retry (static lookup). */
@@ -162,6 +172,7 @@ export class LlmService {
                 ...(opts.json ? { response_format: { type: 'json_object' as const } } : {}),
                 messages: [
                     { role: 'system', content: opts.system },
+                    ...(opts.history ?? []),
                     { role: 'user', content: userContent },
                 ],
             });
@@ -198,6 +209,7 @@ export class LlmService {
             ...(opts.json ? { response_format: { type: 'json_object' } } : {}),
             messages: [
                 { role: 'system', content: opts.system },
+                ...(opts.history ?? []),
                 { role: 'user', content: userContent },
             ],
         };
@@ -265,9 +277,10 @@ export class LlmService {
         // Explicit intent from the caller (substring-sniffing proved fragile —
         // "question-paper" contains "plan"). Fall back to summary.
         if (opts.mockFixture === 'plan') {
+            const weeks = opts.mockCounts?.weeks ?? 12;
             return JSON.stringify({
                 title: 'Mock Year Plan',
-                weeks: Array.from({ length: 12 }, (_, i) => ({
+                weeks: Array.from({ length: weeks }, (_, i) => ({
                     week: i + 1,
                     topics: [`Topic ${i + 1}a`, `Topic ${i + 1}b`],
                     objective: `Objective for week ${i + 1}`,
@@ -275,29 +288,50 @@ export class LlmService {
                 })),
             });
         }
+        if (opts.mockFixture === 'week') {
+            return JSON.stringify({
+                topics: ['Topic a', 'Topic b'],
+                objective: 'Objective for the regenerated week',
+                assessment: null,
+            });
+        }
         if (opts.mockFixture === 'paper') {
+            const mcq = opts.mockCounts?.mcq ?? 3;
+            const short = opts.mockCounts?.short ?? 1;
+            const long = opts.mockCounts?.long ?? 1;
+            const groups = [
+                {
+                    type: 'MCQ',
+                    questions: Array.from({ length: mcq }, (_, i) => ({
+                        text: `MCQ ${i + 1}?`,
+                        options: ['A', 'B', 'C', 'D'],
+                        answer: 'A',
+                        explanation: 'Because A.',
+                        difficulty: i === 0 ? 'easy' : 'medium',
+                    })),
+                },
+                {
+                    type: 'SHORT',
+                    questions: Array.from({ length: short }, (_, i) => ({
+                        text: `Short Q${i + 1}?`,
+                        answer: 'Answer.',
+                        difficulty: 'medium',
+                    })),
+                },
+                {
+                    type: 'LONG',
+                    questions: Array.from({ length: long }, (_, i) => ({
+                        text: `Long Q${i + 1}?`,
+                        answer: 'Answer.',
+                        difficulty: 'hard',
+                    })),
+                },
+            ];
+            // A group with no questions fails the paper schema (min 1), so drop
+            // the groups the blueprint did not ask for.
             return JSON.stringify({
                 title: 'Mock Test Paper',
-                groups: [
-                    {
-                        type: 'MCQ',
-                        questions: Array.from({ length: 3 }, (_, i) => ({
-                            text: `MCQ ${i + 1}?`,
-                            options: ['A', 'B', 'C', 'D'],
-                            answer: 'A',
-                            explanation: 'Because A.',
-                            difficulty: i === 0 ? 'easy' : 'medium',
-                        })),
-                    },
-                    {
-                        type: 'SHORT',
-                        questions: [{ text: 'Short Q1?', answer: 'Answer.', difficulty: 'medium' }],
-                    },
-                    {
-                        type: 'LONG',
-                        questions: [{ text: 'Long Q1?', answer: 'Answer.', difficulty: 'hard' }],
-                    },
-                ],
+                groups: groups.filter((g) => g.questions.length > 0),
             });
         }
         // Default: a summary-ish JSON.
