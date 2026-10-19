@@ -15,7 +15,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { api } from "@/lib/api";
 import { useMyTeacher } from "@/lib/teacher-session";
 
-interface ClassSubject { id: string; subject: { id: string; name: string }; teacher: { user: { fullName: string } } | null }
+interface ClassSubject { id: string; subject: { id: string; name: string }; teacher: { id: string; user: { fullName: string } } | null }
 interface SchoolClass {
     id: string;
     name: string;
@@ -38,7 +38,7 @@ export default function TeacherClassesPage() {
 
     // Only show classes where this teacher teaches at least one subject.
     const myClasses = classes.filter((c) =>
-        c.subjects.some((cs) => cs.teacher?.user && teacherId),
+        c.subjects.some((cs) => cs.teacher?.id === teacherId),
     );
 
     if (loading) {
@@ -62,9 +62,9 @@ export default function TeacherClassesPage() {
                             <CardContent className="p-6">
                                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-2">Your subjects</p>
                                 <div className="flex flex-wrap gap-2 mb-4">
-                                    {cls.subjects.filter((cs) => cs.teacher).map((cs) => (
-                                        <Badge key={cs.id} className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-                                            {cs.subject.name}
+                                    {[...new Map(cls.subjects.filter((cs) => cs.teacher?.id === teacherId).map((cs) => [cs.subject.id, cs.subject])).values()].map((s) => (
+                                        <Badge key={s.id} className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                                            {s.name}
                                         </Badge>
                                     ))}
                                 </div>
