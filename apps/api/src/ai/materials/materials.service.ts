@@ -112,7 +112,14 @@ export class MaterialsService {
         // Flashcards need more room: the model tends to over-produce, and a
         // truncated reply is invalid JSON.
         const maxTokens = dto.kind === 'FLASHCARDS' ? 4000 : 2000;
-        const raw = await this.llm.complete({ system, user, json: true, maxTokens });
+        const raw = await this.llm.complete({
+            system,
+            user,
+            json: true,
+            maxTokens,
+            mockFixture: dto.kind === 'FLASHCARDS' ? 'flashcards' : 'mindmap',
+            mockCounts: { cards: count },
+        });
         const content = this.parseContent(dto.kind, raw, count);
         const label = dto.kind === 'FLASHCARDS' ? 'Flashcards' : 'Mind Map';
         const base = source?.filename ?? [className, subjectName].filter(Boolean).join(' ');

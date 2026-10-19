@@ -43,10 +43,10 @@ export interface LlmCompleteOpts {
     history?: LlmTurn[];
     /** Which mock fixture to return when the mock provider is active. Callers
      *  declare intent explicitly — substring-sniffing the prompt is fragile. */
-    mockFixture?: 'plan' | 'week' | 'paper' | 'summary';
+    mockFixture?: 'plan' | 'week' | 'paper' | 'summary' | 'flashcards' | 'mindmap' | 'ask';
     /** Sizes the mock fixture to the caller's requested counts so the
      *  offline demo satisfies the same shape validation as a real LLM reply. */
-    mockCounts?: { weeks?: number; mcq?: number; short?: number; long?: number };
+    mockCounts?: { weeks?: number; mcq?: number; short?: number; long?: number; cards?: number };
 }
 
 /** Transient HTTP/network statuses worth one retry (static lookup). */
@@ -267,6 +267,22 @@ export class LlmService {
      * Keeps the generator contracts testable and the demo runnable offline.
      */
     private mockComplete(opts: LlmCompleteOpts): string {
+        // The ask fixture is a plain-text answer (not JSON), so it is checked
+        // before the JSON gate below.
+        if (opts.mockFixture === 'ask') {
+            // The mock answer cites the excerpts it was given, so the offline
+            // demo shows the same page-cited shape a real LLM produces. Both
+            // citation forms are recognised: "[file p.N]" (notebook) and
+            // "[p.N]" (single document).
+            const cites = [...opts.user.matchAll(/\[([^\]]+?)\s+p\.([^\]]+?)\]/g)].map(
+                (m) => `[${m[1]} p.${m[2]}]`,
+            );
+            const docCites = [...opts.user.matchAll(/\[p\.([^\]]+?)\]/g)].map((m) => `[p.${m[1]}]`);
+            const unique = [...new Set([...cites, ...docCites])];
+            return unique.length
+                ? `Mock answer based on the retrieved excerpts. ${unique.join(' ')}`
+                : 'Mock answer (no excerpts were retrieved).';
+        }
         if (!opts.json) {
             return 'This is a mocked AI response (mock provider).';
         }
@@ -328,6 +344,24 @@ export class LlmService {
             return JSON.stringify({
                 title: 'Mock Test Paper',
                 groups: groups.filter((g) => g.questions.length > 0),
+            });
+        }
+        if (opts.mockFixture === 'flashcards') {
+            const cards = opts.mockCounts?.cards ?? 8;
+            return JSON.stringify({
+                cards: Array.from({ length: cards }, (_, i) => ({
+                    front: `Mock question ${i + 1}?`,
+                    back: `Mock answer ${i + 1}.`,
+                })),
+            });
+        }
+        if (opts.mockFixture === 'mindmap') {
+            return JSON.stringify({
+                root: 'Mock topic',
+                branches: Array.from({ length: 4 }, (_, i) => ({
+                    title: `Branch ${i + 1}`,
+                    children: [`Point ${i + 1}a`, `Point ${i + 1}b`],
+                })),
             });
         }
         // Default: a summary-ish JSON.
