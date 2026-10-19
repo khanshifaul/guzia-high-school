@@ -1,8 +1,17 @@
 // src/ai/sources/sources.service.ts — source-grounded assistant (spec 10
-// Feature C). Upload PDF/image → extract text → chunk → embed → summarize;
-// then ask (vector retrieval over the teacher's chunks → LLM, page-cited).
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+// Feature C). Upload PDF/image → create the row and return at once; extract,
+// chunk, embed and summarize continue in the background (status PROCESSING →
+// READY/FAILED). Then ask: vector retrieval over the teacher's chunks → LLM,
+// page-cited.
+import {
+    BadRequestException,
+    Injectable,
+    Logger,
+    NotFoundException,
+    type OnModuleInit,
+} from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
+import { Prisma } from 'prisma/generated/client';
 import { UploadService } from '../../upload/upload.service';
 import { LlmService, type LlmTurn } from '../llm/llm.service';
 import { z } from 'zod';
@@ -24,7 +33,7 @@ const CHUNK_CHARS = 1200;
 const CHUNK_OVERLAP = 150;
 
 @Injectable()
-export class SourcesService {
+export class SourcesService implements OnModuleInit {
     private readonly logger = new Logger(SourcesService.name);
 
     constructor(
@@ -33,6 +42,22 @@ export class SourcesService {
         private readonly upload: UploadService,
         private readonly retrieval: RetrievalService,
     ) {}
+
+    /**
+     * A background ingest that was killed mid-flight (a restart) would leave a
+     * row PROCESSING forever, and the UI would poll it forever. Anything still
+     * processing after 15 minutes is stale, so it is marked FAILED (retryable).
+     */
+    async onModuleInit(): Promise<void> {
+        const cutoff = new Date(Date.now() - 15 * 60 * 1000);
+        const stale = await this.prisma.sourceDocument.updateMany({
+            where: { status: 'PROCESSING', createdAt: { lt: cutoff } },
+            data: { status: 'FAILED' },
+        });
+        if (stale.count > 0) {
+            this.logger.warn(`Marked ${stale.count} stale PROCESSING source(s) as FAILED`);
+        }
+    }
 
     async list(userId: string) {
         const teacherId = await this.resolveTeacherId(userId);
@@ -78,8 +103,12 @@ export class SourcesService {
         }));
     }
 
-    /** Ingest uploaded text (already extracted by the controller's multer +
-     *  unpdf/vision step), chunk it, and auto-summarize. */
+    /**
+     * Create a source row and return it immediately. Chunking, embedding and
+     * summarization run in the background, so an upload never waits on the
+     * LLM. The row stays PROCESSING until they finish, then becomes READY
+     * (or FAILED, which the UI offers to retry).
+     */
     async ingest(opts: {
         userId: string;
         filename: string;
@@ -101,58 +130,173 @@ export class SourcesService {
                 teacherId,
                 filename: opts.filename,
                 kind: opts.kind,
-                pages: opts.pages.length,
                 classId: opts.classId ?? null,
                 subjectId: opts.subjectId ?? null,
                 status: 'PROCESSING',
             },
         });
 
-        // Chunk with page tags preserved.
-        const chunks = this.chunk(opts.pages);
-        await this.prisma.sourceChunk.createMany({
-            data: chunks.map((c) => ({ documentId: doc.id, page: c.page, content: c.text })),
-        });
+        void this.finishIngest(doc.id, opts.pages, opts.filename);
+        return doc;
+    }
 
-        // Best-effort embeddings so notebook-wide retrieval can find these
-        // chunks. createMany returns no rows, so re-read them by document.
+    /** Background half of ingest: chunks, embeddings, summary, final status. */
+    private async finishIngest(
+        docId: string,
+        pages: { page: number; text: string }[],
+        filename: string,
+        fileMeta?: Record<string, unknown>,
+    ): Promise<void> {
         try {
+            // Chunk with page tags preserved.
+            const chunks = this.chunk(pages);
+            await this.prisma.sourceChunk.createMany({
+                data: chunks.map((c) => ({ documentId: docId, page: c.page, content: c.text })),
+            });
+
+            // Best-effort embeddings so notebook-wide retrieval can find these
+            // chunks. createMany returns no rows, so re-read them by document.
             const created = await this.prisma.sourceChunk.findMany({
-                where: { documentId: doc.id },
+                where: { documentId: docId },
                 select: { id: true, content: true },
             });
             await this.retrieval.embedChunks(created);
-        } catch (err) {
-            this.logger.warn(
-                `Embedding chunks for ${opts.filename} failed: ${(err as Error).message}`,
-            );
-        }
 
-        // Auto-summarize (best-effort; leave summary null on failure).
-        try {
-            const summary = await this.summarizeText(fullText);
+            // Best-effort summary; a failed summary still leaves the chunks
+            // usable, so the document becomes READY either way.
+            let summary: Record<string, unknown> | null = null;
+            try {
+                summary = (await this.summarizeText(pages.map((p) => p.text).join('\n'))) as unknown as Record<
+                    string,
+                    unknown
+                >;
+            } catch (err) {
+                this.logger.warn(
+                    `Auto-summarize failed for ${filename}: ${(err as Error).message}`,
+                );
+            }
+
+            const meta = { ...summary, ...fileMeta };
             await this.prisma.sourceDocument.update({
-                where: { id: doc.id },
-                data: { summary, status: 'READY' },
+                where: { id: docId },
+                data: {
+                    pages: pages.length,
+                    status: 'READY',
+                    ...(Object.keys(meta).length > 0 ? { summary: meta as unknown as Prisma.InputJsonValue } : {}),
+                },
             });
         } catch (err) {
-            this.logger.warn(
-                `Auto-summarize failed for ${opts.filename}: ${(err as Error).message}`,
-            );
-            await this.prisma.sourceDocument.update({
-                where: { id: doc.id },
-                data: { status: 'READY' },
-            });
+            this.logger.warn(`Ingest failed for ${filename}: ${(err as Error).message}`);
+            await this.prisma.sourceDocument
+                .update({ where: { id: docId }, data: { status: 'FAILED' } })
+                .catch(() => undefined);
         }
-
-        return this.prisma.sourceDocument.findUnique({
-            where: { id: doc.id },
-            include: { chunks: true },
-        });
     }
 
-    /** Handle an uploaded file (PDF/text): store it (R2 or local), extract
-     *  text (unpdf for PDFs), then run the normal ingest pipeline. */
+    /** Extract page text from an uploaded file (throws when unreadable). */
+    private async extractPages(
+        file: { buffer: Buffer; originalname: string; mimetype: string },
+        flags: { isPdf: boolean; isImage: boolean; isOffice: boolean },
+    ): Promise<{ page: number; text: string }[]> {
+        if (flags.isPdf) {
+            // pdf.js requires a Uint8Array; it rejects Node Buffers. This is a
+            // zero-copy view over the same bytes.
+            const bytes = new Uint8Array(file.buffer.buffer, file.buffer.byteOffset, file.buffer.byteLength);
+            const doc = await extractText(bytes, { mergePages: false }).catch((err: Error) => {
+                this.logger.error(`PDF extraction failed for ${file.originalname}: ${err.message}`);
+                throw new BadRequestException(`Could not read this PDF (${err.message})`);
+            });
+            const raw = Array.isArray(doc.text) ? doc.text : [doc.text];
+            const pages = raw.map((text, i) => ({ page: i + 1, text })).filter((p) => p.text.trim());
+            if (pages.length === 0) {
+                throw new BadRequestException(
+                    'No extractable text in this PDF — it looks like a scanned image. ' +
+                        'Upload the page as an image (PNG/JPEG) instead, or run OCR first.',
+                );
+            }
+            return pages;
+        }
+
+        if (flags.isImage) {
+            // Transcribe the page with the provider's vision model.
+            const mime = file.mimetype === 'image/jpg' ? 'image/jpeg' : file.mimetype;
+            const transcript = await this.llm
+                .complete({
+                    system:
+                        'Transcribe the text in this page image exactly, preserving line breaks. ' +
+                        'Output only the text — no commentary.',
+                    user: 'Transcribe this page.',
+                    vision: true,
+                    images: [{ mime, base64: file.buffer.toString('base64') }],
+                    maxTokens: 2000,
+                })
+                .catch((err: Error) => {
+                    this.logger.error(
+                        `Image transcription failed for ${file.originalname}: ${err.message}`,
+                    );
+                    throw new BadRequestException(
+                        `Could not read this image (${err.message}). ` +
+                            'Check the provider vision model in Settings.',
+                    );
+                });
+            if (!transcript.trim()) throw new BadRequestException('No text detected in this image.');
+            return [{ page: 1, text: transcript }];
+        }
+
+        if (flags.isOffice) {
+            // Prefer MarkItDown when installed; fall back to officeparser.
+            const markdown = await convertWithMarkItDown(file.buffer, file.originalname).catch(
+                (err: Error) => {
+                    this.logger.warn(
+                        `MarkItDown failed for ${file.originalname}: ${err.message} — falling back`,
+                    );
+                    return null;
+                },
+            );
+            let text = markdown?.trim() ? markdown : '';
+            if (!text) {
+                const ast = await parseOffice(file.buffer).catch((err: Error) => {
+                    this.logger.error(
+                        `Office parsing failed for ${file.originalname}: ${err.message}`,
+                    );
+                    throw new BadRequestException(`Could not read this document (${err.message})`);
+                });
+                const out = await ast.to('text');
+                text = String(out.value ?? '');
+            }
+            if (!text.trim()) throw new BadRequestException('No extractable text in this document.');
+            return [{ page: 1, text }];
+        }
+
+        // Plain text, Markdown and CSV are already UTF-8 text.
+        return [{ page: 1, text: file.buffer.toString('utf8') }];
+    }
+
+    /** Background half of an upload: extract, then the shared ingest tail. */
+    private async finishUpload(
+        docId: string,
+        file: { buffer: Buffer; originalname: string; mimetype: string },
+        flags: { isPdf: boolean; isImage: boolean; isOffice: boolean },
+        fileMeta: Record<string, unknown>,
+    ): Promise<void> {
+        try {
+            const pages = await this.extractPages(file, flags);
+            await this.finishIngest(docId, pages, file.originalname, fileMeta);
+        } catch (err) {
+            this.logger.warn(
+                `Extraction failed for ${file.originalname}: ${(err as Error).message}`,
+            );
+            await this.prisma.sourceDocument
+                .update({ where: { id: docId }, data: { status: 'FAILED' } })
+                .catch(() => undefined);
+        }
+    }
+
+    /**
+     * Handle an uploaded file (PDF/text): store it (R2 or local), create the
+     * source row, and return at once. Extraction, chunking, embeddings and the
+     * summary all continue in the background.
+     */
     async ingestUpload(
         userId: string,
         file: { buffer: Buffer; originalname: string; mimetype: string } | undefined,
@@ -183,109 +327,32 @@ export class SourcesService {
             );
         }
 
-        // Store the original file (R2 or local disk).
+        const teacherId = await this.resolveTeacherId(userId);
+
+        // Store the original file (R2 or local disk). This is the only part
+        // that must finish before the request returns, so the link is valid.
         const stored = await this.upload.storeFile(
             file.buffer,
             file.originalname,
             file.mimetype,
             'sources',
         );
+        const fileMeta = { fileUrl: stored.url, fileKey: stored.key, storage: stored.storage };
 
-        // Extract text: unpdf for PDFs, vision for images, direct decode for text.
-        let pages: { page: number; text: string }[];
-        if (isPdf) {
-            // pdf.js requires a Uint8Array; it rejects Node Buffers. This is a
-            // zero-copy view over the same bytes.
-            const bytes = new Uint8Array(file.buffer.buffer, file.buffer.byteOffset, file.buffer.byteLength);
-            const doc = await extractText(bytes, { mergePages: false }).catch((err: Error) => {
-                this.logger.error(`PDF extraction failed for ${file.originalname}: ${err.message}`);
-                throw new BadRequestException(`Could not read this PDF (${err.message})`);
-            });
-            const raw = Array.isArray(doc.text) ? doc.text : [doc.text];
-            pages = raw.map((text, i) => ({ page: i + 1, text })).filter((p) => p.text.trim());
-            if (pages.length === 0) {
-                throw new BadRequestException(
-                    'No extractable text in this PDF — it looks like a scanned image. ' +
-                        'Upload the page as an image (PNG/JPEG) instead, or run OCR first.',
-                );
-            }
-        } else if (isImage) {
-            // Transcribe the page with the provider's vision model.
-            const mime = file.mimetype === 'image/jpg' ? 'image/jpeg' : file.mimetype;
-            const transcript = await this.llm
-                .complete({
-                    system:
-                        'Transcribe the text in this page image exactly, preserving line breaks. ' +
-                        'Output only the text — no commentary.',
-                    user: 'Transcribe this page.',
-                    vision: true,
-                    images: [{ mime, base64: file.buffer.toString('base64') }],
-                    maxTokens: 2000,
-                })
-                .catch((err: Error) => {
-                    this.logger.error(
-                        `Image transcription failed for ${file.originalname}: ${err.message}`,
-                    );
-                    throw new BadRequestException(
-                        `Could not read this image (${err.message}). ` +
-                            'Check the provider vision model in Settings.',
-                    );
-                });
-            if (!transcript.trim()) {
-                throw new BadRequestException('No text detected in this image.');
-            }
-            pages = [{ page: 1, text: transcript }];
-        } else if (isOffice) {
-            // Prefer MarkItDown when installed; fall back to officeparser.
-            const markdown = await convertWithMarkItDown(file.buffer, file.originalname).catch(
-                (err: Error) => {
-                    this.logger.warn(
-                        `MarkItDown failed for ${file.originalname}: ${err.message} — falling back`,
-                    );
-                    return null;
-                },
-            );
-            let text = markdown?.trim() ? markdown : '';
-            if (!text) {
-                const ast = await parseOffice(file.buffer).catch((err: Error) => {
-                    this.logger.error(
-                        `Office parsing failed for ${file.originalname}: ${err.message}`,
-                    );
-                    throw new BadRequestException(`Could not read this document (${err.message})`);
-                });
-                const out = await ast.to('text');
-                text = String(out.value ?? '');
-            }
-            if (!text.trim()) {
-                throw new BadRequestException('No extractable text in this document.');
-            }
-            pages = [{ page: 1, text }];
-        } else {
-            // Plain text, Markdown and CSV are already UTF-8 text.
-            pages = [{ page: 1, text: file.buffer.toString('utf8') }];
-        }
-
-        const doc = await this.ingest({
-            userId,
-            filename: file.originalname,
-            kind: isImage ? 'IMAGE' : 'PDF',
-            pages,
-            classId,
-            subjectId,
-        });
-        // Attach the stored-file URL so the UI can link back to the original.
-        return this.prisma.sourceDocument.update({
-            where: { id: (doc as { id: string }).id },
+        const doc = await this.prisma.sourceDocument.create({
             data: {
-                summary: {
-                    ...((doc as { summary?: Record<string, unknown> }).summary),
-                    fileUrl: stored.url,
-                    fileKey: stored.key,
-                    storage: stored.storage,
-                },
+                teacherId,
+                filename: file.originalname,
+                kind: isImage ? 'IMAGE' : 'PDF',
+                classId: classId ?? null,
+                subjectId: subjectId ?? null,
+                status: 'PROCESSING',
+                summary: fileMeta,
             },
-            include: { chunks: true },
         });
+
+        void this.finishUpload(doc.id, file, { isPdf, isImage, isOffice }, fileMeta);
+        return doc;
     }
 
     /** Ingest a web page by URL (NotebookLM-style web source). */

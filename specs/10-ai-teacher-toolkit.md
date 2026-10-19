@@ -272,9 +272,14 @@ no item-response statistics; explanations can be wrong — answer key must be ch
 photo). `POST /ai/sources` multipart (multer `FileInterceptor`, mime-validated,
 filename sanitized, stored under `apps/api/uploads/` gitignored; R2/S3 out of scope).
 
-**Extraction pipeline** (async, in-process — no queue):
+**Extraction pipeline** (async, in-process — no queue). The upload request
+returns at once with the row `PROCESSING`; the steps below run in the
+background and flip it to `READY` (or `FAILED`, which the UI offers to retry).
+An upload therefore never waits for the embeddings or the summary; the client
+polls the list while anything is `PROCESSING`, and a boot-time sweep marks a
+`PROCESSING` row older than 15 minutes `FAILED` (a restart mid-ingest).
 1. PDF → `unpdf` (`extractText`) → page-tagged text; zero text layer → status
-   `NEEDS_OCR` (limitation surfaced; image-only path handles the demo case).
+   `FAILED` (limitation surfaced; the image-only path handles the demo case).
 2. Image → Gemini vision → page text + short caption.
 3. Text → chunk (~1200 chars, page-preserving overlap 150) → `SourceChunk` rows.
 4. Auto-summarize: structured summary `{keyTopics[], glossary[{term,definition}],

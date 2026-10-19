@@ -225,6 +225,31 @@ function Studio() {
             .finally(() => setSourcesLoading(false));
     }, []);
 
+    /** Refresh without flashing the skeleton (used by the processing poll). */
+    const refreshSources = React.useCallback(() => {
+        api<Source[]>("/ai/sources")
+            .then(setSources)
+            .catch(() => undefined);
+    }, []);
+
+    // An upload returns at once with the row PROCESSING; the extraction,
+    // embeddings and summary continue server-side. Poll until it settles so
+    // the status pill becomes READY (or FAILED) without a manual reload.
+    React.useEffect(() => {
+        if (!sources.some((source) => source.status === "PROCESSING")) return;
+        const timer = setInterval(refreshSources, 3000);
+        return () => clearInterval(timer);
+    }, [sources, refreshSources]);
+
+    // Retire the "uploaded — processing" banner once nothing is processing.
+    React.useEffect(() => {
+        if (sources.length === 0) return;
+        if (sources.some((source) => source.status === "PROCESSING")) return;
+        setFeedback((current) =>
+            current?.kind === "ok" && /processing/i.test(current.msg) ? null : current,
+        );
+    }, [sources]);
+
     React.useEffect(() => {
         loadSources();
         api<Paper[]>("/ai/tests")
@@ -337,7 +362,7 @@ function Studio() {
                 throw new Error(Array.isArray(messages) ? messages.join("; ") : String(messages));
             }
             setAddOpen(false);
-            setFeedback({ kind: "ok", msg: `${file.name} ingested` });
+            setFeedback({ kind: "ok", msg: `${file.name} uploaded — processing…` });
             loadSources();
         } catch (err) {
             fail(err, "Upload failed");
@@ -718,7 +743,9 @@ function Studio() {
                                                     <div className="flex items-center gap-1.5 mt-1">
                                                         <Badge className={source.status === "READY"
                                                             ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[8px]"
-                                                            : "bg-amber-500/10 text-amber-600 border-amber-500/20 text-[8px]"}>
+                                                            : source.status === "FAILED"
+                                                                ? "bg-rose-500/10 text-rose-600 border-rose-500/20 text-[8px]"
+                                                                : "bg-amber-500/10 text-amber-600 border-amber-500/20 text-[8px]"}>
                                                             {source.status}
                                                         </Badge>
                                                         <span className="text-[9px] text-muted-foreground">{source.pages ?? "?"}p</span>
