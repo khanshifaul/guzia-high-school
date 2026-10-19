@@ -4,6 +4,7 @@
 import {
     Body,
     Controller,
+    Delete,
     Get,
     Param,
     Post,
@@ -182,6 +183,13 @@ export class SourcesController {
         @User() user: { id: string },
     ) {
         return this.service.ask(id, user.id, question);
+    }
+
+    @Roles('TEACHER')
+    @Delete(':id')
+    @ApiOperation({ summary: 'Delete a source (chunks + stored file)' })
+    remove(@Param('id') id: string, @User() user: { id: string }) {
+        return this.service.remove(user.id, id);
     }
 
     @Roles('TEACHER')

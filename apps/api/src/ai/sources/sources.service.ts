@@ -332,6 +332,22 @@ export class SourcesService {
         });
     }
 
+    /** Delete a source, its chunks (cascade) and the stored original file. */
+    async remove(userId: string, id: string) {
+        const teacherId = await this.resolveTeacherId(userId);
+        const doc = await this.prisma.sourceDocument.findUnique({ where: { id } });
+        if (!doc || doc.teacherId !== teacherId) throw new NotFoundException('Source not found');
+
+        const summary = (doc.summary as { fileKey?: string } | null) ?? null;
+        if (summary?.fileKey) {
+            await this.upload.deleteFile(summary.fileKey).catch((err: Error) => {
+                this.logger.warn(`Could not delete stored file ${summary.fileKey}: ${err.message}`);
+            });
+        }
+        await this.prisma.sourceDocument.delete({ where: { id } });
+        return { deleted: true };
+    }
+
     async get(id: string, userId: string) {
         const teacherId = await this.resolveTeacherId(userId);
         const doc = await this.prisma.sourceDocument.findUnique({

@@ -243,6 +243,21 @@ export default function TeacherSourcesPage() {
         }
     }
 
+    async function removeSource(id: string) {
+        if (!window.confirm("Delete this source, its chunks and the stored file?")) return;
+        try {
+            await api(`/ai/sources/${id}`, { method: "DELETE" });
+            setSources((prev) => prev.filter((s) => s.id !== id));
+            if (detail?.id === id) setDetail(null);
+            setFeedback({ kind: "ok", msg: "Source deleted" });
+        } catch (err) {
+            setFeedback({
+                kind: "err",
+                msg: err instanceof RequestError ? err.messages.join("; ") : "Delete failed",
+            });
+        }
+    }
+
     async function openDetail(id: string) {
         const p = await api<SourceDetail>(`/ai/sources/${id}`);
         setDetail(p);
@@ -559,9 +574,19 @@ export default function TeacherSourcesPage() {
                                         <Card className="border-border/60 shadow-sm cursor-pointer hover:border-primary/20 transition-all" onClick={() => openDetail(s.id)}>
                                             <CardHeader className="border-b border-border/60 pb-4 flex flex-row items-center justify-between">
                                                 <CardTitle className="text-sm font-black uppercase tracking-tight">{s.filename}</CardTitle>
-                                                <Badge className={s.status === "READY" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/20"}>
-                                                    {s.status}
-                                                </Badge>
+                                                <div className="flex items-center gap-1.5">
+                                                    <Badge className={s.status === "READY" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/20"}>
+                                                        {s.status}
+                                                    </Badge>
+                                                    <button
+                                                        type="button"
+                                                        aria-label="Delete source"
+                                                        onClick={(e) => { e.stopPropagation(); void removeSource(s.id); }}
+                                                        className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors"
+                                                    >
+                                                        <FaTrash size={11} />
+                                                    </button>
+                                                </div>
                                             </CardHeader>
                                             <CardContent className="p-4 text-xs text-muted-foreground">
                                                 {s.pages ?? "?"} page(s) · {new Date(s.createdAt).toLocaleDateString()}

@@ -4,9 +4,9 @@
 // demo still works end-to-end.
 import { BadRequestException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PutObjectCommand, GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { PutObjectCommand, GetObjectCommand, DeleteObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { createWriteStream } from 'node:fs';
-import { mkdir, readFile, stat } from 'node:fs/promises';
+import { mkdir, readFile, stat, unlink } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { Readable } from 'node:stream';
@@ -170,6 +170,16 @@ export class UploadService {
         }
         const buf = await readFile(path);
         return Readable.from(buf);
+    }
+
+    /** Delete a stored file (S3 object or local file). Best-effort. */
+    async deleteFile(key: string): Promise<void> {
+        if (this.client) {
+            await this.client.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }));
+            return;
+        }
+        const path = join(this.localDir, key.replace(/\//g, '_'));
+        await unlink(path).catch(() => undefined);
     }
 
     /** Guess a content type from the key extension (for local downloads). */
