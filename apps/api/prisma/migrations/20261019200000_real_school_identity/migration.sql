@@ -24,5 +24,5 @@ UPDATE "SiteSetting" SET
   "address"      = 'Union Guzia, Shibganj, Bogura',
   "addressBn"    = 'গুজিয়া ইউনিয়ন, শিবগঞ্জ, বগুড়া',
   "tagline"      = 'A combined secondary school in Guzia, Bogura — serving the community since 1958.',
-  "taglineBn"    = '১৯৫৮ সাল থেকে বগুড়ার গুজিয়ায় প্রতিষ্ঠিত একটি সহ-শিক্ষা মাধ্যমিক বিদ্যালয়।',
+  "taglineBn"    = '১৯৫৮ সাল থেকে বগুড়ার গুজিয়ায় প্রতিষ্ঠিত একটি সহ-শিক্ষা মাধ্যমিক বিদ্যালয়।'
 WHERE "id" = 'singleton';
