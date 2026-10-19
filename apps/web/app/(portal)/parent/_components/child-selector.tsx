@@ -2,6 +2,12 @@
 
 // app/(portal)/parent/_components/child-selector.tsx — pick which child to
 // view; auto-selects when there's only one.
+//
+// The choice is PERSISTED across pages. A parent with two children picks
+// one on the dashboard and then opens Fees: without persistence each page
+// starts on the first child, so the parent silently reads one child's
+// dashboard and another child's fees with nothing on screen to say so.
+// The selected id lives in localStorage, the same way the language does.
 
 import * as React from "react";
 import { api } from "@/lib/api";
@@ -17,10 +23,25 @@ import {
 
 interface Child { id: string; fullName: string; className: string }
 
+/** Where the chosen child id is kept, so every parent page agrees. */
+const STORAGE_KEY = "ghs-parent-child";
+
 export function useMyChildren() {
     const [children, setChildren] = React.useState<Child[]>([]);
     const [loading, setLoading] = React.useState(true);
-    const [selected, setSelected] = React.useState<string | null>(null);
+    const [selected, setSelectedState] = React.useState<string | null>(null);
+
+    // The stored choice is read before the children load, so the pages do
+    // not flash the first child and then swap to the chosen one.
+    React.useEffect(() => {
+        const saved = window.localStorage.getItem(STORAGE_KEY);
+        if (saved) setSelectedState(saved);
+    }, []);
+
+    const setSelected = React.useCallback((id: string) => {
+        setSelectedState(id);
+        window.localStorage.setItem(STORAGE_KEY, id);
+    }, []);
 
     React.useEffect(() => {
         api<{ data: { childIds?: string[] } }>("/auth/me")
@@ -36,7 +57,11 @@ export function useMyChildren() {
                 );
                 const valid = results.filter((c): c is Child => c !== null);
                 setChildren(valid);
-                if (valid.length > 0) setSelected(valid[0].id);
+                // Keep the stored choice when it is still one of the
+                // children; otherwise fall back to the first one.
+                setSelectedState((current) =>
+                    current && valid.some((c) => c.id === current) ? current : (valid[0]?.id ?? null),
+                );
             })
             .catch(() => setChildren([]))
             .finally(() => setLoading(false));
