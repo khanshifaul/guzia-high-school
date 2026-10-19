@@ -20,7 +20,7 @@ import { Footer } from "@/components/public/footer";
 import { useLanguage } from "@/lib/language-context";
 import { useSiteConfig } from "@/lib/site-config";
 import { api, RequestError } from "@/lib/api";
-
+import { useRouter } from "next/navigation";
 const CLASSES = ["Class 6", "Class 7", "Class 8", "Class 9", "Class 10"];
 const RELATIONS = ["father", "mother", "guardian"];
 const RELIGIONS = ["islam", "hinduism", "christianity", "buddhism", "other"];
@@ -81,6 +81,7 @@ const UPLOAD_META: Record<keyof Files, { label: string; icon: typeof FaImage; ac
 export default function AdmissionPage() {
     const { t } = useLanguage();
     const cfg = useSiteConfig();
+    const router = useRouter();
     const [form, setForm] = React.useState<FormState>(EMPTY);
     const [files, setFiles] = React.useState<Files>({});
     const [uploading, setUploading] = React.useState<keyof Files | null>(null);
@@ -88,9 +89,8 @@ export default function AdmissionPage() {
     const [error, setError] = React.useState<string | null>(null);
     const [receipt, setReceipt] = React.useState<Receipt | null>(null);
 
-    const set = (k: keyof FormState, v: string) => setForm((f) => ({ ...f, [k]: v }));
     const tn = (en: string, bn: string) => t(en, bn);
-
+    const set = (k: keyof FormState, v: string) => setForm((f) => ({ ...f, [k]: v }));
     async function uploadFile(kind: keyof Files, file: File) {
         setUploading(kind);
         setError(null);
@@ -156,7 +156,8 @@ export default function AdmissionPage() {
         }
         try {
             const res = await api<Receipt>("/admissions", { method: "POST", body });
-            setReceipt(res);
+            sessionStorage.setItem("admissionReceipt", JSON.stringify(res));
+            router.replace("/admission/success");
         } catch (err) {
             setError(err instanceof RequestError ? err.messages.join("; ") : "Submission failed. Please try again.");
         } finally {

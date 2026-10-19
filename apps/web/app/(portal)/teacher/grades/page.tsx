@@ -49,8 +49,8 @@ export default function TeacherGradesPage() {
     React.useEffect(() => {
         if (!exam) return;
         setLoadingStudents(true);
-        api<{ data: { data: Student[] } }>(`/students?classId=${exam.class.id}`)
-            .then((p) => setStudents(p.data.data))
+        api<{ data: Student[] }>(`/students?classId=${exam.class.id}`)
+            .then((p) => setStudents(p.data))
             .catch(() => setStudents([]))
             .finally(() => setLoadingStudents(false));
     }, [exam]);
