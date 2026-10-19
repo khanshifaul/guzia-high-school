@@ -58,7 +58,10 @@ guzia-high-school/
         ├── .env.example  .env.local (gitignored)
         ├── app/
         │   ├── layout.tsx  globals.css  global-error.tsx
-        │   ├── (public)/           # page.tsx, login/, admissions/
+        │   ├── page.tsx            # landing (public)
+        │   ├── about/ academics/ contact/ gallery/ login/ news/   # the public pages
+        │   ├── admission/          # page.tsx (server wrapper: reads ?print) + admission-client.tsx (wizard & print sheet)
+        │   │                       # success/page.tsx — receipt after submit
         │   └── (portal)/           # layout.tsx (session gate + sidebar) + admin/ teacher/ student/ parent/
         ├── components/
         │   ├── ui/                 # hand-rolled shadcn kit (from alumni-app: button, card, input,
@@ -66,12 +69,15 @@ guzia-high-school/
         │   │                       # status-banner, theme-switcher, …) — copy verbatim, prune unused
         │   ├── portal/             # sidebar-nav.tsx, top-header.tsx, role-nav.ts
         │   └── shared/             # page-header.tsx, stat-card.tsx, data-table.tsx, form-card.tsx,
-        │                           # confirm-modal.tsx, pagination.tsx
+        │                           # confirm-modal.tsx, pagination.tsx, test-paper.tsx,
+        │                           # admission-application.tsx (A4 printable admission sheet)
         ├── lib/
         │   ├── api.ts              # typed fetch wrapper (credentials: 'include', error → banner)
         │   ├── auth-client.ts      # useSession hook → GET /api/auth/me
         │   ├── language-context.tsx  data-translations.ts
-        │   └── zod-schemas/        # form schemas mirroring API DTOs
+        │   ├── zod-schemas/        # form schemas mirroring API DTOs
+        │   ├── admission-application.ts  # the admission record: fields, blank form, BN label maps
+        │   ├── age.ts              # ageFromDateOfBirth — the one age calculation
         ├── hooks/                  # use-students.ts, use-attendance-marking.ts, …
         ├── types/guzia-api.d.ts    # GENERATED via openapi-typescript
         └── e2e/                    # optional: portal.spec.ts (Playwright smoke)

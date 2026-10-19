@@ -36,6 +36,10 @@ export interface SiteConfig {
     linkedinUrl: string;
     websiteUrl: string;
     mapEmbedUrl: string;
+    /** Admission types the school offers (subset of day/residential). */
+    admissionTypes: string[];
+    /** Shift names the school runs (0-2). Empty = the school uses no shifts. */
+    shifts: string[];
     importantLinks: ImportantLink[];
 }
 
@@ -60,7 +64,22 @@ const FALLBACK: SiteConfig = {
     websiteUrl: "",
     mapEmbedUrl:
         "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14458.072901505664!2d89.30680657310677!3d25.05041884841201!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39fcfc81607202cf%3A0x3ebf373552deaa97!2sGuzia%20High%20School!5e0!3m2!1sen!2sbd!4v1792265333406!5m2!1sen!2sbd",
+    admissionTypes: ["day", "residential"],
+    shifts: ["Morning"],
     importantLinks: [],
+};
+
+/** The two admission lists travel as CSV, which is what the admin edits. */
+function splitList(value: unknown, fallback: string[]): string[] {
+    if (typeof value !== "string") return fallback;
+    const items = value.split(",").map((item) => item.trim()).filter(Boolean);
+    return items.length > 0 ? items : fallback;
+}
+
+/** The settings row, with the two CSV fields replaced by real lists. */
+type SiteSettingsPayload = Omit<Partial<SiteConfig>, "admissionTypes" | "shifts"> & {
+    admissionTypes?: string;
+    shifts?: string;
 };
 
 let cache: SiteConfig | null = null;
@@ -71,7 +90,15 @@ export async function getSiteConfig(): Promise<SiteConfig> {
     if (!inflight) {
         inflight = fetch("/api/site-settings", { credentials: "include" })
             .then((r) => (r.ok ? r.json() : FALLBACK))
-            .then((d) => ({ ...FALLBACK, ...d }) as SiteConfig)
+            .then((d) => {
+                const payload = (d ?? {}) as SiteSettingsPayload;
+                return {
+                    ...FALLBACK,
+                    ...payload,
+                    admissionTypes: splitList(payload.admissionTypes, FALLBACK.admissionTypes),
+                    shifts: splitList(payload.shifts, FALLBACK.shifts),
+                } as SiteConfig;
+            })
             .catch(() => FALLBACK)
             .finally(() => {
                 inflight = null;

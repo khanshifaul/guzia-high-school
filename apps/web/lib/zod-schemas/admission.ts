@@ -23,6 +23,50 @@ export const GROUPS = ["science", "humanities", "business"] as const;
 export const ADMISSION_TYPES = ["day", "residential"] as const;
 export const QUOTAS = ["general", "freedom-fighter", "employee", "staff-child", "sibling", "tribal"] as const;
 export const CLASSES = ["Class 6", "Class 7", "Class 8", "Class 9", "Class 10"] as const;
+
+/** Classes below the school's entry class, used for the transfer history. */
+const CLASSES_WITH_PREVIOUS = ["Class 5", ...CLASSES];
+
+/** Only Class 9 and Class 10 split students into groups. */
+export const GROUP_CLASSES = ["Class 9", "Class 10"] as const;
+
+/** True when the applied class offers groups (science/humanities/business). */
+export function classHasGroups(classWanted: string): boolean {
+    return (GROUP_CLASSES as readonly string[]).includes(classWanted);
+}
+
+/**
+ * Valid previous classes for a transfer applicant: from Class 5 up to the
+ * class applied for, exclusive. Class 6 → [Class 5]; Class 10 → Class 5–9.
+ * The school does not record anything below Class 5.
+ */
+export function previousClassOptions(classWanted: string): string[] {
+    const index = CLASSES_WITH_PREVIOUS.indexOf(classWanted);
+    if (index <= 0) return [];
+    return CLASSES_WITH_PREVIOUS.slice(0, index);
+}
+
+/** Rules that span two academic-step fields; shared by the step and the form. */
+function refineAcademic(
+    value: { classWanted?: string; group?: string; previousClass?: string },
+    ctx: z.RefinementCtx,
+): void {
+    if (value.group && !classHasGroups(value.classWanted ?? "")) {
+        ctx.addIssue({
+            code: "custom",
+            path: ["group"],
+            message: "Groups apply to Class 9 and 10 only",
+        });
+    }
+    const allowed = previousClassOptions(value.classWanted ?? "");
+    if (value.previousClass && allowed.length > 0 && !allowed.includes(value.previousClass)) {
+        ctx.addIssue({
+            code: "custom",
+            path: ["previousClass"],
+            message: `Choose a class below ${value.classWanted} (${allowed[0]}–${allowed[allowed.length - 1]})`,
+        });
+    }
+}
 export const GENDERS = ["male", "female", "other"] as const;
 export const RELATIONS = ["father", "mother", "guardian"] as const;
 
@@ -128,9 +172,9 @@ export type GuardianStep = z.infer<typeof guardianStepSchema>;
 
 export const academicStepSchema = z.object({
     classWanted: z.enum(CLASSES, { message: "Choose a class" }),
-    section: z.string().trim().max(40).optional(),
     group: z.enum(GROUPS).optional().or(z.literal("")),
     admissionType: z.enum(ADMISSION_TYPES).default("day"),
+    shift: z.string().trim().max(40).optional(),
     previousSchool: z.string().trim().max(160).optional(),
     previousClass: z.string().trim().max(40).optional(),
     previousResult: z.string().trim().max(40).optional(),
@@ -142,7 +186,7 @@ export const academicStepSchema = z.object({
     birthCertUrl: z.string().max(500).optional(),
     testimonialUrl: z.string().max(500).optional(),
     note: z.string().trim().max(500).optional(),
-});
+}).superRefine(refineAcademic);
 
 export type AcademicStep = z.infer<typeof academicStepSchema>;
 
@@ -175,6 +219,7 @@ export const admissionSchema = z
                 message: "Enter the permanent address, or tick 'same as present address'",
             });
         }
+        refineAcademic(value, ctx);
     });
 
 export type AdmissionForm = z.infer<typeof admissionSchema>;
@@ -200,7 +245,7 @@ export const STEP_FIELDS = {
         "presentUpazila", "presentDistrict", "presentPostalCode",
         "permanentVillage", "permanentRoad", "permanentWard", "permanentPostOffice",
         "permanentPoliceStation", "permanentUpazila", "permanentDistrict", "permanentPostalCode"],
-    academic: ["classWanted", "section", "group", "admissionType", "previousSchool", "previousClass",
+    academic: ["classWanted", "group", "admissionType", "shift", "previousSchool", "previousClass",
         "previousResult", "tcNumber", "tcDate", "previousSchoolPhone", "quota"],
 } as const;
 

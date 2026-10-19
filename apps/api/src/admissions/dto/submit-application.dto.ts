@@ -171,6 +171,8 @@ export class SubmitApplicationDto {
   @IsOptional() @IsIn(GROUPS) group?: string;
   @ApiPropertyOptional({ enum: ADMISSION_TYPES })
   @IsOptional() @IsIn(ADMISSION_TYPES) admissionType?: string;
+  @ApiPropertyOptional({ description: 'Shift the applicant wants (one of the site settings shifts)' })
+  @IsOptional() @IsString() @Length(0, 40) shift?: string;
 
   @ApiPropertyOptional({ description: 'Previous school name' })
   @IsOptional() @IsString() @Length(0, 160) previousSchool?: string;

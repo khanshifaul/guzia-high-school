@@ -1,7 +1,7 @@
 // src/site-settings/dto/update-site-settings.dto.ts — admin edit of public
 // site info (phone, email, EIIN, board, socials, important links).
 import { Type } from 'class-transformer';
-import { ArrayNotEmpty, IsArray, IsOptional, IsString, IsUrl, Length, ValidateNested } from 'class-validator';
+import { ArrayNotEmpty, IsArray, IsOptional, IsString, IsUrl, Length, Matches, ValidateIf, ValidateNested } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ImportantLinkDto {
@@ -34,18 +34,46 @@ export class UpdateSiteSettingsDto {
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(1, 300) tagline?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @Length(1, 300) taglineBn?: string;
 
-  @ApiPropertyOptional() @IsOptional() @IsUrl({ require_tld: false }) facebookUrl?: string;
-  @ApiPropertyOptional() @IsOptional() @IsUrl({ require_tld: false }) twitterUrl?: string;
-  @ApiPropertyOptional() @IsOptional() @IsUrl({ require_tld: false }) instagramUrl?: string;
-  @ApiPropertyOptional() @IsOptional() @IsUrl({ require_tld: false }) youtubeUrl?: string;
-  @ApiPropertyOptional() @IsOptional() @IsUrl({ require_tld: false }) linkedinUrl?: string;
-  @ApiPropertyOptional() @IsOptional() @IsUrl({ require_tld: false }) websiteUrl?: string;
+  // An empty string clears the link, so it is not validated as a URL.
+  @ApiPropertyOptional() @IsOptional() @ValidateIf((_o, value) => value !== '') @IsUrl({ require_tld: false }) facebookUrl?: string;
+  // An empty string clears the link, so it is not validated as a URL.
+  @ApiPropertyOptional() @IsOptional() @ValidateIf((_o, value) => value !== '') @IsUrl({ require_tld: false }) twitterUrl?: string;
+  // An empty string clears the link, so it is not validated as a URL.
+  @ApiPropertyOptional() @IsOptional() @ValidateIf((_o, value) => value !== '') @IsUrl({ require_tld: false }) instagramUrl?: string;
+  // An empty string clears the link, so it is not validated as a URL.
+  @ApiPropertyOptional() @IsOptional() @ValidateIf((_o, value) => value !== '') @IsUrl({ require_tld: false }) youtubeUrl?: string;
+  // An empty string clears the link, so it is not validated as a URL.
+  @ApiPropertyOptional() @IsOptional() @ValidateIf((_o, value) => value !== '') @IsUrl({ require_tld: false }) linkedinUrl?: string;
+  // An empty string clears the link, so it is not validated as a URL.
+  @ApiPropertyOptional() @IsOptional() @ValidateIf((_o, value) => value !== '') @IsUrl({ require_tld: false }) websiteUrl?: string;
 
   @ApiPropertyOptional({ description: 'Google Maps embed iframe src for the /contact page' })
   @IsOptional()
   @IsString()
   @Length(1, 800)
   mapEmbedUrl?: string;
+
+  @ApiPropertyOptional({
+    description: 'Comma-separated admission types the school actually offers',
+    example: 'day,residential',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^(day|residential)(,(day|residential))?$/, {
+    message: 'Use day and/or residential, comma-separated',
+  })
+  admissionTypes?: string;
+
+  @ApiPropertyOptional({
+    description: 'Comma-separated shift names, at most 2 (empty means the school runs no shifts)',
+    example: 'Morning,Afternoon',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^$|^[^,]{1,40}$|^[^,]{1,40},[^,]{1,40}$/, {
+    message: 'At most 2 shifts, comma-separated',
+  })
+  shifts?: string;
 
   @ApiPropertyOptional({ type: [ImportantLinkDto] })
   @IsOptional()

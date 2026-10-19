@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { IsArray, IsIn, IsOptional, IsString, IsUrl, Length, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsIn, IsOptional, IsString, IsUrl, Length, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -97,6 +97,7 @@ class AskSourcesDto {
     })
     @IsOptional()
     @IsArray()
+    @ArrayMaxSize(10)
     @ValidateNested({ each: true })
     @Type(() => AskTurnDto)
     history?: AskTurnDto[];
@@ -205,6 +206,14 @@ export class SourcesController {
         @User() user: { id: string },
     ) {
         return this.service.ask(id, user.id, question);
+    }
+
+    @Roles('TEACHER')
+    @Post(':id/ocr')
+    @RateLimit('ai:generate', 60_000, 5)
+    @ApiOperation({ summary: 'Transcribe a scanned PDF with OCR, then embed + summarize it' })
+    ocr(@Param('id') id: string, @User() user: { id: string }) {
+        return this.service.ocr(id, user.id);
     }
 
     @Roles('TEACHER')

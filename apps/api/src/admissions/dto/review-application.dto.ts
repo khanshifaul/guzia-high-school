@@ -17,4 +17,12 @@ export class ReviewApplicationDto {
   @IsString()
   @Length(0, 500)
   note?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Section of the applied class to enrol the student into. Defaults to the first section of the class.',
+  })
+  @IsOptional()
+  @IsString()
+  sectionId?: string;
 }

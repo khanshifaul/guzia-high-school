@@ -45,6 +45,8 @@ export type SiteSettingMinAggregateOutputType = {
   linkedinUrl: string | null
   websiteUrl: string | null
   mapEmbedUrl: string | null
+  admissionTypes: string | null
+  shifts: string | null
   updatedAt: Date | null
 }
 
@@ -69,6 +71,8 @@ export type SiteSettingMaxAggregateOutputType = {
   linkedinUrl: string | null
   websiteUrl: string | null
   mapEmbedUrl: string | null
+  admissionTypes: string | null
+  shifts: string | null
   updatedAt: Date | null
 }
 
@@ -94,6 +98,8 @@ export type SiteSettingCountAggregateOutputType = {
   websiteUrl: number
   mapEmbedUrl: number
   importantLinks: number
+  admissionTypes: number
+  shifts: number
   updatedAt: number
   _all: number
 }
@@ -120,6 +126,8 @@ export type SiteSettingMinAggregateInputType = {
   linkedinUrl?: true
   websiteUrl?: true
   mapEmbedUrl?: true
+  admissionTypes?: true
+  shifts?: true
   updatedAt?: true
 }
 
@@ -144,6 +152,8 @@ export type SiteSettingMaxAggregateInputType = {
   linkedinUrl?: true
   websiteUrl?: true
   mapEmbedUrl?: true
+  admissionTypes?: true
+  shifts?: true
   updatedAt?: true
 }
 
@@ -169,6 +179,8 @@ export type SiteSettingCountAggregateInputType = {
   websiteUrl?: true
   mapEmbedUrl?: true
   importantLinks?: true
+  admissionTypes?: true
+  shifts?: true
   updatedAt?: true
   _all?: true
 }
@@ -267,6 +279,8 @@ export type SiteSettingGroupByOutputType = {
   websiteUrl: string
   mapEmbedUrl: string
   importantLinks: runtime.JsonValue
+  admissionTypes: string
+  shifts: string
   updatedAt: Date
   _count: SiteSettingCountAggregateOutputType | null
   _min: SiteSettingMinAggregateOutputType | null
@@ -313,6 +327,8 @@ export type SiteSettingWhereInput = {
   websiteUrl?: Prisma.StringFilter<"SiteSetting"> | string
   mapEmbedUrl?: Prisma.StringFilter<"SiteSetting"> | string
   importantLinks?: Prisma.JsonFilter<"SiteSetting">
+  admissionTypes?: Prisma.StringFilter<"SiteSetting"> | string
+  shifts?: Prisma.StringFilter<"SiteSetting"> | string
   updatedAt?: Prisma.DateTimeFilter<"SiteSetting"> | Date | string
 }
 
@@ -338,6 +354,8 @@ export type SiteSettingOrderByWithRelationInput = {
   websiteUrl?: Prisma.SortOrder
   mapEmbedUrl?: Prisma.SortOrder
   importantLinks?: Prisma.SortOrder
+  admissionTypes?: Prisma.SortOrder
+  shifts?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -366,6 +384,8 @@ export type SiteSettingWhereUniqueInput = Prisma.AtLeast<{
   websiteUrl?: Prisma.StringFilter<"SiteSetting"> | string
   mapEmbedUrl?: Prisma.StringFilter<"SiteSetting"> | string
   importantLinks?: Prisma.JsonFilter<"SiteSetting">
+  admissionTypes?: Prisma.StringFilter<"SiteSetting"> | string
+  shifts?: Prisma.StringFilter<"SiteSetting"> | string
   updatedAt?: Prisma.DateTimeFilter<"SiteSetting"> | Date | string
 }, "id">
 
@@ -391,6 +411,8 @@ export type SiteSettingOrderByWithAggregationInput = {
   websiteUrl?: Prisma.SortOrder
   mapEmbedUrl?: Prisma.SortOrder
   importantLinks?: Prisma.SortOrder
+  admissionTypes?: Prisma.SortOrder
+  shifts?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.SiteSettingCountOrderByAggregateInput
   _max?: Prisma.SiteSettingMaxOrderByAggregateInput
@@ -422,6 +444,8 @@ export type SiteSettingScalarWhereWithAggregatesInput = {
   websiteUrl?: Prisma.StringWithAggregatesFilter<"SiteSetting"> | string
   mapEmbedUrl?: Prisma.StringWithAggregatesFilter<"SiteSetting"> | string
   importantLinks?: Prisma.JsonWithAggregatesFilter<"SiteSetting">
+  admissionTypes?: Prisma.StringWithAggregatesFilter<"SiteSetting"> | string
+  shifts?: Prisma.StringWithAggregatesFilter<"SiteSetting"> | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"SiteSetting"> | Date | string
 }
 
@@ -447,6 +471,8 @@ export type SiteSettingCreateInput = {
   websiteUrl?: string
   mapEmbedUrl?: string
   importantLinks?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  admissionTypes?: string
+  shifts?: string
   updatedAt?: Date | string
 }
 
@@ -472,6 +498,8 @@ export type SiteSettingUncheckedCreateInput = {
   websiteUrl?: string
   mapEmbedUrl?: string
   importantLinks?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  admissionTypes?: string
+  shifts?: string
   updatedAt?: Date | string
 }
 
@@ -497,6 +525,8 @@ export type SiteSettingUpdateInput = {
   websiteUrl?: Prisma.StringFieldUpdateOperationsInput | string
   mapEmbedUrl?: Prisma.StringFieldUpdateOperationsInput | string
   importantLinks?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  admissionTypes?: Prisma.StringFieldUpdateOperationsInput | string
+  shifts?: Prisma.StringFieldUpdateOperationsInput | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -522,6 +552,8 @@ export type SiteSettingUncheckedUpdateInput = {
   websiteUrl?: Prisma.StringFieldUpdateOperationsInput | string
   mapEmbedUrl?: Prisma.StringFieldUpdateOperationsInput | string
   importantLinks?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  admissionTypes?: Prisma.StringFieldUpdateOperationsInput | string
+  shifts?: Prisma.StringFieldUpdateOperationsInput | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -547,6 +579,8 @@ export type SiteSettingCreateManyInput = {
   websiteUrl?: string
   mapEmbedUrl?: string
   importantLinks?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  admissionTypes?: string
+  shifts?: string
   updatedAt?: Date | string
 }
 
@@ -572,6 +606,8 @@ export type SiteSettingUpdateManyMutationInput = {
   websiteUrl?: Prisma.StringFieldUpdateOperationsInput | string
   mapEmbedUrl?: Prisma.StringFieldUpdateOperationsInput | string
   importantLinks?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  admissionTypes?: Prisma.StringFieldUpdateOperationsInput | string
+  shifts?: Prisma.StringFieldUpdateOperationsInput | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -597,6 +633,8 @@ export type SiteSettingUncheckedUpdateManyInput = {
   websiteUrl?: Prisma.StringFieldUpdateOperationsInput | string
   mapEmbedUrl?: Prisma.StringFieldUpdateOperationsInput | string
   importantLinks?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  admissionTypes?: Prisma.StringFieldUpdateOperationsInput | string
+  shifts?: Prisma.StringFieldUpdateOperationsInput | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -622,6 +660,8 @@ export type SiteSettingCountOrderByAggregateInput = {
   websiteUrl?: Prisma.SortOrder
   mapEmbedUrl?: Prisma.SortOrder
   importantLinks?: Prisma.SortOrder
+  admissionTypes?: Prisma.SortOrder
+  shifts?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -646,6 +686,8 @@ export type SiteSettingMaxOrderByAggregateInput = {
   linkedinUrl?: Prisma.SortOrder
   websiteUrl?: Prisma.SortOrder
   mapEmbedUrl?: Prisma.SortOrder
+  admissionTypes?: Prisma.SortOrder
+  shifts?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -670,6 +712,8 @@ export type SiteSettingMinOrderByAggregateInput = {
   linkedinUrl?: Prisma.SortOrder
   websiteUrl?: Prisma.SortOrder
   mapEmbedUrl?: Prisma.SortOrder
+  admissionTypes?: Prisma.SortOrder
+  shifts?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -697,6 +741,8 @@ export type SiteSettingSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   websiteUrl?: boolean
   mapEmbedUrl?: boolean
   importantLinks?: boolean
+  admissionTypes?: boolean
+  shifts?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["siteSetting"]>
 
@@ -722,6 +768,8 @@ export type SiteSettingSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   websiteUrl?: boolean
   mapEmbedUrl?: boolean
   importantLinks?: boolean
+  admissionTypes?: boolean
+  shifts?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["siteSetting"]>
 
@@ -747,6 +795,8 @@ export type SiteSettingSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   websiteUrl?: boolean
   mapEmbedUrl?: boolean
   importantLinks?: boolean
+  admissionTypes?: boolean
+  shifts?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["siteSetting"]>
 
@@ -772,10 +822,12 @@ export type SiteSettingSelectScalar = {
   websiteUrl?: boolean
   mapEmbedUrl?: boolean
   importantLinks?: boolean
+  admissionTypes?: boolean
+  shifts?: boolean
   updatedAt?: boolean
 }
 
-export type SiteSettingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "schoolName" | "schoolNameBn" | "phone" | "hotline" | "email" | "eiin" | "board" | "address" | "addressBn" | "established" | "tagline" | "taglineBn" | "facebookUrl" | "twitterUrl" | "instagramUrl" | "youtubeUrl" | "linkedinUrl" | "websiteUrl" | "mapEmbedUrl" | "importantLinks" | "updatedAt", ExtArgs["result"]["siteSetting"]>
+export type SiteSettingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "schoolName" | "schoolNameBn" | "phone" | "hotline" | "email" | "eiin" | "board" | "address" | "addressBn" | "established" | "tagline" | "taglineBn" | "facebookUrl" | "twitterUrl" | "instagramUrl" | "youtubeUrl" | "linkedinUrl" | "websiteUrl" | "mapEmbedUrl" | "importantLinks" | "admissionTypes" | "shifts" | "updatedAt", ExtArgs["result"]["siteSetting"]>
 
 export type $SiteSettingPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "SiteSetting"
@@ -802,6 +854,8 @@ export type $SiteSettingPayload<ExtArgs extends runtime.Types.Extensions.Interna
     websiteUrl: string
     mapEmbedUrl: string
     importantLinks: runtime.JsonValue
+    admissionTypes: string
+    shifts: string
     updatedAt: Date
   }, ExtArgs["result"]["siteSetting"]>
   composites: {}
@@ -1247,6 +1301,8 @@ export interface SiteSettingFieldRefs {
   readonly websiteUrl: Prisma.FieldRef<"SiteSetting", 'String'>
   readonly mapEmbedUrl: Prisma.FieldRef<"SiteSetting", 'String'>
   readonly importantLinks: Prisma.FieldRef<"SiteSetting", 'Json'>
+  readonly admissionTypes: Prisma.FieldRef<"SiteSetting", 'String'>
+  readonly shifts: Prisma.FieldRef<"SiteSetting", 'String'>
   readonly updatedAt: Prisma.FieldRef<"SiteSetting", 'DateTime'>
 }
     

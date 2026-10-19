@@ -16,8 +16,6 @@ import {
     FaCalendarCheck,
     FaGraduationCap,
     FaListCheck,
-    FaBookOpen,
-    FaClipboardList,
     FaFolderOpen,
     FaBullhorn,
     FaExclamation,
@@ -74,9 +72,7 @@ const LINKS = [
     { label: "Mark Attendance", href: "/teacher/attendance", icon: FaCalendarCheck, desc: "Present / Late / Absent" },
     { label: "Enter Grades", href: "/teacher/grades", icon: FaGraduationCap, desc: "Exam marks entry" },
     { label: "Assignments", href: "/teacher/assignments", icon: FaListCheck, desc: "Create & grade work" },
-    { label: "Lesson Plans", href: "/teacher/plans", icon: FaBookOpen, desc: "AI year/term plans" },
-    { label: "Test Papers", href: "/teacher/tests", icon: FaClipboardList, desc: "AI question papers" },
-    { label: "Sources", href: "/teacher/sources", icon: FaFolderOpen, desc: "Upload & ask AI" },
+    { label: "Studio", href: "/teacher/studio", icon: FaFolderOpen, desc: "Sources, chat & AI papers" },
     { label: "Notices", href: "/teacher/notices", icon: FaBullhorn, desc: "Post announcements" },
 ];
 
@@ -218,7 +214,7 @@ export default function TeacherDashboard() {
             <Card className="border-border/60 shadow-sm">
                 <CardHeader className="border-b border-border/60 pb-4 flex flex-row items-center justify-between">
                     <CardTitle className="text-lg font-black uppercase tracking-tight">Syllabus progress</CardTitle>
-                    <Link href="/teacher/plans">
+                    <Link href="/teacher/studio?view=plans">
                         <Button variant="outline" size="sm" className="font-black text-[10px] uppercase tracking-wider cursor-pointer">
                             All plans
                         </Button>

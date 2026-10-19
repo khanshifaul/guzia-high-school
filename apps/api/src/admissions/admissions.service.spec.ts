@@ -28,6 +28,10 @@ function buildService(state: FakeState) {
             },
             update: async () => ({}),
         },
+        siteSetting: {
+            findUnique: async () =>
+                ({ id: 'singleton', admissionTypes: 'day,residential', shifts: 'Morning,Afternoon' }),
+        },
         admissionApplication: {
             create: async ({ data }: { data: { formData: Record<string, unknown>; userId: string } }) => {
                 const application = {
@@ -45,15 +49,24 @@ function buildService(state: FakeState) {
 
     const email = {
         enabled: false,
-        sendAdmissionCredentials: async (payload: { to: string; studentName: string }) => {
+        sendAdmissionReceived: async (payload: { to: string; studentName: string }) => {
             state.emails.push(payload);
             return true;
         },
     };
 
     const config = { get: () => undefined };
+    const upload = {
+        storeFile: async () => ({
+            key: 'admissions/photo.png',
+            url: '/api/files/admissions/photo.png',
+            size: 1,
+            contentType: 'image/png',
+            storage: 'local',
+        }),
+    };
 
-    return new AdmissionsService(prisma as never, email as never, config as never);
+    return new AdmissionsService(prisma as never, email as never, config as never, upload as never);
 }
 
 function baseState(overrides: Partial<FakeState> = {}): FakeState {
@@ -80,16 +93,18 @@ describe('AdmissionsService.submit', () => {
         expect(state.applications[0].status).toBe('SUBMITTED');
     });
 
-    it('returns the receipt the applicant prints and logs in with', async () => {
+    it('returns an application number, never credentials the account cannot use', async () => {
         const state = baseState();
         const service = buildService(state);
         const receipt = await service.submit({ ...APPLICANT });
 
         expect(receipt.studentName).toBe('Ayesha Rahman');
         expect(receipt.classWanted).toBe('Class 8');
-        expect(receipt.username).toBe('ayesha@example.com');
-        expect(receipt.password).toBeTruthy();
         expect(receipt.id).toBeTruthy();
+        // The account is BLOCKED until an admin approves it, so a password
+        // printed at submit time could never be used to log in.
+        expect(receipt).not.toHaveProperty('password');
+        expect(receipt).not.toHaveProperty('username');
     });
 
     it('refuses a second application for the same email', async () => {
@@ -186,5 +201,77 @@ describe('AdmissionsService.submit', () => {
             await service.submit({ ...APPLICANT, website: '' });
             expect(state.applications[0].formData).not.toHaveProperty('website');
         });
+    });
+});
+
+/** A PNG header carrying the given dimensions — enough for the size check. */
+function pngBuffer(width: number, height: number): Buffer {
+    const buffer = Buffer.alloc(24);
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(buffer, 0);
+    buffer.writeUInt32BE(13, 8);
+    buffer.write('IHDR', 12, 'ascii');
+    buffer.writeUInt32BE(width, 16);
+    buffer.writeUInt32BE(height, 20);
+    return buffer;
+}
+
+describe('AdmissionsService.storeAttachment', () => {
+    it('accepts a 300x300 photo under 1 MB', async () => {
+        const service = buildService(baseState());
+        const file = { buffer: pngBuffer(300, 300), originalname: 'p.png', mimetype: 'image/png' };
+        await expect(service.storeAttachment(file, 'photo')).resolves.toBeTruthy();
+    });
+
+    it('refuses a photo that is not exactly 300x300', async () => {
+        const service = buildService(baseState());
+        const file = { buffer: pngBuffer(400, 400), originalname: 'p.png', mimetype: 'image/png' };
+        await expect(service.storeAttachment(file, 'photo')).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('refuses a photo larger than 1 MB', async () => {
+        const service = buildService(baseState());
+        const big = Buffer.concat([pngBuffer(300, 300), Buffer.alloc(1024 * 1024)]);
+        await expect(
+            service.storeAttachment({ buffer: big, originalname: 'p.png', mimetype: 'image/png' }, 'photo'),
+        ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('does not apply the photo rule to a birth certificate', async () => {
+        const service = buildService(baseState());
+        const file = { buffer: pngBuffer(800, 600), originalname: 'bc.png', mimetype: 'image/png' };
+        await expect(service.storeAttachment(file, 'birthCert')).resolves.toBeTruthy();
+    });
+
+    it('refuses a request with no file', async () => {
+        const service = buildService(baseState());
+        await expect(service.storeAttachment(undefined, 'photo')).rejects.toBeInstanceOf(BadRequestException);
+    });
+});
+
+describe('AdmissionsService.submit — the site settings gate what is offered', () => {
+    it('refuses an admission type the school does not offer', async () => {
+        const state = baseState();
+        const service = buildService(state);
+        // The fake settings offer only day + residential; "boarding" is unknown.
+        await expect(
+            service.submit({ ...APPLICANT, admissionType: 'boarding' } as never),
+        ).rejects.toBeInstanceOf(BadRequestException);
+        expect(state.applications).toHaveLength(0);
+    });
+
+    it('refuses a shift the school does not run', async () => {
+        const state = baseState();
+        const service = buildService(state);
+        await expect(service.submit({ ...APPLICANT, shift: 'Night' })).rejects.toBeInstanceOf(
+            BadRequestException,
+        );
+        expect(state.applications).toHaveLength(0);
+    });
+
+    it('accepts a configured shift', async () => {
+        const state = baseState();
+        const service = buildService(state);
+        await service.submit({ ...APPLICANT, shift: 'Morning' });
+        expect(state.applications).toHaveLength(1);
     });
 });

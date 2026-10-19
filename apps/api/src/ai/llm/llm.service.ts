@@ -227,7 +227,16 @@ export class LlmService {
         }
 
         const data = (await res.json()) as unknown;
-        return extractKiloContent(data);
+        const content = extractKiloContent(data);
+        if (content.trim().length === 0) {
+            // A reasoning model can spend the whole max_tokens budget on
+            // reasoning and emit nothing; the reason names the cause.
+            this.logger.warn(
+                `Kilo gateway returned no text (finish_reason=${extractKiloFinishReason(data)}, ` +
+                    `model=${extractKiloModel(data)}). Pin KILO_MODEL to a non-reasoning model.`,
+            );
+        }
+        return content;
     }
 
     /** Run `fn`, retrying once on transient HTTP/network failures. */
@@ -375,6 +384,24 @@ export class LlmService {
 }
 
 /** Safely extract content from the Kilo gateway JSON response. */
+/** Routed model id from a gateway reply, for diagnostics. */
+function extractKiloModel(data: unknown): string {
+    if (!data || typeof data !== 'object') return 'unknown';
+    const model = (data as { model?: unknown }).model;
+    return typeof model === 'string' ? model : 'unknown';
+}
+
+/** `finish_reason` of the first choice, for diagnostics. */
+function extractKiloFinishReason(data: unknown): string {
+    if (!data || typeof data !== 'object') return 'unknown';
+    const choices = (data as { choices?: unknown }).choices;
+    if (!Array.isArray(choices) || choices.length === 0) return 'unknown';
+    const first = choices[0];
+    if (!first || typeof first !== 'object') return 'unknown';
+    const reason = (first as { finish_reason?: unknown }).finish_reason;
+    return typeof reason === 'string' ? reason : 'unknown';
+}
+
 function extractKiloContent(data: unknown): string {
     if (!data || typeof data !== 'object') return '';
     const obj = data as { choices?: unknown };

@@ -123,7 +123,7 @@ export default function TeacherAttemptsPage() {
                 subtitle={`${attempts.length} student${attempts.length === 1 ? "" : "s"}`}
                 icon={FaUsers}
                 actions={
-                    <Link href="/teacher/tests">
+                    <Link href="/teacher/studio?view=tests">
                         <Button variant="outline" className="font-black text-xs uppercase tracking-wider">
                             <FaArrowLeft size={12} /> Back to Papers
                         </Button>

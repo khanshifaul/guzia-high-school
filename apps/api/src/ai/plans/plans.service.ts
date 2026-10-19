@@ -3,6 +3,7 @@
 // startDate (skips Fridays — BD weekend) and validates week count.
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
+import { resolveTeacherId } from '../../common/access/teacher-access.util';
 import { Prisma } from 'prisma/generated/client';
 import { LlmService } from '../llm/llm.service';
 import { z } from 'zod';
@@ -56,7 +57,7 @@ export class PlansService {
     ) {}
 
     async list(userId: string) {
-        const teacherId = await this.resolveTeacherId(userId);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
         return this.prisma.teachingPlan.findMany({
             where: { teacherId },
             include: { class: true, subject: true },
@@ -66,7 +67,7 @@ export class PlansService {
 
     /** One plan with its weeks, for the plan detail page. */
     async findOne(id: string, userId: string) {
-        const teacherId = await this.resolveTeacherId(userId);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
         const plan = await this.prisma.teachingPlan.findUnique({
             where: { id },
             include: { class: true, subject: true },
@@ -76,7 +77,7 @@ export class PlansService {
     }
 
     async generate(dto: GeneratePlanDto, userId: string) {
-        const teacherId = await this.resolveTeacherId(userId);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
         const cls = await this.prisma.class.findUnique({ where: { id: dto.classId } });
         if (!cls) throw new NotFoundException('Class not found');
         const subject = await this.prisma.subject.findUnique({ where: { id: dto.subjectId } });
@@ -130,7 +131,7 @@ export class PlansService {
      * teacher's own edits) is left untouched.
      */
     async regenerateWeek(id: string, weekNo: number, userId: string) {
-        const teacherId = await this.resolveTeacherId(userId);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
         const plan = await this.requireOwned(id, teacherId);
         const weeks = plan.weeks as unknown as PlanWeek[];
         const index = weeks.findIndex((w) => w.week === weekNo);
@@ -242,7 +243,7 @@ export class PlansService {
         userId: string,
         patch: { title?: string; weeks?: PlanWeek[]; status?: 'DRAFT' | 'ACTIVE' | 'ARCHIVED' },
     ) {
-        const teacherId = await this.resolveTeacherId(userId);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
         const plan = await this.requireOwned(id, teacherId);
         // Activating archives any other ACTIVE plan for the same tuple.
         if (patch.status === 'ACTIVE') {
@@ -272,7 +273,7 @@ export class PlansService {
 
     /** Mark one week DONE/PLANNED (drives syllabus progress %). */
     async setWeekStatus(id: string, weekNo: number, status: 'PLANNED' | 'DONE', userId: string) {
-        const teacherId = await this.resolveTeacherId(userId);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
         const plan = await this.requireOwned(id, teacherId);
         const weeks = plan.weeks as { week: number; status?: string }[];
         const next = weeks.map((w) => (w.week === weekNo ? { ...w, status } : w));
@@ -289,7 +290,7 @@ export class PlansService {
         patch: { topics?: string[]; objective?: string; assessment?: string | null },
         userId: string,
     ) {
-        const teacherId = await this.resolveTeacherId(userId);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
         const plan = await this.requireOwned(id, teacherId);
         const weeks = plan.weeks as unknown as PlanWeek[];
         const index = weeks.findIndex((w) => w.week === weekNo);
@@ -312,19 +313,13 @@ export class PlansService {
     }
 
     async remove(id: string, userId: string) {
-        const teacherId = await this.resolveTeacherId(userId);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
         await this.requireOwned(id, teacherId);
         await this.prisma.teachingPlan.delete({ where: { id } });
         return { deleted: true };
     }
 
     /** JWT carries the User id; the FK references the Teacher row. Resolve it. */
-    private async resolveTeacherId(userId: string): Promise<string> {
-        const teacher = await this.prisma.teacher.findUnique({ where: { userId } });
-        if (!teacher) throw new NotFoundException('No teacher profile for this user');
-        return teacher.id;
-    }
-
     private async requireOwned(id: string, teacherId: string) {
         const plan = await this.prisma.teachingPlan.findUnique({ where: { id } });
         if (!plan) throw new NotFoundException('Plan not found');

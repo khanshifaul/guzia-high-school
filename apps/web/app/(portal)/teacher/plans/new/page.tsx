@@ -74,6 +74,9 @@ function Field({
 export default function NewPlanPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    // Returning from a generated artifact lands back on its workspace.
+    const workspaceId = searchParams.get("workspaceId");
+    const backHref = workspaceId ? `/teacher/studio/${workspaceId}?view=plans` : "/teacher/studio?view=plans";
     const { teacherId } = useMyTeacher();
 
     const [classes, setClasses] = React.useState<ClassOption[]>([]);
@@ -133,7 +136,7 @@ export default function NewPlanPage() {
                     topicsHint: topicsHint.trim() || undefined,
                 },
             });
-            router.push("/teacher/plans");
+            router.push(backHref);
         } catch (err) {
             setError(err instanceof RequestError ? err.messages.join("; ") : "Could not generate the plan");
             setBusy(false);
@@ -147,7 +150,7 @@ export default function NewPlanPage() {
                 subtitle="Set the term shape, then let the AI draft the weeks"
                 icon={FaBookOpen}
                 actions={
-                    <Link href="/teacher/plans">
+                    <Link href={backHref}>
                         <Button variant="outline" className="font-black text-xs uppercase tracking-wider cursor-pointer">
                             <FaArrowLeft size={12} /> Back to plans
                         </Button>
@@ -272,7 +275,7 @@ export default function NewPlanPage() {
                             <><FaBookOpen size={12} /> Generate Plan</>
                         )}
                     </Button>
-                    <Link href="/teacher/plans">
+                    <Link href={backHref}>
                         <Button type="button" variant="outline" className="font-black text-xs uppercase tracking-wider cursor-pointer">
                             Cancel
                         </Button>

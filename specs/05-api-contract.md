@@ -98,9 +98,10 @@ List endpoints accept `?page=1&limit=20` (where applicable) and return
 ### admissions (the showcase workflow)
 | Method | Path | Roles | Notes |
 |---|---|---|---|
-| POST `/admissions` **public** | — | 4-step form payload (AdmissionApplicationDto, zod-mirrored client-side); `website` honeypot field — if it is non-blank the submit is refused with 400 and nothing is written, and it is never persisted. The payload carries no `age`: the age is derived server-side from `dateOfBirth` and stored in `formData`; a date of birth outside the admission age window is refused with 400 |
+| POST `/admissions` **public** | — | 4-step form payload (AdmissionApplicationDto, zod-mirrored client-side); `website` honeypot field — if it is non-blank the submit is refused with 400 and nothing is written, and it is never persisted. The payload carries no `age`: the age is derived server-side from `dateOfBirth` and stored in `formData`; a date of birth outside the admission age window is refused with 400. It carries no `section` (the administration assigns it), `group` is refused for a class other than Class 9/10, and `admissionType`/`shift` must be among the values the site settings offer (400 otherwise). Returns `{id, status, studentName, classWanted, emailSent}` — the application number, **never credentials** |
+| POST `/admissions/upload` **public** | — | multipart `file` + `kind` (`photo` \| `birthCert` \| `testimonial`), rate-limited 20/min. `kind=photo` must be an image of exactly 300×300 px and at most 1 MB (400 with the reason otherwise); the other kinds only need an allowed type and the global size cap. Returns `{key, url, size, contentType, storage}` |
 | GET `/admissions?status=SUBMITTED` | ADMIN | review queue |
-| POST `/admissions/:id/review` | ADMIN | `{decision: APPROVED|REJECTED, note?}`; on APPROVE runs transaction: create Student (admissionNo auto `GHS-2026-NNN`, rollNo next) + User (email from form, password = generated + returned once to admin for handout) + link; on REJECT just status. Re-review → 409 |
+| POST `/admissions/:id/review` | ADMIN | `{decision: APPROVED|REJECTED, note?}`; on APPROVE runs transaction: activate the pending account with a fresh `bcrypt(generatedPassword)` + create Student (admissionNo auto `GHS-2026-NNN`, rollNo next) + link, and returns `{admissionNo, rollNo, email, generatedPassword}` once to the admin for handout; on REJECT just status. Re-review → 409 |
 
 ### notices
 | Method | Path | Roles |
@@ -157,6 +158,29 @@ Online test delivery (test papers with `mode: ONLINE`; see specs/10 Feature B):
 | GET `/ai/materials` | TEACHER | the teacher's saved materials, newest first; `?classId=` `?subjectId=` filters |
 | GET `/ai/materials/:id` | TEACHER | one material with its content, plus `className` / `subjectName` / `sourceName` for the printed header |
 | DELETE `/ai/materials/:id` | TEACHER | delete one of the teacher's own materials |
+
+### workspaces (teacher Studio)
+A workspace is the teacher's container: pointers to library sources plus ONE
+conversation. Attaching never re-uploads or re-embeds. All routes are
+TEACHER-scoped and ownership-checked; an unknown id is a 404.
+
+| Method | Path | Notes |
+|---|---|---|
+| GET `/workspaces` | the teacher's workspaces, newest first: `sourceCount`, `chatCount`, `lastMessage`, `hasProcessing`; auto-creates "My workspace" with their existing sources attached on first call (deterministic id, race-safe) |
+| POST `/workspaces` | `{title?, classId?, subjectId?}` |
+| GET `/workspaces/:id` | the workspace + attached `sources[]` + ordered `messages[]` |
+| PATCH `/workspaces/:id` | `{title?, classId?, subjectId?}` (an empty string clears class/subject) |
+| DELETE `/workspaces/:id` | deletes the workspace and its conversation; the sources stay in the library |
+| POST `/workspaces/:id/sources` | `{sourceIds: string[]}` — attach by pointer; ids not in the teacher's library are refused |
+| DELETE `/workspaces/:id/sources/:sourceId` | detach the pointer, keep the source |
+| POST `/workspaces/:id/messages` | `{question}` (1–500 chars), 10/min → `{userMessage, message, citations}`; retrieval is scoped to the workspace's ready sources, the prompt/citation verification is the canonical sources ask, and both turns are persisted |
+| DELETE `/workspaces/:id/messages` | clear the conversation, keep the workspace |
+
+### site-settings (public site info + admission options)
+| Method | Path | Roles | Notes |
+|---|---|---|---|
+| GET `/site-settings` | public | the singleton row: school identity, contact, socials, `importantLinks`, and the admission options `admissionTypes` (`day,residential` CSV) + `shifts` (0–2 names, CSV) |
+| PUT `/site-settings` | ADMIN | partial update; `admissionTypes` must be a CSV subset of `day,residential`, `shifts` at most 2 comma-separated names, and an empty social URL clears it |
 
 ### health
 | GET `/health` **public** | — | `{ok: true}` (compose healthcheck / demo sanity) |

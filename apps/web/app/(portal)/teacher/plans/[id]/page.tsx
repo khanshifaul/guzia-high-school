@@ -163,7 +163,7 @@ export default function PlanDetailPage() {
         if (!plan) return;
         try {
             await api(`/ai/plans/${plan.id}`, { method: "DELETE" });
-            router.push("/teacher/plans");
+            router.push("/teacher/studio?view=plans");
         } catch (err) {
             setFeedback({ kind: "err", msg: err instanceof RequestError ? err.messages.join("; ") : "Could not delete the plan" });
         }
@@ -185,7 +185,7 @@ export default function PlanDetailPage() {
                 <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-semibold">
                     {error ?? "Plan not found"}
                 </div>
-                <Link href="/teacher/plans">
+                <Link href="/teacher/studio?view=plans">
                     <Button variant="outline" className="font-black text-xs uppercase tracking-wider cursor-pointer">
                         <FaArrowLeft size={12} /> Back to plans
                     </Button>
@@ -205,7 +205,7 @@ export default function PlanDetailPage() {
                 icon={FaBookOpen}
                 actions={
                     <div className="flex items-center gap-2">
-                        <Link href="/teacher/plans">
+                        <Link href="/teacher/studio?view=plans">
                             <Button variant="outline" className="font-black text-xs uppercase tracking-wider cursor-pointer">
                                 <FaArrowLeft size={12} /> Back
                             </Button>

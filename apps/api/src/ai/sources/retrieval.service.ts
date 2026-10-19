@@ -22,6 +22,21 @@ export interface ChunkRow {
 }
 
 const DEFAULT_TOP_K = 6;
+/** Each arm fetches a wider pool; fusion then trims to topK. */
+const VECTOR_POOL = 20;
+const KEYWORD_POOL = 20;
+/** Reciprocal-rank-fusion constant (Cormack et al. use 60). */
+const RRF_K = 60;
+/**
+ * Function words that occur in almost every chunk. Left in the OR query they
+ * drown the rare term ("what does naksha mean" ranked the definition 6th).
+ */
+const STOPWORDS = new Set([
+    'a', 'about', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'did', 'do', 'does',
+    'for', 'from', 'how', 'in', 'is', 'it', 'of', 'on', 'or', 'the', 'this',
+    'that', 'to', 'was', 'were', 'what', 'when', 'where', 'which', 'who', 'why',
+    'with', 'কি', 'কী', 'কেন', 'কিভাবে', 'কোন', 'এবং', 'এর', 'এই', 'ও', 'একটি',
+]);
 /** Safety cap for a single backfill sweep. */
 const BACKFILL_LIMIT = 5000;
 
@@ -34,17 +49,53 @@ export class RetrievalService {
         private readonly embeddings: EmbeddingsService,
     ) {}
 
-    /** Cosine-similarity search over all chunks of the teacher's sources. */
+    /**
+     * Hybrid search over the teacher's chunks: cosine similarity on the
+     * vectors, plus Postgres full-text ranking on the same rows, merged with
+     * reciprocal rank fusion. Vectors alone miss exact tokens (a name, "Lesson
+     * 3", a formula); full text alone misses paraphrases. Both arms share the
+     * same filters.
+     */
     async retrieve(
         teacherId: string,
         question: string,
-        opts: { classId?: string; subjectId?: string; topK?: number } = {},
+        opts: {
+            classId?: string;
+            subjectId?: string;
+            sourceId?: string;
+            workspaceId?: string;
+            topK?: number;
+        } = {},
     ): Promise<RetrievedChunk[]> {
         const topK = opts.topK ?? DEFAULT_TOP_K;
+        const pool = Math.max(topK * 4, VECTOR_POOL);
+        const [vectorHits, keywordHits] = await Promise.all([
+            this.vectorSearch(teacherId, question, opts, pool),
+            this.keywordSearch(teacherId, question, opts, Math.max(pool, KEYWORD_POOL)).catch(
+                (err: unknown) => {
+                    this.logger.warn(
+                        `Keyword search failed, using vectors only: ${(err as Error).message}`,
+                    );
+                    return [] as RetrievedChunk[];
+                },
+            ),
+        ]);
+        return fuseHits(vectorHits, keywordHits, topK);
+    }
+
+    /** Vector arm: nearest neighbours by cosine distance. */
+    private async vectorSearch(
+        teacherId: string,
+        question: string,
+        opts: { classId?: string; subjectId?: string; sourceId?: string; workspaceId?: string },
+        limit: number,
+    ): Promise<RetrievedChunk[]> {
         const embedding = await this.embeddings.embedOne(question);
         const vector = `[${embedding.join(',')}]`;
         const classId = opts.classId ?? null;
         const subjectId = opts.subjectId ?? null;
+        const sourceId = opts.sourceId ?? null;
+        const workspaceId = opts.workspaceId ?? null;
 
         return this.prisma.$queryRaw<RetrievedChunk[]>`
             SELECT c.id AS "chunkId", d.id AS "sourceId", d.filename, c.page, c.content,
@@ -55,8 +106,55 @@ export class RetrievalService {
               AND c.embedding IS NOT NULL
               AND (${classId}::text IS NULL OR d."classId" = ${classId})
               AND (${subjectId}::text IS NULL OR d."subjectId" = ${subjectId})
+              AND (${sourceId}::text IS NULL OR d.id = ${sourceId})
+              AND (${workspaceId}::text IS NULL OR EXISTS (
+                  SELECT 1 FROM "WorkspaceSource" ws
+                  WHERE ws."sourceId" = d.id AND ws."workspaceId" = ${workspaceId}
+              ))
             ORDER BY c.embedding <=> ${vector}::vector
-            LIMIT CAST(${topK} AS integer)
+            LIMIT CAST(${limit} AS integer)
+        `;
+    }
+
+    /**
+     * Keyword arm: OR the question's words (the `simple` config keeps names,
+     * numbers and Bangla intact) and rank by term coverage and density.
+     */
+    private async keywordSearch(
+        teacherId: string,
+        question: string,
+        opts: { classId?: string; subjectId?: string; sourceId?: string; workspaceId?: string },
+        limit: number,
+    ): Promise<RetrievedChunk[]> {
+        const terms = question
+            .toLowerCase()
+            .split(/[^\p{L}\p{N}]+/u)
+            .filter((term) => term.length > 1 && !STOPWORDS.has(term))
+            .slice(0, 12);
+        if (terms.length === 0) return [];
+
+        const query = terms.join(' | ');
+        const classId = opts.classId ?? null;
+        const subjectId = opts.subjectId ?? null;
+        const sourceId = opts.sourceId ?? null;
+        const workspaceId = opts.workspaceId ?? null;
+
+        return this.prisma.$queryRaw<RetrievedChunk[]>`
+            SELECT c.id AS "chunkId", d.id AS "sourceId", d.filename, c.page, c.content,
+                   ts_rank_cd(to_tsvector('simple', c.content), to_tsquery('simple', ${query})) AS score
+            FROM "SourceChunk" c
+            JOIN "SourceDocument" d ON d.id = c."documentId"
+            WHERE d."teacherId" = ${teacherId}
+              AND to_tsvector('simple', c.content) @@ to_tsquery('simple', ${query})
+              AND (${classId}::text IS NULL OR d."classId" = ${classId})
+              AND (${subjectId}::text IS NULL OR d."subjectId" = ${subjectId})
+              AND (${sourceId}::text IS NULL OR d.id = ${sourceId})
+              AND (${workspaceId}::text IS NULL OR EXISTS (
+                  SELECT 1 FROM "WorkspaceSource" ws
+                  WHERE ws."sourceId" = d.id AND ws."workspaceId" = ${workspaceId}
+              ))
+            ORDER BY score DESC
+            LIMIT CAST(${limit} AS integer)
         `;
     }
 
@@ -123,4 +221,28 @@ export class RetrievalService {
 
         return embedded;
     }
+}
+
+/**
+ * Reciprocal rank fusion: a chunk's score is the sum of 1/(K + rank) over the
+ * lists it appears in, so agreement between the arms wins. The returned
+ * `score` is that fused rank; consumers only use it for ordering.
+ */
+function fuseHits(
+    vectorHits: RetrievedChunk[],
+    keywordHits: RetrievedChunk[],
+    topK: number,
+): RetrievedChunk[] {
+    const fused = new Map<string, RetrievedChunk>();
+    const add = (hits: RetrievedChunk[]) => {
+        hits.forEach((hit, index) => {
+            const contribution = 1 / (RRF_K + index + 1);
+            const existing = fused.get(hit.chunkId);
+            if (existing) existing.score += contribution;
+            else fused.set(hit.chunkId, { ...hit, score: contribution });
+        });
+    };
+    add(vectorHits);
+    add(keywordHits);
+    return [...fused.values()].sort((a, b) => b.score - a.score).slice(0, topK);
 }

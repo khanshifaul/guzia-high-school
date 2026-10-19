@@ -63,6 +63,9 @@ function Field({ label, children, required, hint }: { label: string; children: R
 export default function NewTestPaperPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    // Returning from a generated artifact lands back on its workspace.
+    const workspaceId = searchParams.get("workspaceId");
+    const backHref = workspaceId ? `/teacher/studio/${workspaceId}?view=tests` : "/teacher/studio?view=tests";
     const { teacherId } = useMyTeacher();
 
     const [classes, setClasses] = React.useState<ClassOption[]>([]);
@@ -129,7 +132,7 @@ export default function NewTestPaperPage() {
                     endAt: mode === "ONLINE" ? new Date(endAt).toISOString() : undefined,
                 },
             });
-            router.push("/teacher/tests");
+            router.push(backHref);
         } catch (err) {
             setError(err instanceof RequestError ? err.messages.join("; ") : "Could not generate the paper");
             setBusy(false);
@@ -140,7 +143,7 @@ export default function NewTestPaperPage() {
         <div className="space-y-6">
             <PageHeader title="Generate Test Paper" subtitle="Set the blueprint, then let the AI draft the questions" icon={FaClipboardList}
                 actions={
-                    <Link href="/teacher/tests">
+                    <Link href={backHref}>
                         <Button variant="outline" className="font-black text-xs uppercase tracking-wider cursor-pointer">
                             <FaArrowLeft size={12} /> Back to papers
                         </Button>
@@ -265,7 +268,7 @@ export default function NewTestPaperPage() {
                     <Button type="submit" disabled={busy || !valid} className="font-black text-xs uppercase tracking-wider">
                         {busy ? <><FaSpinner className="animate-spin" size={12} /> Generating…</> : <><FaClipboardList size={12} /> Generate Paper</>}
                     </Button>
-                    <Link href="/teacher/tests">
+                    <Link href={backHref}>
                         <Button type="button" variant="outline" className="font-black text-xs uppercase tracking-wider cursor-pointer">Cancel</Button>
                     </Link>
                 </div>

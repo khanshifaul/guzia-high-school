@@ -4,12 +4,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
 
-export interface AdmissionCredentialsEmail {
+export interface AdmissionReceivedEmail {
   to: string;
   studentName: string;
   applicationId: string;
-  username: string;
-  password: string;
   classWanted: string;
 }
 
@@ -24,7 +22,7 @@ export class EmailService {
     this.from = config.get<string>('RESEND_FROM') ?? 'Guzia Bilateral High School <onboarding@resend.dev>';
     this.resend = apiKey ? new Resend(apiKey) : null;
     if (!this.resend) {
-      this.logger.warn('RESEND_API_KEY not set — admission emails will be skipped (credentials shown on-screen only).');
+      this.logger.warn('RESEND_API_KEY not set — admission emails will be skipped (the receipt is shown on-screen only).');
     }
   }
 
@@ -32,17 +30,17 @@ export class EmailService {
     return this.resend !== null;
   }
 
-  /** Send admission portal credentials. Returns true when actually sent. */
-  async sendAdmissionCredentials(input: AdmissionCredentialsEmail): Promise<boolean> {
+  /** Send the application acknowledgement. Returns true when actually sent. */
+  async sendAdmissionReceived(input: AdmissionReceivedEmail): Promise<boolean> {
     if (!this.resend) return false;
     try {
       await this.resend.emails.send({
         from: this.from,
         to: input.to,
-        subject: 'Your Guzia Bilateral High School admission application — portal credentials',
-        html: this.admissionCredentialsHtml(input),
+        subject: 'Your Guzia Bilateral High School admission application — received',
+        html: this.admissionReceivedHtml(input),
       });
-      this.logger.log(`Admission credentials emailed to ${input.to}`);
+      this.logger.log(`Admission acknowledgement emailed to ${input.to}`);
       return true;
     } catch (err) {
       // Never fail the application over an email hiccup.
@@ -51,7 +49,7 @@ export class EmailService {
     }
   }
 
-  private admissionCredentialsHtml(i: AdmissionCredentialsEmail): string {
+  private admissionReceivedHtml(i: AdmissionReceivedEmail): string {
     return `
       <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:auto;border:1px solid #eee;border-radius:12px;overflow:hidden">
         <div style="background:#FE5B09;color:#fff;padding:20px 24px">
@@ -61,13 +59,11 @@ export class EmailService {
         <div style="padding:24px;color:#333;font-size:14px;line-height:1.6">
           <p>Dear <strong>${this.esc(i.studentName)}</strong>,</p>
           <p>Thank you for applying to Guzia Bilateral High School for <strong>${this.esc(i.classWanted)}</strong>.
-          Your application (<strong>#${this.esc(i.applicationId)}</strong>) has been received and is under review.</p>
-          <p>Below are your portal credentials. Use them to log in at the school portal and track your application status.</p>
-          <table style="width:100%;border-collapse:collapse;margin:16px 0">
-            <tr><td style="padding:8px;border:1px solid #eee;background:#fafafa;width:120px"><strong>Username</strong></td><td style="padding:8px;border:1px solid #eee">${this.esc(i.username)}</td></tr>
-            <tr><td style="padding:8px;border:1px solid #eee;background:#fafafa"><strong>Password</strong></td><td style="padding:8px;border:1px solid #eee;font-family:monospace"><strong>${this.esc(i.password)}</strong></td></tr>
-          </table>
-          <p style="font-size:12px;color:#888">Please change your password after first login. Do not share these credentials.</p>
+          Your application has been received and is under review.</p>
+          <p style="margin-bottom:4px">Your application number is</p>
+          <p style="margin:0 0 16px;font-size:20px;font-family:monospace;font-weight:bold">${this.esc(i.applicationId)}</p>
+          <p>Keep this number. The admission result will be published in the school notices; there is no portal
+          login to use at this stage.</p>
           <p style="font-size:12px;color:#888">— Guzia Bilateral High School</p>
         </div>
       </div>`;

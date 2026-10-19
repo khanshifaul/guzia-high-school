@@ -41,6 +41,8 @@ interface SiteSettings {
     facebookUrl: string; twitterUrl: string;
     instagramUrl: string; youtubeUrl: string; linkedinUrl: string; websiteUrl: string;
     mapEmbedUrl: string;
+    admissionTypes: string;
+    shifts: string;
     importantLinks: ImportantLink[];
 }
 
@@ -63,6 +65,8 @@ const FIELDS: { key: keyof Omit<SiteSettings, "importantLinks">; label: string; 
     { key: "linkedinUrl", label: "LinkedIn URL" },
     { key: "websiteUrl", label: "Website URL" },
     { key: "mapEmbedUrl", label: "Google Maps embed URL" },
+    { key: "admissionTypes", label: "Admission types offered (day,residential)" },
+    { key: "shifts", label: "Shifts (comma separated, max 2 · blank = none)" },
 ];
 
 export function SiteSettingsPanel() {
@@ -90,7 +94,17 @@ export function SiteSettingsPanel() {
         if (!settings) return;
         setBusy(true); setFeedback(null);
         try {
-            await api("/site-settings", { method: "PUT", body: settings });
+            // Send only editable settings: the GET response also carries `id`
+            // and `updatedAt`, which the API refuses as unknown fields.
+            const body = {
+                ...FIELDS.reduce<Record<string, string>>((acc, f) => {
+                    acc[f.key] = String(settings[f.key] ?? "");
+                    return acc;
+                }, {}),
+                board: settings.board,
+                importantLinks: settings.importantLinks,
+            };
+            await api("/site-settings", { method: "PUT", body });
             setFeedback({ kind: "ok", msg: "Site settings saved — header & footer update immediately." });
         } catch (err) {
             setFeedback({ kind: "err", msg: err instanceof RequestError ? err.messages.join("; ") : "Save failed" });

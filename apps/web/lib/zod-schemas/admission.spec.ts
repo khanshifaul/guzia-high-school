@@ -187,10 +187,9 @@ describe("admissionSchema (the full payload)", () => {
         presentDistrict: "Gopalganj",
         permanentSameAsPresent: true,
         classWanted: "Class 8",
-        section: "A",
-        group: "science",
         admissionType: "day",
         previousSchool: "Guzia Primary School",
+        previousClass: "Class 7",
         quota: "general",
         declarationAccepted: true,
     };
@@ -209,6 +208,31 @@ describe("admissionSchema (the full payload)", () => {
     it("fails when the declaration is unchecked", () => {
         const result = admissionSchema.safeParse({ ...full, declarationAccepted: false });
         expect(result.success).toBe(false);
+    });
+
+    it("refuses a group below Class 9", () => {
+        const result = admissionSchema.safeParse({ ...full, classWanted: "Class 8", group: "science" });
+        expect(result.success).toBe(false);
+    });
+
+    it("accepts a group in Class 9", () => {
+        const result = admissionSchema.safeParse({
+            ...full,
+            classWanted: "Class 9",
+            group: "science",
+            previousClass: "Class 8",
+        });
+        expect(result.success).toBe(true);
+    });
+
+    it("refuses a previous class at or above the class applied for", () => {
+        const result = admissionSchema.safeParse({ ...full, classWanted: "Class 8", previousClass: "Class 8" });
+        expect(result.success).toBe(false);
+    });
+
+    it("accepts Class 5 as the previous class for Class 6", () => {
+        const result = admissionSchema.safeParse({ ...full, classWanted: "Class 6", previousClass: "Class 5" });
+        expect(result.success).toBe(true);
     });
 
     it("fails when a permanent address is asked for but left empty", () => {

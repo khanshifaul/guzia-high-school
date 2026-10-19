@@ -254,6 +254,7 @@ export type SourceDocumentWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"SourceDocument"> | Date | string
   teacher?: Prisma.XOR<Prisma.TeacherScalarRelationFilter, Prisma.TeacherWhereInput>
   chunks?: Prisma.SourceChunkListRelationFilter
+  workspaceSources?: Prisma.WorkspaceSourceListRelationFilter
 }
 
 export type SourceDocumentOrderByWithRelationInput = {
@@ -269,6 +270,7 @@ export type SourceDocumentOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   teacher?: Prisma.TeacherOrderByWithRelationInput
   chunks?: Prisma.SourceChunkOrderByRelationAggregateInput
+  workspaceSources?: Prisma.WorkspaceSourceOrderByRelationAggregateInput
 }
 
 export type SourceDocumentWhereUniqueInput = Prisma.AtLeast<{
@@ -287,6 +289,7 @@ export type SourceDocumentWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"SourceDocument"> | Date | string
   teacher?: Prisma.XOR<Prisma.TeacherScalarRelationFilter, Prisma.TeacherWhereInput>
   chunks?: Prisma.SourceChunkListRelationFilter
+  workspaceSources?: Prisma.WorkspaceSourceListRelationFilter
 }, "id">
 
 export type SourceDocumentOrderByWithAggregationInput = {
@@ -335,6 +338,7 @@ export type SourceDocumentCreateInput = {
   createdAt?: Date | string
   teacher: Prisma.TeacherCreateNestedOneWithoutSourcesInput
   chunks?: Prisma.SourceChunkCreateNestedManyWithoutDocumentInput
+  workspaceSources?: Prisma.WorkspaceSourceCreateNestedManyWithoutSourceInput
 }
 
 export type SourceDocumentUncheckedCreateInput = {
@@ -349,6 +353,7 @@ export type SourceDocumentUncheckedCreateInput = {
   summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   chunks?: Prisma.SourceChunkUncheckedCreateNestedManyWithoutDocumentInput
+  workspaceSources?: Prisma.WorkspaceSourceUncheckedCreateNestedManyWithoutSourceInput
 }
 
 export type SourceDocumentUpdateInput = {
@@ -363,6 +368,7 @@ export type SourceDocumentUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   teacher?: Prisma.TeacherUpdateOneRequiredWithoutSourcesNestedInput
   chunks?: Prisma.SourceChunkUpdateManyWithoutDocumentNestedInput
+  workspaceSources?: Prisma.WorkspaceSourceUpdateManyWithoutSourceNestedInput
 }
 
 export type SourceDocumentUncheckedUpdateInput = {
@@ -377,6 +383,7 @@ export type SourceDocumentUncheckedUpdateInput = {
   summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chunks?: Prisma.SourceChunkUncheckedUpdateManyWithoutDocumentNestedInput
+  workspaceSources?: Prisma.WorkspaceSourceUncheckedUpdateManyWithoutSourceNestedInput
 }
 
 export type SourceDocumentCreateManyInput = {
@@ -541,6 +548,20 @@ export type SourceDocumentUpdateOneRequiredWithoutChunksNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.SourceDocumentUpdateToOneWithWhereWithoutChunksInput, Prisma.SourceDocumentUpdateWithoutChunksInput>, Prisma.SourceDocumentUncheckedUpdateWithoutChunksInput>
 }
 
+export type SourceDocumentCreateNestedOneWithoutWorkspaceSourcesInput = {
+  create?: Prisma.XOR<Prisma.SourceDocumentCreateWithoutWorkspaceSourcesInput, Prisma.SourceDocumentUncheckedCreateWithoutWorkspaceSourcesInput>
+  connectOrCreate?: Prisma.SourceDocumentCreateOrConnectWithoutWorkspaceSourcesInput
+  connect?: Prisma.SourceDocumentWhereUniqueInput
+}
+
+export type SourceDocumentUpdateOneRequiredWithoutWorkspaceSourcesNestedInput = {
+  create?: Prisma.XOR<Prisma.SourceDocumentCreateWithoutWorkspaceSourcesInput, Prisma.SourceDocumentUncheckedCreateWithoutWorkspaceSourcesInput>
+  connectOrCreate?: Prisma.SourceDocumentCreateOrConnectWithoutWorkspaceSourcesInput
+  upsert?: Prisma.SourceDocumentUpsertWithoutWorkspaceSourcesInput
+  connect?: Prisma.SourceDocumentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.SourceDocumentUpdateToOneWithWhereWithoutWorkspaceSourcesInput, Prisma.SourceDocumentUpdateWithoutWorkspaceSourcesInput>, Prisma.SourceDocumentUncheckedUpdateWithoutWorkspaceSourcesInput>
+}
+
 export type SourceDocumentCreateWithoutTeacherInput = {
   id?: string
   classId?: string | null
@@ -552,6 +573,7 @@ export type SourceDocumentCreateWithoutTeacherInput = {
   summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   chunks?: Prisma.SourceChunkCreateNestedManyWithoutDocumentInput
+  workspaceSources?: Prisma.WorkspaceSourceCreateNestedManyWithoutSourceInput
 }
 
 export type SourceDocumentUncheckedCreateWithoutTeacherInput = {
@@ -565,6 +587,7 @@ export type SourceDocumentUncheckedCreateWithoutTeacherInput = {
   summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   chunks?: Prisma.SourceChunkUncheckedCreateNestedManyWithoutDocumentInput
+  workspaceSources?: Prisma.WorkspaceSourceUncheckedCreateNestedManyWithoutSourceInput
 }
 
 export type SourceDocumentCreateOrConnectWithoutTeacherInput = {
@@ -620,6 +643,7 @@ export type SourceDocumentCreateWithoutChunksInput = {
   summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
   teacher: Prisma.TeacherCreateNestedOneWithoutSourcesInput
+  workspaceSources?: Prisma.WorkspaceSourceCreateNestedManyWithoutSourceInput
 }
 
 export type SourceDocumentUncheckedCreateWithoutChunksInput = {
@@ -633,6 +657,7 @@ export type SourceDocumentUncheckedCreateWithoutChunksInput = {
   status?: $Enums.SourceStatus
   summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
+  workspaceSources?: Prisma.WorkspaceSourceUncheckedCreateNestedManyWithoutSourceInput
 }
 
 export type SourceDocumentCreateOrConnectWithoutChunksInput = {
@@ -662,6 +687,7 @@ export type SourceDocumentUpdateWithoutChunksInput = {
   summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   teacher?: Prisma.TeacherUpdateOneRequiredWithoutSourcesNestedInput
+  workspaceSources?: Prisma.WorkspaceSourceUpdateManyWithoutSourceNestedInput
 }
 
 export type SourceDocumentUncheckedUpdateWithoutChunksInput = {
@@ -675,6 +701,79 @@ export type SourceDocumentUncheckedUpdateWithoutChunksInput = {
   status?: Prisma.EnumSourceStatusFieldUpdateOperationsInput | $Enums.SourceStatus
   summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  workspaceSources?: Prisma.WorkspaceSourceUncheckedUpdateManyWithoutSourceNestedInput
+}
+
+export type SourceDocumentCreateWithoutWorkspaceSourcesInput = {
+  id?: string
+  classId?: string | null
+  subjectId?: string | null
+  filename: string
+  kind: $Enums.SourceKind
+  pages?: number | null
+  status?: $Enums.SourceStatus
+  summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  teacher: Prisma.TeacherCreateNestedOneWithoutSourcesInput
+  chunks?: Prisma.SourceChunkCreateNestedManyWithoutDocumentInput
+}
+
+export type SourceDocumentUncheckedCreateWithoutWorkspaceSourcesInput = {
+  id?: string
+  teacherId: string
+  classId?: string | null
+  subjectId?: string | null
+  filename: string
+  kind: $Enums.SourceKind
+  pages?: number | null
+  status?: $Enums.SourceStatus
+  summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  chunks?: Prisma.SourceChunkUncheckedCreateNestedManyWithoutDocumentInput
+}
+
+export type SourceDocumentCreateOrConnectWithoutWorkspaceSourcesInput = {
+  where: Prisma.SourceDocumentWhereUniqueInput
+  create: Prisma.XOR<Prisma.SourceDocumentCreateWithoutWorkspaceSourcesInput, Prisma.SourceDocumentUncheckedCreateWithoutWorkspaceSourcesInput>
+}
+
+export type SourceDocumentUpsertWithoutWorkspaceSourcesInput = {
+  update: Prisma.XOR<Prisma.SourceDocumentUpdateWithoutWorkspaceSourcesInput, Prisma.SourceDocumentUncheckedUpdateWithoutWorkspaceSourcesInput>
+  create: Prisma.XOR<Prisma.SourceDocumentCreateWithoutWorkspaceSourcesInput, Prisma.SourceDocumentUncheckedCreateWithoutWorkspaceSourcesInput>
+  where?: Prisma.SourceDocumentWhereInput
+}
+
+export type SourceDocumentUpdateToOneWithWhereWithoutWorkspaceSourcesInput = {
+  where?: Prisma.SourceDocumentWhereInput
+  data: Prisma.XOR<Prisma.SourceDocumentUpdateWithoutWorkspaceSourcesInput, Prisma.SourceDocumentUncheckedUpdateWithoutWorkspaceSourcesInput>
+}
+
+export type SourceDocumentUpdateWithoutWorkspaceSourcesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  classId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subjectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  filename?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumSourceKindFieldUpdateOperationsInput | $Enums.SourceKind
+  pages?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.EnumSourceStatusFieldUpdateOperationsInput | $Enums.SourceStatus
+  summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  teacher?: Prisma.TeacherUpdateOneRequiredWithoutSourcesNestedInput
+  chunks?: Prisma.SourceChunkUpdateManyWithoutDocumentNestedInput
+}
+
+export type SourceDocumentUncheckedUpdateWithoutWorkspaceSourcesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  teacherId?: Prisma.StringFieldUpdateOperationsInput | string
+  classId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subjectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  filename?: Prisma.StringFieldUpdateOperationsInput | string
+  kind?: Prisma.EnumSourceKindFieldUpdateOperationsInput | $Enums.SourceKind
+  pages?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  status?: Prisma.EnumSourceStatusFieldUpdateOperationsInput | $Enums.SourceStatus
+  summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  chunks?: Prisma.SourceChunkUncheckedUpdateManyWithoutDocumentNestedInput
 }
 
 export type SourceDocumentCreateManyTeacherInput = {
@@ -700,6 +799,7 @@ export type SourceDocumentUpdateWithoutTeacherInput = {
   summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chunks?: Prisma.SourceChunkUpdateManyWithoutDocumentNestedInput
+  workspaceSources?: Prisma.WorkspaceSourceUpdateManyWithoutSourceNestedInput
 }
 
 export type SourceDocumentUncheckedUpdateWithoutTeacherInput = {
@@ -713,6 +813,7 @@ export type SourceDocumentUncheckedUpdateWithoutTeacherInput = {
   summary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chunks?: Prisma.SourceChunkUncheckedUpdateManyWithoutDocumentNestedInput
+  workspaceSources?: Prisma.WorkspaceSourceUncheckedUpdateManyWithoutSourceNestedInput
 }
 
 export type SourceDocumentUncheckedUpdateManyWithoutTeacherInput = {
@@ -734,10 +835,12 @@ export type SourceDocumentUncheckedUpdateManyWithoutTeacherInput = {
 
 export type SourceDocumentCountOutputType = {
   chunks: number
+  workspaceSources: number
 }
 
 export type SourceDocumentCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   chunks?: boolean | SourceDocumentCountOutputTypeCountChunksArgs
+  workspaceSources?: boolean | SourceDocumentCountOutputTypeCountWorkspaceSourcesArgs
 }
 
 /**
@@ -757,6 +860,13 @@ export type SourceDocumentCountOutputTypeCountChunksArgs<ExtArgs extends runtime
   where?: Prisma.SourceChunkWhereInput
 }
 
+/**
+ * SourceDocumentCountOutputType without action
+ */
+export type SourceDocumentCountOutputTypeCountWorkspaceSourcesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.WorkspaceSourceWhereInput
+}
+
 
 export type SourceDocumentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -771,6 +881,7 @@ export type SourceDocumentSelect<ExtArgs extends runtime.Types.Extensions.Intern
   createdAt?: boolean
   teacher?: boolean | Prisma.TeacherDefaultArgs<ExtArgs>
   chunks?: boolean | Prisma.SourceDocument$chunksArgs<ExtArgs>
+  workspaceSources?: boolean | Prisma.SourceDocument$workspaceSourcesArgs<ExtArgs>
   _count?: boolean | Prisma.SourceDocumentCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["sourceDocument"]>
 
@@ -819,6 +930,7 @@ export type SourceDocumentOmit<ExtArgs extends runtime.Types.Extensions.Internal
 export type SourceDocumentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   teacher?: boolean | Prisma.TeacherDefaultArgs<ExtArgs>
   chunks?: boolean | Prisma.SourceDocument$chunksArgs<ExtArgs>
+  workspaceSources?: boolean | Prisma.SourceDocument$workspaceSourcesArgs<ExtArgs>
   _count?: boolean | Prisma.SourceDocumentCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type SourceDocumentIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -833,6 +945,7 @@ export type $SourceDocumentPayload<ExtArgs extends runtime.Types.Extensions.Inte
   objects: {
     teacher: Prisma.$TeacherPayload<ExtArgs>
     chunks: Prisma.$SourceChunkPayload<ExtArgs>[]
+    workspaceSources: Prisma.$WorkspaceSourcePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1241,6 +1354,7 @@ export interface Prisma__SourceDocumentClient<T, Null = never, ExtArgs extends r
   readonly [Symbol.toStringTag]: "PrismaPromise"
   teacher<T extends Prisma.TeacherDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TeacherDefaultArgs<ExtArgs>>): Prisma.Prisma__TeacherClient<runtime.Types.Result.GetResult<Prisma.$TeacherPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   chunks<T extends Prisma.SourceDocument$chunksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SourceDocument$chunksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SourceChunkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  workspaceSources<T extends Prisma.SourceDocument$workspaceSourcesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.SourceDocument$workspaceSourcesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkspaceSourcePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1702,6 +1816,30 @@ export type SourceDocument$chunksArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.SourceChunkScalarFieldEnum | Prisma.SourceChunkScalarFieldEnum[]
+}
+
+/**
+ * SourceDocument.workspaceSources
+ */
+export type SourceDocument$workspaceSourcesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the WorkspaceSource
+   */
+  select?: Prisma.WorkspaceSourceSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the WorkspaceSource
+   */
+  omit?: Prisma.WorkspaceSourceOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.WorkspaceSourceInclude<ExtArgs> | null
+  where?: Prisma.WorkspaceSourceWhereInput
+  orderBy?: Prisma.WorkspaceSourceOrderByWithRelationInput | Prisma.WorkspaceSourceOrderByWithRelationInput[]
+  cursor?: Prisma.WorkspaceSourceWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.WorkspaceSourceScalarFieldEnum | Prisma.WorkspaceSourceScalarFieldEnum[]
 }
 
 /**
