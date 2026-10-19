@@ -67,7 +67,7 @@ export function PortalSidebar({ children }: { children: React.ReactNode }) {
     if (loading || !user) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-muted/10">
-                <FaGraduationCap className="animate-spin text-4xl text-primary mb-4" />
+                <FaGraduationCap className="animate-pulse text-4xl text-primary mb-4" />
                 <p className="text-sm font-semibold text-muted-foreground animate-pulse">Loading session…</p>
             </div>
         );
