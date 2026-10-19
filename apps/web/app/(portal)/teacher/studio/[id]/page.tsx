@@ -76,6 +76,7 @@ function WorkspaceView() {
     const [feedback, setFeedback] = React.useState<string | null>(null);
     const [dragging, setDragging] = React.useState(false);
     const [uploading, setUploading] = React.useState(false);
+    const [ocrBusyId, setOcrBusyId] = React.useState<string | null>(null);
 
     const [view, setView] = React.useState<StudioView>("tests");
     const listRef = React.useRef<HTMLDivElement>(null);
@@ -211,6 +212,20 @@ function WorkspaceView() {
             setError(err instanceof RequestError ? err.messages.join("; ") : "Could not clear the conversation");
         } finally {
             setClearing(false);
+        }
+    }
+
+    async function runOcr(source: StudioSource) {
+        setOcrBusyId(source.id);
+        setError(null);
+        try {
+            await api(`/ai/sources/${source.id}/ocr`, { method: "POST" });
+            setFeedback(`${source.filename} is being transcribed — this can take a minute.`);
+            load();
+        } catch (err) {
+            setError(err instanceof RequestError ? err.messages.join("; ") : "Could not start OCR");
+        } finally {
+            setOcrBusyId(null);
         }
     }
 
@@ -388,6 +403,8 @@ function WorkspaceView() {
                                     source={source}
                                     onOpen={() => setDetailSourceId(source.id)}
                                     onDetach={() => void detach(source)}
+                                    onOcr={source.status === "NEEDS_OCR" ? () => void runOcr(source) : undefined}
+                                    ocrBusy={ocrBusyId === source.id}
                                 />
                             ))
                         )}
@@ -528,7 +545,7 @@ function WorkspaceView() {
                 onAttached={load}
             />
 
-            <SourceDetailDialog sourceId={detailSourceId} onClose={() => setDetailSourceId(null)} />
+            <SourceDetailDialog sourceId={detailSourceId} onClose={() => setDetailSourceId(null)} onChanged={load} />
 
             {/* A citation opens the cited page's text. */}
             <Dialog open={cited !== null} onOpenChange={(open) => (open ? null : setCited(null))}>

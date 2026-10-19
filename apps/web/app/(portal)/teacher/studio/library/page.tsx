@@ -294,7 +294,7 @@ export default function StudioLibraryPage() {
                 </div>
             ) : null}
 
-            <SourceDetailDialog sourceId={detailId} onClose={() => setDetailId(null)} />
+            <SourceDetailDialog sourceId={detailId} onClose={() => setDetailId(null)} onChanged={load} />
 
             {/* Attach selected sources to a workspace */}
             <Dialog open={attachOpen} onOpenChange={setAttachOpen}>

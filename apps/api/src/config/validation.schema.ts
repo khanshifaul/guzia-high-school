@@ -20,4 +20,16 @@ export const validationSchema = Joi.object({
     .default('https://api.deepseek.com/v1'),
   DEEPSEEK_MODEL: optionalStr().default('deepseek-chat'),
   GEMINI_API_KEY: optionalStr(),
+
+  // Embeddings: local (384-d) is the default; nvidia needs a 2048-d column.
+  EMBEDDINGS_PROVIDER: Joi.string().valid('local', 'nvidia').default('local'),
+  NVIDIA_API_KEY: optionalStr(),
+  NVIDIA_BASE_URL: Joi.string().uri().default('https://integrate.api.nvidia.com/v1'),
+  NVIDIA_EMBED_MODEL: optionalStr().default('nvidia/nemotron-3-embed-1b'),
+
+  // Scanned-PDF OCR (optional system binaries; see ai/sources/ocr.util.ts).
+  PDFTOPPM_BIN: optionalStr().default('pdftoppm'),
+  TESSERACT_BIN: optionalStr().default('tesseract'),
+  OCR_DPI: Joi.number().integer().min(72).max(400).default(200),
+  OCR_LANGS: optionalStr().default('eng'),
 }).unknown(true);

@@ -209,6 +209,14 @@ export class SourcesController {
     }
 
     @Roles('TEACHER')
+    @Post(':id/ocr')
+    @RateLimit('ai:generate', 60_000, 5)
+    @ApiOperation({ summary: 'Transcribe a scanned PDF with OCR, then embed + summarize it' })
+    ocr(@Param('id') id: string, @User() user: { id: string }) {
+        return this.service.ocr(id, user.id);
+    }
+
+    @Roles('TEACHER')
     @Delete(':id')
     @ApiOperation({ summary: 'Delete a source (chunks + stored file)' })
     remove(@Param('id') id: string, @User() user: { id: string }) {

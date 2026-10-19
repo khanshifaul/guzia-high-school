@@ -18,14 +18,29 @@ export function SourceRow({
     source,
     onOpen,
     onDetach,
+    onOcr,
+    ocrBusy,
 }: {
     source: StudioSource;
     onOpen: () => void;
     onDetach: () => void;
+    onOcr?: () => void;
+    ocrBusy?: boolean;
 }) {
     return (
         <div className="flex items-start gap-2 rounded-lg border border-border/60 p-2 transition-colors hover:border-primary/40">
-            <button type="button" onClick={onOpen} className="min-w-0 flex-1 text-left cursor-pointer">
+            <div
+                role="button"
+                tabIndex={0}
+                onClick={onOpen}
+                onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        onOpen();
+                    }
+                }}
+                className="min-w-0 flex-1 cursor-pointer text-left"
+            >
                 <p className="truncate text-xs font-semibold">{source.filename}</p>
                 <div className="mt-1 flex items-center gap-1.5">
                     <Badge className={cn(statusStyle(source.status), "text-[8px]")}>{source.status}</Badge>
@@ -34,12 +49,29 @@ export function SourceRow({
                 {source.status !== "READY" && source.status !== "FAILED" ? (
                     <p className="mt-1 text-[9px] text-amber-600">Not searchable until it finishes processing.</p>
                 ) : null}
+                {source.status === "NEEDS_OCR" ? (
+                    <div className="mt-1 space-y-1">
+                        <p className="text-[9px] leading-snug text-amber-600">
+                            {source.error ?? "This PDF is a scan (no text layer)."}
+                        </p>
+                        {onOcr ? (
+                            <button
+                                type="button"
+                                onClick={onOcr}
+                                disabled={ocrBusy}
+                                className="text-[9px] font-black uppercase tracking-wider text-primary hover:underline disabled:opacity-50"
+                            >
+                                {ocrBusy ? "Starting…" : "Transcribe (OCR)"}
+                            </button>
+                        ) : null}
+                    </div>
+                ) : null}
                 {source.status === "FAILED" ? (
                     <p className="mt-1 text-[9px] leading-snug text-rose-600">
                         {source.error ?? "Processing failed — remove and upload again."}
                     </p>
                 ) : null}
-            </button>
+            </div>
             <button
                 type="button"
                 aria-label={`Detach ${source.filename}`}

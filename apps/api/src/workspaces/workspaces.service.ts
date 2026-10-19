@@ -222,6 +222,9 @@ export class WorkspacesService {
     });
     const history = recent
       .reverse()
+      // Empty assistant turns from an earlier provider hiccup are noise; the
+      // model tends to mirror them.
+      .filter((message) => message.content.trim().length > 0)
       .map((message) => ({
         role: message.role === 'USER' ? ('user' as const) : ('assistant' as const),
         content: message.content,

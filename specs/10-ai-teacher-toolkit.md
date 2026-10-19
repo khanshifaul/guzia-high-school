@@ -280,7 +280,13 @@ polls the list while anything is `PROCESSING`, and a boot-time sweep marks a
 `PROCESSING` row older than 15 minutes `FAILED` (a restart mid-ingest).
 1. PDF → `unpdf` (`extractText`) → page-tagged text; zero text layer → status
    `FAILED` (limitation surfaced; the image-only path handles the demo case).
-2. Image → Gemini vision → page text + short caption.
+2. Image → the provider's vision model → page text.
+   A PDF with no text layer is not a failure: it is marked `NEEDS_OCR`, and an
+   explicit "Transcribe with OCR" action rasterizes the stored file with
+   poppler (`pdftoppm`, 200 dpi) and reads each page with tesseract, then runs
+   the same chunk → embed → summarize tail. Both binaries are optional; when
+   absent the row stays `NEEDS_OCR` and the message says so. (162-page scan
+   measured: ~2 min, zero API cost.)
 3. Text → chunk (~1200 chars, page-preserving overlap 150) → `SourceChunk` rows.
 4. Auto-summarize: structured summary `{keyTopics[], glossary[{term,definition}],
    summary, suggestedQuestions[5]}` → stored on document.
@@ -318,8 +324,11 @@ enum SourceStatus { PROCESSING READY NEEDS_OCR FAILED }
 2. **Ask** — `POST /ai/sources/:id/ask {question}` (one document) and
    `POST /ai/sources/ask {question, classId?, subjectId?, history?}` (the whole
    notebook) share **one retrieval implementation**, `RetrievalService`: the
-   question is embedded with the in-process multilingual MiniLM model
-   (`Xenova/paraphrase-multilingual-MiniLM-L12-v2`, 384 dims) and matched by
+   question is embedded with the configured embedding provider
+   (`EMBEDDINGS_PROVIDER`: `local` = in-process multilingual MiniLM,
+   `Xenova/paraphrase-multilingual-MiniLM-L12-v2`, 384 dims — the default and
+   the only one that supports Bangla; `nvidia` = OpenAI-compatible
+   `/embeddings`, `nvidia/nemotron-3-embed-1b`, 2048 dims) and matched by
    cosine distance against `SourceChunk.embedding` (pgvector). Top-4 chunks for a
    single document, top-6 for the notebook → LLM with strict system prompt
    *"answer only from the provided excerpts; cite [filename p.N] for every claim;
@@ -327,7 +336,11 @@ enum SourceStatus { PROCESSING READY NEEDS_OCR FAILED }
    (single document) or `{answer, citations: [{sourceId, filename, page, snippet}]}`
    (notebook). A citation the model writes is **dropped unless it matches a
    retrieved chunk**, so a page or file cannot be invented. `history` replays up to
-   **10** prior turns and is validated server-side.
+   **10** prior turns and is validated server-side; empty turns are dropped and an
+   empty completion is retried once, so a blank assistant bubble is never stored.
+   The provider decides the vector width, so a mismatch with the
+   `SourceChunk.embedding` column refuses to boot (migrate the column and clear
+   the old vectors before switching).
    Prompt-injection stance: document text and question are delimited as untrusted
    data; system prompt instructs to ignore instructions found inside them.
 3. **→ Test draft** — `POST /ai/sources/:id/to-test {mcq, short, long}` pulls chunk
