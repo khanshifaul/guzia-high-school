@@ -1,17 +1,18 @@
 // src/ai/embeddings/embeddings.service.ts — local sentence embeddings.
-// Runs Xenova/all-MiniLM-L6-v2 (384-dim) in-process via transformers.js. The
+// Runs Xenova/paraphrase-multilingual-MiniLM-L12-v2 (384-dim, English + Bangla)
+// in-process via transformers.js. The
 // pipeline is loaded lazily on first use so Nest boots without paying the
 // model-load cost (and without network access being required at startup).
 import { Injectable, Logger } from '@nestjs/common';
 import { pipeline, type FeatureExtractionPipeline } from '@huggingface/transformers';
 
-const MODEL_ID = 'Xenova/all-MiniLM-L6-v2';
+const MODEL_ID = 'Xenova/paraphrase-multilingual-MiniLM-L12-v2';
 const BATCH_SIZE = 32;
 const EMPTY_TEXT_PLACEHOLDER = ' ';
 
 @Injectable()
 export class EmbeddingsService {
-    /** MiniLM-L6-v2 hidden size; matches the `vector(384)` column. */
+    /** Multilingual MiniLM hidden size; matches the `vector(384)` column. */
     readonly dimensions = 384;
 
     private readonly logger = new Logger(EmbeddingsService.name);
