@@ -1,6 +1,7 @@
 // app/news/[id]/page.tsx — public detail page for a global notice.
 import type { Metadata } from "next";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { FaArrowLeft, FaCalendarDays, FaNewspaper } from "react-icons/fa6";
 import { Badge } from "@/components/ui/badge";
@@ -9,8 +10,6 @@ import { Navbar } from "@/components/public/navbar";
 import { Footer } from "@/components/public/footer";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 
-const API = process.env.API_BASE_URL ?? "http://localhost:4000";
-
 interface PublicNotice {
     id: string;
     title: string;
@@ -18,9 +17,21 @@ interface PublicNotice {
     createdAt: string;
 }
 
+/**
+ * Ask our own /api proxy (the Next rewrite points it at the API), resolved from
+ * the incoming request. This works in production and in local dev without
+ * depending on a server-side API_BASE_URL being present at runtime.
+ */
+async function noticeUrl(id: string): Promise<string> {
+    const requestHeaders = await headers();
+    const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost:3004";
+    const proto = requestHeaders.get("x-forwarded-proto") ?? "http";
+    return `${proto}://${host}/api/notices/public/${id}`;
+}
+
 async function getNotice(id: string): Promise<PublicNotice | null> {
     try {
-        const res = await fetch(`${API}/api/notices/public/${id}`, { cache: "no-store" });
+        const res = await fetch(await noticeUrl(id), { cache: "no-store" });
         if (!res.ok) return null;
         return (await res.json()) as PublicNotice;
     } catch {
