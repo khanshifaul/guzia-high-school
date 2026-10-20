@@ -21,10 +21,8 @@ describe('Admissions workflow (e2e)', () => {
     expect(submit.status).toBe(201);
     const applicationId = submit.body.id as string;
     expect(applicationId).toBeTruthy();
-    // Submit creates the pending portal account and returns the one-time
-    // credentials (the password is shown/emailed once, at submit time).
-    const password = submit.body.password as string;
-    expect(password).toBeTruthy();
+    // The pending account is BLOCKED, so no password is issued at submit time.
+    expect(submit.body.password).toBeUndefined();
 
     // 2. Admin login + review (approve) — activates the pending account.
     const admin = await request(API)
@@ -39,8 +37,11 @@ describe('Admissions workflow (e2e)', () => {
     expect(review.status).toBe(201);
     expect(review.body.status).toBe('APPROVED');
     expect(review.body.admissionNo).toMatch(/^GHS-\d{4}-\d{3}$/);
+    // Approval activates the account and returns the one-time credentials.
+    const password = review.body.generatedPassword as string;
+    expect(password).toBeTruthy();
 
-    // 3. The submit-time credentials work once the account is approved.
+    // 3. Those credentials work once the account is approved.
     const studentLogin = await request(API)
       .post('/api/auth/login')
       .send({ email, password });
