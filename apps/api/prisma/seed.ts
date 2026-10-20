@@ -30,13 +30,58 @@ const GRADE_BANDS = [
   { minPercent: 0, maxPercent: 32, letter: "F", point: 0.0 },
 ];
 
-const SUBJECTS = [
-  { name: "Bangla 1st Paper", code: "BAN1" },
-  { name: "English 1st Paper", code: "ENG1" },
-  { name: "Mathematics", code: "MATH" },
-  { name: "Science", code: "SCI" },
-  { name: "ICT", code: "ICT" },
-  { name: "Bangladesh & Global Studies", code: "BGS" },
+/**
+ * NCTB 2026 textbook lists (nctb.gov.bd, secondary level).
+ * Classes 6-8: items 1-16; classes 9-10: items 1-22 and 25-29.
+ * One Subject row per title — the same title is shared across classes.
+ */
+const SUBJECTS_6_8 = [
+  "চারুপাঠ",
+  "আনন্দপাঠ",
+  "বাংলা ব্যাকরণ ও নির্মিতি",
+  "English For Today",
+  "English Grammar and Composition",
+  "গণিত",
+  "তথ্য ও যোগাযোগ প্রযুক্তি",
+  "বাংলাদেশ ও বিশ্বপরিচয়",
+  "বিজ্ঞান",
+  "শারীরিক শিক্ষা ও স্বাস্থ্য",
+  "কর্ম ও জীবনমুখী শিক্ষা",
+  "কৃষিশিক্ষা",
+  "গার্হস্থ্যবিজ্ঞান",
+  "চারু ও কারুকলা",
+  "ইসলাম শিক্ষা",
+  "হিন্দুধর্ম শিক্ষা",
+];
+
+const SUBJECTS_9_10 = [
+  "বাংলা সাহিত্য",
+  "বাংলা সহপাঠ",
+  "বাংলা ভাষার ব্যাকরণ ও নির্মিতি",
+  "English For Today",
+  "English Grammar and Composition",
+  "গণিত",
+  "তথ্য ও যোগাযোগ প্রযুক্তি",
+  "বিজ্ঞান",
+  "পদার্থবিজ্ঞান",
+  "রসায়ন",
+  "জীববিজ্ঞান",
+  "উচ্চতর গণিত",
+  "ভূগোল ও পরিবেশ",
+  "অর্থনীতি",
+  "কৃষিশিক্ষা",
+  "গার্হস্থ্যবিজ্ঞান",
+  "পৌরনীতি ও নাগরিকতা",
+  "হিসাববিজ্ঞান",
+  "ফিন্যান্স ও ব্যাংকিং",
+  "ব্যবসায় উদ্যোগ",
+  "ইসলাম শিক্ষা",
+  "হিন্দুধর্ম শিক্ষা",
+  "ক্যারিয়ার শিক্ষা",
+  "বাংলাদেশ ও বিশ্বপরিচয়",
+  "চারু ও কারুকলা",
+  "বাংলাদেশের ইতিহাস ও বিশ্বসভ্যতা",
+  "শারীরিক শিক্ষা, স্বাস্থ্যবিজ্ঞান ও খেলাধুলা",
 ];
 
 const FIRST_NAMES = [
@@ -188,30 +233,42 @@ async function main(): Promise<void> {
   }
   const [sectionsA, sectionsB] = sectionsByClass.get(focusClass.id)!;
 
-  const subjects = await Promise.all(
-    SUBJECTS.map((s) => prisma.subject.create({ data: s })),
-  );
+  // One catalog row per unique NCTB title; classes map onto it.
+  const catalog = [...new Set([...SUBJECTS_6_8, ...SUBJECTS_9_10])];
+  const subjectByName = new Map<string, { id: string; name: string }>();
+  for (const [i, name] of catalog.entries()) {
+    const subject = await prisma.subject.create({
+      data: { name, code: `NCTB-${String(i + 1).padStart(2, "0")}` },
+    });
+    subjectByName.set(name, subject);
+  }
+  const subjects68 = SUBJECTS_6_8.map((name) => subjectByName.get(name)!);
+  const subjects910 = SUBJECTS_9_10.map((name) => subjectByName.get(name)!);
+  // Class 8 carries the exams and assignments in this demo.
+  const focusSubjects = subjects68;
 
-  // ClassSubject: teacher assignment per SECTION — same subject can have a
-  // different teacher for section A vs B (e.g. Bangla: teacher1 for A,
-  // teacher2 for B). Demo: section A gets teacher i, section B gets teacher i+1.
-  await prisma.classSubject.createMany({
-    data: subjects.flatMap((s, i) => [
-      {
-        classId: focusClass.id,
-        sectionId: sectionsA.id,
-        subjectId: s.id,
-        teacherId: teachers[i % teachers.length].id,
-      },
-      {
-        classId: focusClass.id,
-        sectionId: sectionsB.id,
-        subjectId: s.id,
-        // Different teacher for the same subject in section B.
-        teacherId: teachers[(i + 1) % teachers.length].id,
-      },
-    ]),
-  });
+  // ClassSubject: the NCTB list for each class, per section. The teacher is
+  // round-robin across the staff so every section has a full timetable.
+  const classSubjectRows: {
+    classId: string;
+    sectionId: string;
+    subjectId: string;
+    teacherId: string;
+  }[] = [];
+  for (const cls of classes) {
+    const list = cls.name === "Class 9" || cls.name === "Class 10" ? subjects910 : subjects68;
+    for (const section of sectionsByClass.get(cls.id) ?? []) {
+      list.forEach((subject, i) => {
+        classSubjectRows.push({
+          classId: cls.id,
+          sectionId: section.id,
+          subjectId: subject.id,
+          teacherId: teachers[i % teachers.length].id,
+        });
+      });
+    }
+  }
+  await prisma.classSubject.createMany({ data: classSubjectRows });
 
   // Students: 10 per class (5 in each section), 50 total.
   const studentUsers: { id: string; fullName: string }[] = [];
@@ -303,7 +360,7 @@ async function main(): Promise<void> {
   }[] = [];
   for (const [examIdx, exam] of [firstTerm, midYear].entries()) {
     for (let i = 0; i < focusStudents.length; i++) {
-      for (const subject of subjects) {
+      for (const subject of focusSubjects) {
         const weak = WEAK_STUDENTS.has(i);
         let marks: number;
         if (weak) {
@@ -326,12 +383,12 @@ async function main(): Promise<void> {
   await prisma.examMark.createMany({ data: markRows });
 
   // Assignments + submissions (weak students miss/submit late).
-  const teacherOfSubject = subjects.map((s, i) => ({ subjectId: s.id, teacher: teachers[i % teachers.length] }));
+  const teacherOfSubject = focusSubjects.map((s, i) => ({ subjectId: s.id, teacher: teachers[i % teachers.length] }));
   for (const [i, { subjectId, teacher }] of teacherOfSubject.entries()) {
     const due = examDate(7 - i); // due within last week
     const assignment = await prisma.assignment.create({
       data: {
-        title: `${SUBJECTS[i].name} Assignment ${i + 1}`,
+        title: `${focusSubjects[i].name} Assignment ${i + 1}`,
         description: `Practice questions from chapter ${i + 1}.`,
         subjectId,
         classId: focusClass.id,
@@ -347,7 +404,7 @@ async function main(): Promise<void> {
         data: {
           assignmentId: assignment.id,
           studentId: focusStudents[s].id,
-          content: `Submission by ${focusStudents[s].fullName} for ${SUBJECTS[i].name}.`,
+          content: `Submission by ${focusStudents[s].fullName} for ${focusSubjects[i].name}.`,
           status: late ? "LATE" : "ON_TIME",
           grade: weak ? 40 + Math.round(random() * 15) : 75 + Math.round(random() * 20),
           feedback: weak ? "Needs more practice." : "Good work.",

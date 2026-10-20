@@ -6,7 +6,7 @@
 
 import * as React from "react";
 import { motion } from "motion/react";
-import { FaLayerGroup, FaPlus, FaSpinner } from "react-icons/fa6";
+import { FaLayerGroup, FaPlus, FaSpinner, FaTrash } from "react-icons/fa6";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -117,6 +117,26 @@ export default function AdminClassesPage() {
         } finally { setBusy(false); }
     }
 
+    async function removeClass(cls: SchoolClass) {
+        if (!window.confirm(`Delete ${cls.name}? This cannot be undone.`)) return;
+        setBusy(true);
+        setFeedback(null);
+        try {
+            await api(`/classes/${cls.id}`, { method: "DELETE" });
+            setFeedback({ kind: "ok", msg: `${cls.name} deleted` });
+            load();
+        } catch (err) {
+            setFeedback({
+                kind: "err",
+                msg: err instanceof RequestError
+                    ? err.messages.join("; ")
+                    : err instanceof Error ? err.message : "Could not delete the class",
+            });
+        } finally {
+            setBusy(false);
+        }
+    }
+
     if (loading) return <div className="space-y-6"><PageHeader title="Classes" icon={FaLayerGroup} /><Skeleton className="h-32" /></div>;
 
     return (
@@ -163,6 +183,10 @@ export default function AdminClassesPage() {
                                         <Button size="sm" variant="outline" onClick={() => { setSectionName(""); setDialog({ kind: "section", classId: cls.id }); }}
                                             className="font-black text-[10px] uppercase tracking-wider">
                                             <FaPlus size={10} /> Section
+                                        </Button>
+                                        <Button size="sm" variant="outline" onClick={() => void removeClass(cls)} disabled={busy}
+                                            className="font-black text-[10px] uppercase tracking-wider text-destructive border-destructive/30 hover:bg-destructive/10">
+                                            <FaTrash size={10} /> Delete
                                         </Button>
                                     </div>
                                 </CardHeader>
