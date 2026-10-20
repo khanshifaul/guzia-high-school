@@ -7,6 +7,10 @@ an admin-configured teacher AI toolkit.
 
 Built as the **NT Tech Innovation Full-Stack Developer assessment**.
 
+**Live demo:** https://guzia-high-school.vercel.app ·
+**API:** https://guzia-api.onrender.com (`/api/docs`) — both are free instances, so the
+first request after a quiet period takes ~50 s to wake. See [`DEPLOY.md`](DEPLOY.md).
+
 ## Stack
 
 | Layer | Choice |
@@ -64,13 +68,14 @@ All passwords are `password123`.
 | Role | Email |
 |---|---|
 | Admin | `admin@guziahs.edu` |
-| Teacher | `teacher1@guziahs.edu` (also `teacher2`, `teacher3`) |
-| Student | `student01@guziahs.edu` (also `student02` … `student15`) |
-| Parent | `parent01@guziahs.edu` (also `parent02` … `parent08`) |
+| Teacher | `teacher1@guziahs.edu` (MST. MASUDA KHATUN), `teacher2`, `teacher3` |
+| Student | `student01@guziahs.edu` (also `student02` … `student30`) |
+| Parent | `parent01@guziahs.edu` (also `parent02` … `parent15`) |
 
-The seed creates a realistic dataset: 5 classes, 15 students in Class 8-A, 60 days of
-attendance (with 3 deliberately weak students for the AI demo), two published exams
-with marks, fee invoices, notices, and pending admission applications.
+The seed creates a realistic dataset: 5 classes, 30 students in Class 8-A, 17 teachers
+taken from the school's MPO sheet (`emis.gov.bd`), 15 parents, 60 days of attendance
+(with 3 deliberately weak students for the AI demo), two published exams with marks,
+fee invoices, notices, and pending admission applications.
 
 ## Demo walkthrough
 

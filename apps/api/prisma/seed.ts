@@ -46,6 +46,31 @@ const FIRST_NAMES = [
 ];
 const LAST_NAMES = ["Rahman", "Hossain", "Akter", "Islam", "Khan", "Ahmed", "Chowdhury", "Uddin"];
 
+/**
+ * Teaching staff from the school's MPO sheet (emis.gov.bd, September 2026).
+ * The first three keep the demo emails teacher1..3 so the README credentials
+ * stay stable; the rest use their name.
+ */
+const TEACHING_STAFF = [
+  { name: "MST. MASUDA KHATUN", email: "teacher1@guziahs.edu", employeeId: "R564856", designation: "Computer Teacher", department: "Computer" },
+  { name: "MST. NURE SHAKILA JAHAN", email: "teacher2@guziahs.edu", employeeId: "R5552534", designation: "Agriculture Teacher", department: "Agriculture" },
+  { name: "MD. NURUL ISLAM", email: "teacher3@guziahs.edu", employeeId: "R540130", designation: "Assistant Teacher", department: "General" },
+  { name: "MD. MEZBAUL ISLAM", email: "mezbaul.islam@guziahs.edu", employeeId: "R1017290", designation: "Assistant Teacher (English)", department: "English" },
+  { name: "MD. SHAHINUR ALOM", email: "shahinur.alom@guziahs.edu", employeeId: "R10232220", designation: "Assistant Head Master", department: "Administration" },
+  { name: "MD ABDUL LATIF", email: "abdul.latif@guziahs.edu", employeeId: "R1053715", designation: "Assistant Teacher (Religion)", department: "Religion" },
+  { name: "TANZILA AKHTER", email: "tanzila.akhter@guziahs.edu", employeeId: "R10341333", designation: "Assistant Teacher", department: "General" },
+  { name: "MD MAHAMUDUL HASAN", email: "mahamudul.hasan@guziahs.edu", employeeId: "R1053713", designation: "Assistant Teacher", department: "General" },
+  { name: "MD ZILLUR RAHMAN", email: "zillur.rahman@guziahs.edu", employeeId: "R1053714", designation: "Assistant Teacher", department: "General" },
+  { name: "MD. AMINUR RAHMAN", email: "aminur.rahman@guziahs.edu", employeeId: "R1023219", designation: "Assistant Teacher", department: "General" },
+  { name: "MD ZAKIR HOSSAIN", email: "zakir.hossain@guziahs.edu", employeeId: "N110975", designation: "Physical Teacher", department: "Physical Education" },
+  { name: "MD. ASHRAFUL ISLAM", email: "ashraful.islam@guziahs.edu", employeeId: "N1104777", designation: "Assistant Teacher (Library & Information Science)", department: "Library" },
+  { name: "MD. SHUZAL MIAH", email: "shuzal.miah@guziahs.edu", employeeId: "N1159994", designation: "Assistant Teacher (Bangla)", department: "Bangla" },
+  { name: "PRODDUT KUMAR CHAKROBARTY", email: "proddut.chakrobarty@guziahs.edu", employeeId: "N1226267", designation: "Hindu Religion Teacher", department: "Religion" },
+  { name: "MST. SHAHIDA AKTER LUCKY", email: "shahida.akter@guziahs.edu", employeeId: "N5690019", designation: "Assistant Teacher (Physical Science)", department: "Science" },
+  { name: "MISS. MOLE AKTAR", email: "mole.aktar@guziahs.edu", employeeId: "N569055942", designation: "Assistant Teacher (Biology)", department: "Science" },
+  { name: "MD. MEHEDI HASAN", email: "mehedi.hasan@guziahs.edu", employeeId: "N569333053", designation: "Assistant Teacher (Arts & Crafts)", department: "Arts" },
+];
+
 // Weak students (0-indexed in class 8-A): guaranteed AI-demo at-risk cases.
 const WEAK_STUDENTS = new Set([2, 7, 12]);
 
@@ -95,7 +120,7 @@ async function main(): Promise<void> {
   // Canonical grade bands (specs/04) — the single source of truth for grading.
   await prisma.gradeBand.createMany({ data: GRADE_BANDS });
 
-  // Users: 1 admin, 3 teachers, 15 students (class 8-A), 8 parents.
+  // Users: 1 admin, 17 real teachers (MPO sheet), 30 students (class 8-A), 15 parents.
   const admin = await prisma.user.create({
     data: {
       email: "admin@guziahs.edu",
@@ -106,12 +131,12 @@ async function main(): Promise<void> {
   });
 
   const teacherUsers = await Promise.all(
-    [1, 2, 3].map((n) =>
+    TEACHING_STAFF.map((staff) =>
       prisma.user.create({
         data: {
-          email: `teacher${n}@guziahs.edu`,
+          email: staff.email,
           passwordHash,
-          fullName: `Teacher ${n}`,
+          fullName: staff.name,
           role: "TEACHER",
         },
       }),
@@ -120,13 +145,19 @@ async function main(): Promise<void> {
   const teachers = await Promise.all(
     teacherUsers.map((u, i) =>
       prisma.teacher.create({
-        data: { userId: u.id, employeeId: `T-00${i + 1}`, phone: `0171100000${i + 1}` },
+        data: {
+          userId: u.id,
+          employeeId: TEACHING_STAFF[i].employeeId,
+          designation: TEACHING_STAFF[i].designation,
+          department: TEACHING_STAFF[i].department,
+          phone: `0171100${String(i + 1).padStart(4, "0")}`,
+        },
       }),
     ),
   );
 
   const parentUsers = await Promise.all(
-    Array.from({ length: 8 }, (_, i) =>
+    Array.from({ length: 15 }, (_, i) =>
       prisma.user.create({
         data: {
           email: `parent0${i + 1}@guziahs.edu`,
@@ -188,11 +219,11 @@ async function main(): Promise<void> {
     ]),
   });
 
-  // Students: 15 in class 8-A, linked to parents (first 8 parents, wrap).
+  // Students: 30 in class 8-A, linked to parents (15 parents, two each).
   const studentUsers: { id: string; fullName: string }[] = [];
   const students = [];
-  for (let i = 0; i < 15; i++) {
-    const fullName = `${FIRST_NAMES[i]} ${LAST_NAMES[i % LAST_NAMES.length]}`;
+  for (let i = 0; i < 30; i++) {
+    const fullName = `${FIRST_NAMES[i % FIRST_NAMES.length]} ${LAST_NAMES[i % LAST_NAMES.length]}`;
     const u = await prisma.user.create({
       data: {
         email: `student${String(i + 1).padStart(2, "0")}@guziahs.edu`,
@@ -291,7 +322,7 @@ async function main(): Promise<void> {
   await prisma.examMark.createMany({ data: markRows });
 
   // Assignments + submissions (weak students miss/submit late).
-  const teacherOfSubject = subjects.map((s, i) => ({ subjectId: s.id, teacher: teachers[i % 3] }));
+  const teacherOfSubject = subjects.map((s, i) => ({ subjectId: s.id, teacher: teachers[i % teachers.length] }));
   for (const [i, { subjectId, teacher }] of teacherOfSubject.entries()) {
     const due = examDate(7 - i); // due within last week
     const assignment = await prisma.assignment.create({
@@ -440,7 +471,7 @@ async function main(): Promise<void> {
 
   console.log("✅ Seed complete.");
   console.log("   Demo logins (all password: password123)");
-  console.log("   admin@guziahs.edu | teacher1..3@guziahs.edu | student01..15@guziahs.edu | parent01..08@guziahs.edu");
+  console.log("   admin@guziahs.edu | teacher1..3 + 14 staff | student01..30@guziahs.edu | parent01..15@guziahs.edu");
   console.log(`   Students: ${students.length}, attendance rows: ${attendanceRows.length}, marks: ${markRows.length}`);
 }
 
