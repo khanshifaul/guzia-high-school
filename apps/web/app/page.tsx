@@ -100,7 +100,7 @@ const facilities = [
 const testimonials = [
     { name: "Fatima Begum", role: "Alumna, Class of 2021", quote: "Guzia High School shaped my character and gave me the confidence to pursue my dreams. The teachers here don't just teach — they mentor." },
     { name: "Rafiq Hasan", role: "Current Parent", quote: "I chose Guzia for my children because of its academic reputation. Seeing their growth in both studies and values confirms it was the right decision." },
-    { name: "Dr. Anwar Hossain", role: "Principal", quote: "Our mission is to nurture every student into a responsible citizen who excels not just academically but also in character and leadership." },
+    { name: "MD. SHAHINUR ALOM", role: "Acting Headmaster", quote: "Our mission is to nurture every student into a responsible citizen who excels not just academically but also in character and leadership." },
 ];
 
 const achievements = [
@@ -186,7 +186,7 @@ export default function HomePage() {
                     </div>
                 </section>
 
-                {/* PRINCIPAL'S MESSAGE */}
+                {/* ACTING HEADMASTER'S MESSAGE */}
                 <section className="py-20 md:py-28">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <Reveal>
@@ -194,11 +194,11 @@ export default function HomePage() {
                                 <motion.div variants={fadeIn} className="md:col-span-1">
                                     <div className="relative aspect-[4/5] rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-border/60 flex flex-col items-center justify-center overflow-hidden">
                                         <FaGraduationCap className="size-16 text-primary/40" />
-                                        <span className="mt-3 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Principal</span>
+                                        <span className="mt-3 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Acting Headmaster</span>
                                     </div>
                                 </motion.div>
                                 <motion.div variants={fadeIn} className="md:col-span-2">
-                                    <p className="text-[10px] font-black text-primary uppercase tracking-[0.25em] mb-3">Principal&apos;s Message</p>
+                                    <p className="text-[10px] font-black text-primary uppercase tracking-[0.25em] mb-3">Acting Headmaster&apos;s Message</p>
                                     <h2 className="text-[clamp(1.5rem,4vw,2.25rem)] font-black tracking-tight text-foreground mb-4">
                                         Nurturing Minds, <span className="text-primary">Forming Hearts</span>
                                     </h2>
@@ -214,10 +214,10 @@ export default function HomePage() {
                                         leaders.
                                     </p>
                                     <div className="flex items-center gap-3 pt-4 border-t border-border/40">
-                                        <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black">DA</div>
+                                        <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black">SA</div>
                                         <div>
-                                            <p className="font-bold text-sm text-foreground">Dr. Anwar Hossain</p>
-                                            <p className="text-[11px] text-muted-foreground">Principal, Guzia High School</p>
+                                            <p className="font-bold text-sm text-foreground">MD. SHAHINUR ALOM</p>
+                                            <p className="text-[11px] text-muted-foreground">Acting Headmaster, Guzia High School</p>
                                         </div>
                                     </div>
                                 </motion.div>

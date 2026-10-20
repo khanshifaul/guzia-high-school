@@ -72,7 +72,7 @@ const TEACHING_STAFF = [
 ];
 
 // Weak students (0-indexed in class 8-A): guaranteed AI-demo at-risk cases.
-const WEAK_STUDENTS = new Set([2, 7, 12]);
+const WEAK_STUDENTS = new Set([0, 3, 6]);
 
 function admissionNo(i: number): string {
   return `GHS-2026-${String(i + 1).padStart(3, "0")}`;
@@ -120,7 +120,7 @@ async function main(): Promise<void> {
   // Canonical grade bands (specs/04) — the single source of truth for grading.
   await prisma.gradeBand.createMany({ data: GRADE_BANDS });
 
-  // Users: 1 admin, 17 real teachers (MPO sheet), 30 students (class 8-A), 15 parents.
+  // Users: 1 admin, 17 real teachers (MPO sheet), 10 students per class, 15 parents.
   const admin = await prisma.user.create({
     data: {
       email: "admin@guziahs.edu",
@@ -179,20 +179,14 @@ async function main(): Promise<void> {
   );
   const focusClass = classes[2];
 
-  const sectionsA = await prisma.section.create({
-    data: { name: "A", classId: focusClass.id },
-  });
-  const sectionsB = await prisma.section.create({
-    data: { name: "B", classId: focusClass.id },
-  });
-  for (const cls of [classes[0], classes[1], classes[3], classes[4]]) {
-    await prisma.section.createMany({
-      data: [
-        { name: "A", classId: cls.id },
-        { name: "B", classId: cls.id },
-      ],
-    });
+  const sectionsByClass = new Map<string, { id: string; name: string }[]>();
+  for (const cls of classes) {
+    sectionsByClass.set(cls.id, [
+      await prisma.section.create({ data: { name: "A", classId: cls.id } }),
+      await prisma.section.create({ data: { name: "B", classId: cls.id } }),
+    ]);
   }
+  const [sectionsA, sectionsB] = sectionsByClass.get(focusClass.id)!;
 
   const subjects = await Promise.all(
     SUBJECTS.map((s) => prisma.subject.create({ data: s })),
@@ -219,34 +213,44 @@ async function main(): Promise<void> {
     ]),
   });
 
-  // Students: 30 in class 8-A, linked to parents (15 parents, two each).
+  // Students: 10 per class (5 in each section), 50 total.
   const studentUsers: { id: string; fullName: string }[] = [];
-  const students = [];
-  for (let i = 0; i < 30; i++) {
-    const fullName = `${FIRST_NAMES[i % FIRST_NAMES.length]} ${LAST_NAMES[i % LAST_NAMES.length]}`;
-    const u = await prisma.user.create({
-      data: {
-        email: `student${String(i + 1).padStart(2, "0")}@guziahs.edu`,
-        passwordHash,
-        fullName,
-        role: "STUDENT",
-      },
-    });
-    studentUsers.push(u);
-    const s = await prisma.student.create({
-      data: {
-        userId: u.id,
-        admissionNo: admissionNo(i),
-        fullName,
-        gender: i % 2 === 0 ? "male" : "female",
-        classId: focusClass.id,
-        sectionId: sectionsA.id,
-        parentId: parents[i % parents.length].id,
-        rollNo: i + 1,
-      },
-    });
-    students.push(s);
+  const students: { id: string; fullName: string }[] = [];
+  const focusStudents: { id: string; fullName: string }[] = [];
+  for (const cls of classes) {
+    const sections = sectionsByClass.get(cls.id) ?? [];
+    for (let slot = 0; slot < 10; slot++) {
+      const i = students.length;
+      const section = sections[slot < 5 ? 0 : 1];
+      const fullName = `${FIRST_NAMES[i % FIRST_NAMES.length]} ${LAST_NAMES[i % LAST_NAMES.length]}`;
+      const u = await prisma.user.create({
+        data: {
+          email: `student${String(i + 1).padStart(2, "0")}@guziahs.edu`,
+          passwordHash,
+          fullName,
+          role: "STUDENT",
+        },
+      });
+      studentUsers.push(u);
+      const s = await prisma.student.create({
+        data: {
+          userId: u.id,
+          admissionNo: admissionNo(i),
+          fullName,
+          gender: i % 2 === 0 ? "male" : "female",
+          classId: cls.id,
+          sectionId: section.id,
+          parentId: parents[i % parents.length].id,
+          rollNo: slot + 1,
+        },
+      });
+      students.push(s);
+      if (cls.id === focusClass.id) focusStudents.push(s);
+    }
   }
+  const weakStudentIds = new Set(
+    [...WEAK_STUDENTS].map((i) => focusStudents[i]?.id).filter((id): id is string => Boolean(id)),
+  );
 
   // Attendance: last 60 school days (skip Fridays=5, Saturdays=6 — BD weekend Fri).
   const today = new Date();
@@ -259,7 +263,7 @@ async function main(): Promise<void> {
     if (dow === 5 || dow === 6) continue; // weekend
     daysCollected++;
     for (let i = 0; i < students.length; i++) {
-      const weak = WEAK_STUDENTS.has(i);
+      const weak = weakStudentIds.has(students[i].id);
       const r = random();
       let status: "PRESENT" | "ABSENT" | "LATE";
       if (weak) {
@@ -298,7 +302,7 @@ async function main(): Promise<void> {
     examId: string; studentId: string; subjectId: string; marksObtained: number; totalMarks: number;
   }[] = [];
   for (const [examIdx, exam] of [firstTerm, midYear].entries()) {
-    for (let i = 0; i < students.length; i++) {
+    for (let i = 0; i < focusStudents.length; i++) {
       for (const subject of subjects) {
         const weak = WEAK_STUDENTS.has(i);
         let marks: number;
@@ -311,7 +315,7 @@ async function main(): Promise<void> {
         }
         markRows.push({
           examId: exam.id,
-          studentId: students[i].id,
+          studentId: focusStudents[i].id,
           subjectId: subject.id,
           marksObtained: marks,
           totalMarks: 100,
@@ -335,15 +339,15 @@ async function main(): Promise<void> {
         dueDate: due,
       },
     });
-    for (let s = 0; s < students.length; s++) {
+    for (let s = 0; s < focusStudents.length; s++) {
       const weak = WEAK_STUDENTS.has(s);
       if (weak && random() < 0.5) continue; // missing submission
       const late = weak && random() < 0.6;
       await prisma.submission.create({
         data: {
           assignmentId: assignment.id,
-          studentId: students[s].id,
-          content: `Submission by ${students[s].fullName} for ${SUBJECTS[i].name}.`,
+          studentId: focusStudents[s].id,
+          content: `Submission by ${focusStudents[s].fullName} for ${SUBJECTS[i].name}.`,
           status: late ? "LATE" : "ON_TIME",
           grade: weak ? 40 + Math.round(random() * 15) : 75 + Math.round(random() * 20),
           feedback: weak ? "Needs more practice." : "Good work.",
@@ -471,7 +475,7 @@ async function main(): Promise<void> {
 
   console.log("✅ Seed complete.");
   console.log("   Demo logins (all password: password123)");
-  console.log("   admin@guziahs.edu | teacher1..3 + 14 staff | student01..30@guziahs.edu | parent01..15@guziahs.edu");
+  console.log("   admin@guziahs.edu | teacher1..3 + 14 staff | student01..50@guziahs.edu | parent01..15@guziahs.edu");
   console.log(`   Students: ${students.length}, attendance rows: ${attendanceRows.length}, marks: ${markRows.length}`);
 }
 

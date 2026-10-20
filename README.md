@@ -69,10 +69,10 @@ All passwords are `password123`.
 |---|---|
 | Admin | `admin@guziahs.edu` |
 | Teacher | `teacher1@guziahs.edu` (MST. MASUDA KHATUN), `teacher2`, `teacher3` |
-| Student | `student01@guziahs.edu` (also `student02` … `student30`) |
+| Student | `student01@guziahs.edu` (also `student02` … `student50`) |
 | Parent | `parent01@guziahs.edu` (also `parent02` … `parent15`) |
 
-The seed creates a realistic dataset: 5 classes, 30 students in Class 8-A, 17 teachers
+The seed creates a realistic dataset: 5 classes with 10 students each (5 per section), 17 teachers
 taken from the school's MPO sheet (`emis.gov.bd`), 15 parents, 60 days of attendance
 (with 3 deliberately weak students for the AI demo), two published exams with marks,
 fee invoices, notices, and pending admission applications.
