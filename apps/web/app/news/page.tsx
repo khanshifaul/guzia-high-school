@@ -4,6 +4,7 @@
 // upcoming events, plus the admin-published notices.
 
 import * as React from "react";
+import Link from "next/link";
 import { motion } from "motion/react";
 import { FaCalendarDays, FaNewspaper, FaTag } from "react-icons/fa6";
 import { Card, CardContent } from "@/components/ui/card";
@@ -45,10 +46,21 @@ export default function NewsPage() {
     }, []);
 
     // Real admin-published global notices first, then static highlights.
-    const items = [
+    interface FeedItem {
+        key: string;
+        tag: string;
+        date: string;
+        title: string;
+        titleBn: string;
+        excerpt: string;
+        excerptBn: string;
+        href?: string;
+    }
+    const items: FeedItem[] = [
         ...notices.map((n) => ({
             key: n.id, tag: "Notice", date: n.createdAt,
             title: n.title, titleBn: n.title, excerpt: n.body, excerptBn: n.body,
+            href: `/news/${n.id}`,
         })),
         ...PUBLIC_EVENTS.map((e) => ({
             key: `event-${e.title}`,
@@ -58,6 +70,7 @@ export default function NewsPage() {
             titleBn: e.title,
             excerpt: `School calendar — ${e.type.toLowerCase()} on ${new Date(e.date).toLocaleDateString("en-GB")}.`,
             excerptBn: `স্কুল ক্যালেন্ডার — ${new Date(e.date).toLocaleDateString("bn-BD")} তারিখে ${EVENT_TYPE_BN[e.type]}।`,
+            href: "/news",
         })),
         ...PUBLIC_NEWS.map((n) => ({ key: n.title, ...n })),
     ];
@@ -83,8 +96,8 @@ export default function NewsPage() {
                     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                         <Reveal>
                             <motion.div variants={stagger} className="space-y-6">
-                                {items.map((n) => (
-                                    <motion.div key={n.key} variants={fadeIn}>
+                                {items.map((n) => {
+                                    const card = (
                                         <Card className="border-border/60 hover:border-primary/30 transition-colors">
                                             <CardContent className="p-6">
                                                 <div className="flex items-center gap-3 mb-3">
@@ -102,10 +115,24 @@ export default function NewsPage() {
                                                 <p className="text-sm text-muted-foreground leading-relaxed">
                                                     {language === "bn" ? n.excerptBn : n.excerpt}
                                                 </p>
+                                                {n.href ? (
+                                                    <p className="mt-3 text-[10px] font-black uppercase tracking-wider text-primary">Read notice →</p>
+                                                ) : null}
                                             </CardContent>
                                         </Card>
-                                    </motion.div>
-                                ))}
+                                    );
+                                    return (
+                                        <motion.div key={n.key} variants={fadeIn}>
+                                            {n.href ? (
+                                                <Link href={n.href} className="block">
+                                                    {card}
+                                                </Link>
+                                            ) : (
+                                                card
+                                            )}
+                                        </motion.div>
+                                    );
+                                })}
                             </motion.div>
                         </Reveal>
                     </div>

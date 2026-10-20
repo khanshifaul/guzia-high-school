@@ -20,6 +20,13 @@ export class NoticesController {
         return this.service.publicNotices(n);
     }
 
+    @Public()
+    @Get('public/:id')
+    @ApiOperation({ summary: 'One global notice for its public detail page' })
+    publicNotice(@Param('id') id: string) {
+        return this.service.publicNotice(id);
+    }
+
     @Roles('ADMIN', 'TEACHER', 'STUDENT', 'PARENT')
     @Get()
     @ApiOperation({ summary: 'Notices visible to the viewer (audience-filtered)' })

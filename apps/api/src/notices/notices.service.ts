@@ -18,6 +18,16 @@ export class NoticesService {
         return { data: notices, meta: { total: notices.length } };
     }
 
+    /** One global notice, for its public detail page. */
+    async publicNotice(id: string) {
+        const notice = await this.prisma.notice.findFirst({
+            where: { id, audience: null },
+            select: { id: true, title: true, body: true, createdAt: true },
+        });
+        if (!notice) throw new NotFoundException('Notice not found');
+        return notice;
+    }
+
     /** Public site: only global notices (audience null), latest first. */
     async publicNotices(limit = 6) {
         const notices = await this.prisma.notice.findMany({
