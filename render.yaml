@@ -1,0 +1,46 @@
+# render.yaml — Render Blueprint for the API.
+#
+# Import this repository in Render → "New Blueprint" and it creates the web
+# service below. Fill the `sync: false` secrets in the dashboard.
+services:
+  - type: web
+    name: guzia-api
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    # Migrations are run once from the Render Shell after the first deploy:
+    #   DATABASE_URL="$DATABASE_URL_UNPOOLED" bunx prisma migrate deploy
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      # Direct (non-pooled) Neon URL; Prisma migrations must not go through
+      # PgBouncer. Runtime keeps the pooled DATABASE_URL.
+      - key: DATABASE_URL_UNPOOLED
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: AI_CONFIG_SECRET
+        generateValue: true
+      - key: WEB_ORIGIN
+        sync: false
+      - key: AI_PROVIDER
+        value: mock
+      - key: EMBEDDINGS_PROVIDER
+        value: local
+      - key: OCR_LANGS
+        value: eng
+      - key: STORAGE_ENDPOINT
+        sync: false
+      - key: STORAGE_REGION
+        sync: false
+      - key: STORAGE_BUCKET
+        sync: false
+      - key: STORAGE_ACCESS_KEY_ID
+        sync: false
+      - key: STORAGE_SECRET_ACCESS_KEY
+        sync: false
+      - key: STORAGE_FORCE_PATH_STYLE
+        value: "false"

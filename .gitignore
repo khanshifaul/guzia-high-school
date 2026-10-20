@@ -19,3 +19,4 @@ coverage/
 # logs / os
 *.log
 .DS_Store
+.neon

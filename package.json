@@ -18,5 +18,9 @@
     "@types/node": "^20.17.0",
     "oxlint": "^1.78.0",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@neon/config": "^1.9.2",
+    "@neon/env": "^1.6.3"
   }
 }
