@@ -1,16 +1,12 @@
 import type { MetadataRoute } from "next";
-
-const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3004";
-
-// Public, SEO-relevant routes only (portal pages require auth).
-const routes = ["", "/about", "/academics", "/admission", "/news", "/gallery", "/contact", "/login", "/pages"];
+import { PUBLIC_ROUTES, SITE_URL } from "@/lib/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
     const now = new Date();
-    return routes.map((r) => ({
-        url: `${BASE}${r}`,
+    return PUBLIC_ROUTES.map((route) => ({
+        url: `${SITE_URL}${route.path}`,
         lastModified: now,
-        changeFrequency: "weekly" as const,
-        priority: r === "" ? 1 : 0.7,
+        changeFrequency: route.path === "" || route.path === "/news" ? "weekly" : "monthly",
+        priority: route.priority,
     }));
 }

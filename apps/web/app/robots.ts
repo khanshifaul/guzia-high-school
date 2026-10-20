@@ -1,10 +1,24 @@
 import type { MetadataRoute } from "next";
-
-const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3004";
+import { SITE_URL } from "@/lib/site";
 
 export default function robots(): MetadataRoute.Robots {
     return {
-        rules: [{ userAgent: "*", allow: "/", disallow: ["/admin", "/teacher", "/student", "/parent", "/api"] }],
-        sitemap: `${BASE}/sitemap.xml`,
+        rules: [
+            {
+                userAgent: "*",
+                allow: "/",
+                disallow: [
+                    "/admin",
+                    "/teacher",
+                    "/student",
+                    "/parent",
+                    "/portal",
+                    "/login",
+                    "/api",
+                ],
+            },
+        ],
+        sitemap: `${SITE_URL}/sitemap.xml`,
+        host: SITE_URL,
     };
 }
