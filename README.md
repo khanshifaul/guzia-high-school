@@ -31,34 +31,33 @@ published exams, fee invoices, notices and pending admission applications.
 
 ## Run it locally
 
-Requirements: [Bun](https://bun.sh), Docker (for PostgreSQL 18 with pgvector).
+Requirements: [Bun](https://bun.sh) 1.4+, and PostgreSQL 18 with pgvector — Docker is the
+easiest way to get it. No shell scripts are required; these commands work in any
+terminal (on Windows use `Copy-Item` instead of `cp`).
 
 ```bash
-git clone https://github.com/khanshifaul/guzia-high-school
-cd guzia-high-school
-./scripts/bootstrap.sh   # install, start Postgres, migrate, seed, train the model
-./scripts/dev.sh         # API on :4000, web on :3004
-```
+# 1. database + dependencies
+docker compose up -d
+bun install
 
-Open http://localhost:3004. Swagger is at http://localhost:4000/api/docs.
-
-<details>
-<summary>Manual setup</summary>
-
-```bash
-docker compose up -d && bun install
-
+# 2. API (terminal 1)
 cd apps/api
-cp .env.example .env.local      # DATABASE_URL, JWT_SECRET, AI_CONFIG_SECRET
+cp .env.example .env.local        # Windows: Copy-Item .env.example .env.local
 bunx prisma migrate dev
-bun run db:seed && bun run ai:train
-bun run dev
+bun run db:seed                   # demo school
+bun run ai:train                  # at-risk model + eval report
+bun run dev                       # http://localhost:4000  (Swagger /api/docs)
 
-cd apps/web                     # second terminal
-cp .env.example .env.local      # API_BASE_URL=http://localhost:4000
-bun run dev
+# 3. web (terminal 2)
+cd apps/web
+cp .env.example .env.local        # API_BASE_URL=http://localhost:4000
+bun run dev                       # http://localhost:3004
 ```
-</details>
+
+Open http://localhost:3004 and sign in with a demo account.
+
+`scripts/bootstrap.sh` and `scripts/dev.sh` do the same steps on Linux/macOS if you
+prefer one command; they are a convenience, not a requirement.
 
 The default provider is a seeded **mock**, so every AI feature works with no API key
 and no network. Point it at a real model in **Admin → Settings → LLM Provider**.
