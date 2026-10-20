@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://guzia-api.onrender.com/api/:path*"
+    },
+    {
+      "source": "/health",
+      "destination": "https://guzia-api.onrender.com/health"
+    }
+  ]
+}
