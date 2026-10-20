@@ -69,7 +69,7 @@ function LoginInner() {
                             <FaGraduationCap className="text-3xl text-primary" />
                         </Link>
                         <h1 className="text-2xl font-black uppercase tracking-tight text-foreground text-center">
-                            <Link href="/" className="hover:text-primary transition-colors">Guzia High School</Link>
+                            <Link href="/" className="hover:text-primary transition-colors">Guzia Bilateral High School</Link>
                         </h1>
                         <p className="text-muted-foreground text-xs font-semibold mt-1 text-center tracking-[0.2em] uppercase">
                             Management Portal

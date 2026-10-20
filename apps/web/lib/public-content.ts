@@ -54,7 +54,7 @@ export const PUBLIC_NEWS: PublicNewsItem[] = [
         title: "SSC 2026 Results — 100% Pass Rate",
         titleBn: "এসএসসি ২০২৬ ফলাফল — ১০০% উত্তীর্ণ",
         excerpt:
-            "Congratulations to all SSC candidates. Guzia High School achieved a 100% pass rate with a record number of GPA-5.",
+            "Congratulations to all SSC candidates. Guzia Bilateral High School achieved a 100% pass rate with a record number of GPA-5.",
         excerptBn:
             "সকল এসএসসি পরীক্ষার্থীকে অভিনন্দন। গুজিয়া উচ্চ বিদ্যালয় রেকর্ড GPA-5 সহ ১০০% উত্তীর্ণ হয়েছে।",
     },

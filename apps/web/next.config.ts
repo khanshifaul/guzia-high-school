@@ -16,6 +16,11 @@ const nextConfig: NextConfig = {
         source: "/health",
         destination: `${API_BASE_URL}/health`,
       },
+      {
+        // The site guide is published as llms.txt; llm.txt is an alias.
+        source: "/llm.txt",
+        destination: "/llms.txt",
+      },
     ];
   },
 };

@@ -236,7 +236,7 @@ function SidebarInsetShell({ children }: { children: React.ReactNode }) {
             <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/60 bg-card px-4 py-3 md:px-6 shrink-0">
                 <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
                 <Separator orientation="vertical" className="mr-2 h-4 bg-border/60" />
-                <span className="text-sm font-bold text-foreground tracking-tight">Guzia High School</span>
+                <span className="text-sm font-bold text-foreground tracking-tight">Guzia Bilateral High School</span>
             </header>
             <main className="flex-1 p-4 md:p-6 bg-muted/10">{children}</main>
         </SidebarInset>

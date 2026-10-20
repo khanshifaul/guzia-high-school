@@ -1,0 +1,44 @@
+# Guzia Bilateral High School, Bogura
+
+> Government-recognised secondary school for Classes 6–10 in Guzia, Shibganj,
+> Bogura, Bangladesh. EIIN 119825 · established 1958 · Rajshahi Education Board.
+
+## Pages
+
+- [Home](https://guzia-high-school.vercel.app/): overview, acting headmaster's message, programmes, upcoming events
+- [About](https://guzia-high-school.vercel.app/about): history, mission and leadership
+- [Academics](https://guzia-high-school.vercel.app/academics): NCTB curriculum for Classes 6–10
+- [Admission](https://guzia-high-school.vercel.app/admission): requirements and the online application form
+- [News & events](https://guzia-high-school.vercel.app/news): notices and the school calendar
+- [Gallery](https://guzia-high-school.vercel.app/gallery)
+- [Contact](https://guzia-high-school.vercel.app/contact): address, phone and contact form
+
+## School facts
+
+- Name: Guzia Bilateral High School
+- EIIN: 119825
+- MPO code: 7610041302
+- Founded: 1958
+- Board: Rajshahi
+- Classes: 6–10 (secondary level)
+- Address: Guzia, Shibganj, Bogura, Bangladesh
+- Phone: +880 1945 411140
+
+## Portal
+
+Sign-in: /login (admin, teacher, student, parent). The authenticated portals are
+/admin, /teacher, /student and /parent; they are excluded from indexing.
+
+## AI features
+
+- At-risk student classifier: a logistic regression trained in-house, with the
+  contributing factors shown for every score.
+- Teacher toolkit: question papers, lesson plans, flashcards/mind maps, and a
+  source-grounded assistant that cites the page it used.
+
+## Technical
+
+- Web: Next.js (App Router), API: NestJS with Prisma/PostgreSQL, JWT in an
+  httpOnly cookie.
+- API documentation: /api/docs on the API host.
+- Source and setup: https://github.com/khanshifaul/guzia-high-school

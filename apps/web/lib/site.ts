@@ -3,20 +3,25 @@
 export const SITE_URL =
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://guzia-high-school.vercel.app";
 
-export const SITE_NAME = "Guzia High School";
+export const SITE_NAME = "Guzia Bilateral High School";
+
+export const EIIN = "119825";
+
+export const SITE_TITLE = "Guzia Bilateral High School, Bogura | EIIN: 119825";
 
 export const SITE_DESCRIPTION =
-    "Guzia High School, Bogura — a government-recognised secondary school for Classes 6–10 since 1958. Admissions, results, notices and the school's AI teaching toolkit.";
+    "Guzia Bilateral High School, Bogura (EIIN: 119825) — a government-recognised secondary school for Classes 6–10 since 1958. Admissions, results, notices and the school's AI teaching toolkit.";
 
 export const SCHOOL = {
     name: SITE_NAME,
-    alternateName: ["Guzia Bilateral High School", "গুজিয়া উচ্চ বিদ্যালয়"],
+    alternateName: ["Guzia High School", "গুজিয়া দ্বিপাক্ষিক উচ্চ বিদ্যালয়", "গুজিয়া উচ্চ বিদ্যালয়"],
     founded: "1958",
     street: "Guzia, Shibganj",
     city: "Bogura",
     region: "Rajshahi",
     country: "BD",
     phone: "+8801945411140",
+    eiin: EIIN,
     image: "/images/campus.jpg",
 };
 

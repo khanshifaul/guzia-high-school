@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import { Geist, Geist_Mono } from "next/font/google";
 import { LanguageProvider } from "@/lib/language-context";
-import { SCHOOL, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { EIIN, SCHOOL, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -19,12 +19,14 @@ export const metadata: Metadata = {
     metadataBase: new URL(SITE_URL),
     applicationName: SITE_NAME,
     title: {
-        default: "Guzia High School — Bogura | Classes 6–10",
-        template: "%s | Guzia High School",
+        default: SITE_TITLE,
+        template: `%s | ${SITE_NAME}`,
     },
     description: SITE_DESCRIPTION,
     keywords: [
+        "Guzia Bilateral High School",
         "Guzia High School",
+        "EIIN 119825",
         "Bogura school",
         "Shibganj school",
         "secondary school Bangladesh",
@@ -40,7 +42,7 @@ export const metadata: Metadata = {
         type: "website",
         url: "/",
         siteName: SITE_NAME,
-        title: "Guzia High School — Bogura | Classes 6–10",
+        title: SITE_TITLE,
         description: SITE_DESCRIPTION,
         locale: "en_US",
         alternateLocale: ["bn_BD"],
@@ -49,13 +51,13 @@ export const metadata: Metadata = {
                 url: SCHOOL.image,
                 width: 2000,
                 height: 1125,
-                alt: "Guzia High School campus",
+                alt: "Guzia Bilateral High School campus",
             },
         ],
     },
     twitter: {
         card: "summary_large_image",
-        title: "Guzia High School — Bogura",
+        title: SITE_TITLE,
         description: SITE_DESCRIPTION,
         images: [SCHOOL.image],
     },
@@ -81,6 +83,7 @@ const schoolSchema = {
     image: `${SITE_URL}${SCHOOL.image}`,
     description: SITE_DESCRIPTION,
     foundingDate: SCHOOL.founded,
+    identifier: `EIIN: ${EIIN}`,
     telephone: SCHOOL.phone,
     address: {
         "@type": "PostalAddress",

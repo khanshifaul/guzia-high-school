@@ -45,7 +45,7 @@ export interface SiteConfig {
 
 const FALLBACK: SiteConfig = {
     schoolName: "Guzia Bilateral High School",
-    schoolNameBn: "গুজিয়া উচ্চ বিদ্যালয়",
+    schoolNameBn: "গুজিয়া দ্বিপাক্ষিক উচ্চ বিদ্যালয়",
     phone: "01713939240",
     hotline: "",
     email: "info@guziahs.edu",

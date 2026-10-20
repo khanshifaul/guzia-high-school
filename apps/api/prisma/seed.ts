@@ -502,7 +502,7 @@ async function main(): Promise<void> {
   // Rajshahi Education Board, Union Guzia / Shibganj / Bogura).
   const schoolIdentity = {
     schoolName: "Guzia Bilateral High School",
-    schoolNameBn: "গুজিয়া উচ্চ বিদ্যালয়",
+    schoolNameBn: "গুজিয়া দ্বিপাক্ষিক উচ্চ বিদ্যালয়",
     phone: "01713939240",
     eiin: "119825",
     board: "Rajshahi Education Board",

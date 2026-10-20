@@ -1,4 +1,4 @@
-# Guzia High School
+# Guzia Bilateral High School
 
 A school management portal for a real secondary school in Bogura, Bangladesh
 (Classes 6–10), plus an AI toolkit that does the work teachers usually do by hand:

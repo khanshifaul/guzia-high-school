@@ -3,13 +3,13 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
     title: "Admission",
     description:
-        "Admission requirements, dates and the online application form for Classes 6–10 at Guzia High School.",
+        "Admission requirements, dates and the online application form for Classes 6–10 at Guzia Bilateral High School.",
     alternates: { canonical: "/admission" },
     openGraph: {
         url: "/admission",
-        title: "Admission | Guzia High School",
+        title: "Admission | Guzia Bilateral High School",
         description:
-            "Admission requirements, dates and the online application form for Classes 6–10 at Guzia High School.",
+            "Admission requirements, dates and the online application form for Classes 6–10 at Guzia Bilateral High School.",
     },
 };
 

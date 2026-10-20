@@ -92,7 +92,7 @@ const facilities = [
 ];
 
 const testimonials = [
-    { name: "Fatima Begum", role: "Alumna, Class of 2021", quote: "Guzia High School shaped my character and gave me the confidence to pursue my dreams. The teachers here don't just teach — they mentor." },
+    { name: "Fatima Begum", role: "Alumna, Class of 2021", quote: "Guzia Bilateral High School shaped my character and gave me the confidence to pursue my dreams. The teachers here don't just teach — they mentor." },
     { name: "Rafiq Hasan", role: "Current Parent", quote: "I chose Guzia for my children because of its academic reputation. Seeing their growth in both studies and values confirms it was the right decision." },
     { name: "MD. SHAHINUR ALOM", role: "Acting Headmaster", quote: "Our mission is to nurture every student into a responsible citizen who excels not just academically but also in character and leadership." },
 ];
@@ -134,7 +134,7 @@ export default function HomePage() {
                         <motion.div initial="hidden" animate="visible" variants={stagger} className="max-w-3xl mx-auto text-center">
                             <motion.div variants={fadeIn} className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-6">
                                 <span className="size-2 rounded-full bg-primary animate-pulse" />
-                                Guzia High School · Est. 1958 · Bogura
+                                Guzia Bilateral High School · Est. 1958 · Bogura
                             </motion.div>
                             <motion.h1 variants={fadeIn} className="text-[clamp(2rem,6vw,3.5rem)] font-black tracking-tight text-foreground leading-none mb-4">
                                 Shaping Tomorrow <span className="text-primary">Leaders</span>
@@ -207,7 +207,7 @@ export default function HomePage() {
                                         Nurturing Minds, <span className="text-primary">Forming Hearts</span>
                                     </h2>
                                     <p className="text-muted-foreground leading-relaxed mb-4">
-                                        Welcome to Guzia High School. Since 1958 we have been committed to academic
+                                        Welcome to Guzia Bilateral High School. Since 1958 we have been committed to academic
                                         excellence and the formation of character. Our dedicated faculty mentor every
                                         student — not just to succeed in examinations, but to grow into responsible,
                                         compassionate citizens who will serve their community and country.
@@ -221,7 +221,7 @@ export default function HomePage() {
                                         <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black">SA</div>
                                         <div>
                                             <p className="font-bold text-sm text-foreground">MD. SHAHINUR ALOM</p>
-                                            <p className="text-[11px] text-muted-foreground">Acting Headmaster, Guzia High School</p>
+                                            <p className="text-[11px] text-muted-foreground">Acting Headmaster, Guzia Bilateral High School</p>
                                         </div>
                                     </div>
                                 </motion.div>
@@ -235,7 +235,7 @@ export default function HomePage() {
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <Reveal>
                             <motion.div variants={stagger} className="text-center mb-14">
-                                <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-3">Why Choose Guzia High School?</motion.h2>
+                                <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-3">Why Choose Guzia Bilateral High School?</motion.h2>
                                 <motion.p variants={fadeIn} className="text-muted-foreground max-w-xl mx-auto">We are committed to providing quality education that prepares students for the challenges of tomorrow.</motion.p>
                             </motion.div>
                             <motion.div variants={stagger} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -404,7 +404,7 @@ export default function HomePage() {
                         <Reveal>
                             <motion.div variants={stagger} className="text-center mb-14">
                                 <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-3">Campus Gallery</motion.h2>
-                                <motion.p variants={fadeIn} className="text-muted-foreground max-w-xl mx-auto">A glimpse into life at Guzia High School.</motion.p>
+                                <motion.p variants={fadeIn} className="text-muted-foreground max-w-xl mx-auto">A glimpse into life at Guzia Bilateral High School.</motion.p>
                             </motion.div>
                             <motion.div variants={stagger} className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {gallery.map((g) => (
