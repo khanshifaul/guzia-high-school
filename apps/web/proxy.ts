@@ -4,8 +4,6 @@
 
 import { NextResponse, type NextRequest } from "next/server";
 
-const API_BASE = process.env.API_BASE_URL ?? "http://localhost:4000";
-
 const ROLE_HOME: Record<string, string> = {
     ADMIN: "/admin",
     TEACHER: "/teacher",
@@ -21,17 +19,21 @@ const ROLE_PREFIX: Record<string, string[]> = {
     PARENT: ["/parent"],
 };
 
-async function fetchRole(request: NextRequest): Promise<string | null> {
-    const cookie = request.cookies.get("ghs_token")?.value;
-    if (!cookie) return null;
+/**
+ * Read the role straight from the session JWT. The API verifies the signature
+ * on every data call, so this only decides which shell to render; a forged
+ * cookie gets a page and then 401s. Keeping it local removes a network hop
+ * from every portal navigation (and the edge-env dependency it carried).
+ */
+function readSessionRole(request: NextRequest): string | null {
+    const token = request.cookies.get("ghs_token")?.value;
+    const payload = token?.split(".")[1];
+    if (!payload) return null;
     try {
-        const res = await fetch(`${API_BASE}/api/auth/me`, {
-            headers: { cookie: `ghs_token=${cookie}` },
-            cache: "no-store",
-        });
-        if (!res.ok) return null;
-        const body = (await res.json()) as { data?: { role?: string } };
-        return body.data?.role ?? null;
+        const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+        const json = JSON.parse(atob(base64)) as { role?: unknown; exp?: unknown };
+        if (typeof json.exp === "number" && json.exp * 1000 <= Date.now()) return null;
+        return typeof json.role === "string" ? json.role : null;
     } catch {
         return null;
     }
@@ -46,7 +48,7 @@ export async function proxy(request: NextRequest) {
         .some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
     if (!isPortal) return NextResponse.next();
 
-    const role = await fetchRole(request);
+    const role = readSessionRole(request);
 
     // Unauthenticated → login with a callback back to the intended page.
     if (!role) {
