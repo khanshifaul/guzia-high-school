@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/public/navbar";
 import { Footer } from "@/components/public/footer";
 import { useLanguage } from "@/lib/language-context";
+import { PUBLIC_EVENTS, PUBLIC_NEWS, type PublicEvent } from "@/lib/public-content";
 
 const fadeIn = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
 const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
@@ -23,40 +24,12 @@ function Reveal({ children, className }: { children: React.ReactNode; className?
     );
 }
 
-const news = [
-    {
-        tag: "Academic",
-        date: "2026-09-15",
-        title: "SSC 2026 Results — 100% Pass Rate",
-        titleBn: "এসএসসি ২০২৬ ফলাফল — ১০০% উত্তীর্ণ",
-        excerpt: "Congratulations to all SSC candidates. Guzia High School achieved a 100% pass rate with a record number of GPA-5.",
-        excerptBn: "সকল এসএসসি পরীক্ষার্থীকে অভিনন্দন। গুজিয়া উচ্চ বিদ্যালয় রেকর্ড GPA-5 সহ ১০০% উত্তীর্ণ হয়েছে।",
-    },
-    {
-        tag: "Event",
-        date: "2026-08-20",
-        title: "Annual Sports Day 2026",
-        titleBn: "বার্ষিক ক্রীড়া দিবস ২০২৬",
-        excerpt: "Our annual sports day will be held on the school field with track and field events for all classes.",
-        excerptBn: "আমাদের বার্ষিক ক্রীড়া দিবস স্কুল মাঠে অনুষ্ঠিত হবে, সকল শ্রেণির জন্য ট্র্যাক ও ফিল্ড ইভেন্ট।",
-    },
-    {
-        tag: "Notice",
-        date: "2026-08-01",
-        title: "Half-Yearly Examination Schedule Published",
-        titleBn: "অর্ধবার্ষিক পরীক্ষার রুটিন প্রকাশিত",
-        excerpt: "The half-yearly examination routine for classes 6–10 is now available. Check the notices section for details.",
-        excerptBn: "৬ষ্ঠ থেকে ১০ম শ্রেণির অর্ধবার্ষিক পরীক্ষার রুটিন এখন পাওয়া যাচ্ছে। বিস্তারিত জানতে বিজ্ঞপ্তি দেখুন।",
-    },
-    {
-        tag: "Event",
-        date: "2026-07-10",
-        title: "Science Fair & Exhibition",
-        titleBn: "বিজ্ঞান মেলা ও প্রদর্শনী",
-        excerpt: "Students showcased working models in physics, chemistry, and biology at our annual science fair.",
-        excerptBn: "শিক্ষার্থীরা বার্ষিক বিজ্ঞান মেলায় পদার্থবিজ্ঞান, রসায়ন ও জীববিজ্ঞানের কার্যকর মডেল উপস্থাপন করেছে।",
-    },
-];
+const EVENT_TYPE_BN: Record<PublicEvent["type"], string> = {
+    EXAM: "পরীক্ষা",
+    MEETING: "সভা",
+    EVENT: "অনুষ্ঠান",
+    HOLIDAY: "ছুটি",
+};
 
 interface PublicNotice { id: string; title: string; body: string; createdAt: string }
 
@@ -77,7 +50,16 @@ export default function NewsPage() {
             key: n.id, tag: "Notice", date: n.createdAt,
             title: n.title, titleBn: n.title, excerpt: n.body, excerptBn: n.body,
         })),
-        ...news.map((n) => ({ key: n.title, ...n })),
+        ...PUBLIC_EVENTS.map((e) => ({
+            key: `event-${e.title}`,
+            tag: "Event" as const,
+            date: e.date,
+            title: e.title,
+            titleBn: e.title,
+            excerpt: `School calendar — ${e.type.toLowerCase()} on ${new Date(e.date).toLocaleDateString("en-GB")}.`,
+            excerptBn: `স্কুল ক্যালেন্ডার — ${new Date(e.date).toLocaleDateString("bn-BD")} তারিখে ${EVENT_TYPE_BN[e.type]}।`,
+        })),
+        ...PUBLIC_NEWS.map((n) => ({ key: n.title, ...n })),
     ];
 
     return (

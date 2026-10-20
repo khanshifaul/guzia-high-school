@@ -17,6 +17,7 @@ import {
     FaBus, FaArrowRight, FaHeart,
 } from "react-icons/fa6";
 import { ONLINE_SERVICES } from "@/lib/online-services";
+import { PUBLIC_EVENTS, nextEvent } from "@/lib/public-content";
 import { Navbar } from "@/components/public/navbar";
 import { Footer } from "@/components/public/footer";
 
@@ -71,13 +72,6 @@ const highlights = [
     { icon: FaFlask, title: "Science Labs", desc: "Fully equipped physics, chemistry, and biology laboratories." },
     { icon: FaTrophy, title: "Co-Curricular", desc: "Debate, sports, cultural programs, and science fair opportunities." },
     { icon: FaUsers, title: "Community", desc: "Strong parent-teacher collaboration for holistic student development." },
-];
-
-const events = [
-    { type: "EXAM", title: "Half-Yearly Examination", date: "2026-11-10", color: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
-    { type: "MEETING", title: "Parent-Teacher Meeting", date: "2026-10-25", color: "bg-violet-500/10 text-violet-600 border-violet-500/20" },
-    { type: "EVENT", title: "Annual Science Fair", date: "2026-12-05", color: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
-    { type: "HOLIDAY", title: "Victory Day Holiday", date: "2026-12-16", color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" },
 ];
 
 const programs = [
@@ -140,14 +134,14 @@ export default function HomePage() {
                         <motion.div initial="hidden" animate="visible" variants={stagger} className="max-w-3xl mx-auto text-center">
                             <motion.div variants={fadeIn} className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-6">
                                 <span className="size-2 rounded-full bg-primary animate-pulse" />
-                                Est. 1958 — Excellence in Education
+                                Guzia High School · Est. 1958 · Bogura
                             </motion.div>
                             <motion.h1 variants={fadeIn} className="text-[clamp(2rem,6vw,3.5rem)] font-black tracking-tight text-foreground leading-none mb-4">
                                 Shaping Tomorrow <span className="text-primary">Leaders</span>
                             </motion.h1>
                             <motion.p variants={fadeIn} className="text-lg md:text-xl text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">
-                                Guzia High School provides a nurturing environment where students excel
-                                academically, develop character, and prepare for a bright future.
+                                A government-recognised secondary school for Classes 6–10, where students
+                                excel academically, build character, and prepare for a bright future.
                             </motion.p>
                             <motion.div variants={fadeIn} className="flex flex-col sm:flex-row gap-3 justify-center">
                                 <Link href="/login">
@@ -155,10 +149,20 @@ export default function HomePage() {
                                         Enter Portal <FaArrowRight size={14} />
                                     </Button>
                                 </Link>
-                                <Link href="/#programs">
+                                <Link href="/news">
                                     <Button variant="outline" size="lg" className="w-full sm:w-auto gap-2 text-base px-8 font-black uppercase tracking-wider">
-                                        Learn More
+                                        News &amp; Events
                                     </Button>
+                                </Link>
+                            </motion.div>
+                            <motion.div variants={fadeIn} className="mt-6 flex justify-center">
+                                <Link
+                                    href="/news"
+                                    className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/70 px-4 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                                >
+                                    <FaCalendarCheck className="size-3 text-primary" />
+                                    Next: <span className="text-foreground">{nextEvent().title}</span>
+                                    <span>· {new Date(nextEvent().date).toLocaleDateString("en-US", { day: "numeric", month: "short" })}</span>
                                 </Link>
                             </motion.div>
                         </motion.div>
@@ -262,7 +266,7 @@ export default function HomePage() {
                                 <motion.p variants={fadeIn} className="text-muted-foreground">Stay updated with school activities and important dates.</motion.p>
                             </motion.div>
                             <motion.div variants={stagger} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                                {events.map((e) => (
+                                {PUBLIC_EVENTS.map((e) => (
                                     <motion.div key={e.title} variants={fadeInUp}>
                                         <Card className="h-full border-border/60 hover:border-primary/30 transition-colors overflow-hidden group">
                                             <div className="h-2 w-full bg-gradient-to-r from-primary to-primary/40" />

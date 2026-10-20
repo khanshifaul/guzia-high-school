@@ -6,6 +6,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { FaBullhorn } from "react-icons/fa6";
+import { PUBLIC_EVENTS } from "@/lib/public-content";
 
 interface Notice {
     id: string;
@@ -26,7 +27,23 @@ export function NoticeTicker() {
             .catch(() => setNotices([]));
     }, []);
 
-    if (notices.length === 0) return null;
+    // One strip for the same things the site announces: live public notices
+    // first, then the calendar events shown on the homepage and /news.
+    const items = React.useMemo(() => {
+        const seen = new Set<string>();
+        const merged = [
+            ...notices.map((n) => ({ id: n.id, title: n.title, date: n.createdAt })),
+            ...PUBLIC_EVENTS.map((e) => ({ id: `event-${e.title}`, title: e.title, date: e.date })),
+        ];
+        return merged.filter((item) => {
+            const key = item.title.trim().toLowerCase();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+    }, [notices]);
+
+    if (items.length === 0) return null;
 
     return (
         <div className="w-full bg-primary text-primary-foreground overflow-hidden border-b border-primary/40">
@@ -36,7 +53,7 @@ export function NoticeTicker() {
                 </span>
                 <div className="relative flex-1 overflow-hidden whitespace-nowrap">
                     <div className="inline-flex animate-[ticker_30s_linear_infinite] hover:[animation-play-state:paused]">
-                        {[...notices, ...notices].map((n, i) => (
+                        {[...items, ...items].map((n, i) => (
                             <Link
                                 key={`${n.id}-${i}`}
                                 href="/news"
@@ -45,7 +62,7 @@ export function NoticeTicker() {
                                 <span className="opacity-90">•</span>
                                 {n.title}
                                 <span className="opacity-90 text-[10px]">
-                                    {new Date(n.createdAt).toLocaleDateString("en-GB")}
+                                    {new Date(n.date).toLocaleDateString("en-GB")}
                                 </span>
                             </Link>
                         ))}
