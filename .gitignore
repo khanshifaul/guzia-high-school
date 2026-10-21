@@ -38,3 +38,56 @@ agents/critic/report-*.md
 # local engines / temp
 .turbo/
 *.tsbuildinfo
+
+# Zolly office runtime — machine-local state, NOT memory.
+#
+# Founder decision, 2026-10-22: the office layer stays OFF this repo. This
+# repo is PUBLIC, and the office layer carries the founder's working
+# preferences and personal notes. It is not published.
+#
+# .agents/results/ is deliberately NOT ignored: a worker commits its result
+# file on the task branch, and the reviewer reads it there. It is not
+# committed to main, but git has no per-branch ignore.
+#
+# The cost, accepted knowingly: a fresh clone and every task worktree carry
+# no rules, so an agent there re-derives them. The office only runs on the
+# machine that holds .agents/.
+.agents/AGENTS.md
+.agents/foreman/
+.agents/hr/
+.agents/memory/
+.agents/prompts/
+.agents/reviewer/
+.agents/rules/
+.agents/shared/
+.agents/worker/
+.agents/zolly/
+.agents/STATE.md
+.agents/day.json
+.agents/queue/
+.agents/runs/
+.agents/inbox/
+.agents/worktrees/
+.agents/trash/
+.agents/days/
+.agents/events/
+.agents/monitor/
+.agents/memory/.work/
+.agents/memory/.lock
+.agents/memory/*.tmp
+.agents-backup-*/
+.agents/foreman.pid
+.agents/foreman-loop.pid
+.agents/foreman-settle.pid
+.agents/LAST_PROMPT.md
+.agents/foreman-nudged.stamp
+.agents/zolly/telegram_offset.txt
+.agents/zolly/telegram_serve.lock
+.agents/zolly/task_ledger.json
+.agents/zolly/task_ledger.json.tmp
+.agents/zolly/dead_letter.jsonl
+.agents/nudge.stamp
+
+# Zolly: omp project MCP registration (absolute zolly-mcp path, per office).
+.omp/mcp.json
+.agents/zolly/state.md
