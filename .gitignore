@@ -46,8 +46,9 @@ agents/critic/report-*.md
 # preferences and personal notes. It is not published.
 #
 # .agents/results/ is deliberately NOT ignored: a worker commits its result
-# file on the task branch, and the reviewer reads it there. It is not
-# committed to main, but git has no per-branch ignore.
+# file on the task branch, and the reviewer reads it there. A squash merge
+# brings that file onto main as well, so a result file is public once merged:
+# it must not name personal facts.
 #
 # The cost, accepted knowingly: a fresh clone and every task worktree carry
 # no rules, so an agent there re-derives them. The office only runs on the
