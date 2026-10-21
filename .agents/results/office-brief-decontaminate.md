@@ -204,7 +204,9 @@ Checked for the fact, no correction needed:
 
 ## Commit
 
-`<sha>` — see "Commit" below.
+`80f1960` (`80f1960fec0e68280c3491113cf2b1d535f55ec4`) — the commit that adds
+this result file. A trailing record commit updates this line; no file outside
+`.agents/results/` is touched.
 
 ## Blockers
 
