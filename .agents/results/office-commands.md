@@ -186,8 +186,8 @@ $ gh repo view khanshifaul/guzia-high-school --json visibility
 ```
 
 The office layer carries the founder's working preferences and personal notes —
-`memory/founder.md` and `memory/personality.md` are personal notes, and several
-office files mention the founder has ADHD. `.gitignore` therefore ignores
+`memory/founder.md` and `memory/personality.md` are personal notes. `.gitignore`
+therefore ignores
 `.agents/AGENTS.md`, `.agents/foreman/`, `.agents/hr/`, `.agents/memory/`,
 `.agents/prompts/`, `.agents/reviewer/`, `.agents/rules/`, `.agents/shared/`,
 `.agents/worker/` and `.agents/zolly/`.
@@ -198,7 +198,9 @@ Accepted cost, knowingly:
   re-derives them;
 - the office only runs on the machine that holds `.agents/`;
 - `.agents/results/` is deliberately NOT ignored, so a worker can commit its
-  result file on the task branch and the reviewer can read it there.
+  result file on the task branch and the reviewer can read it there. A squash
+  merge brings that file onto `main` too, so a result file is **public once
+  merged** and must carry no personal facts.
 
 So "a task branch cannot carry a rule change" is deliberate, not a defect.
 This task does not propose tracking `.agents/`, does not `git add -f` a persona
