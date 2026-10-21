@@ -64,3 +64,11 @@ This project is indexed by GitNexus as **guzia-high-school** (21923 symbols, 265
 | Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus-cli/SKILL.md` |
 
 <!-- gitnexus:end -->
+
+## Zolly office context
+
+@.agents/memory/goal.md
+@.agents/rules/system.md
+@.agents/rules/safety.md
+@.agents/rules/workflows.md
+@.agents/rules/project.md
