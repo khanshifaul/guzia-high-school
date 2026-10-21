@@ -109,8 +109,10 @@ C) is the only form that works.
 
 ## Commit
 
-- result file: `COMMIT_SHA_PLACEHOLDER` (the commit on `foreman/office-commands`
-  that carries this file)
+- result file, content: `ca569b1349bb371abb2e91d201b43512a9520818`
+  (`docs(office): record the --path fix and the tracking decision`)
+- this SHA was recorded by the follow-up commit on `foreman/office-commands`,
+  because a commit cannot name its own SHA. Both commits touch only this file.
 
 ## Blockers
 
