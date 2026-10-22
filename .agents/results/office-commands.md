@@ -282,6 +282,48 @@ are never right" would have broken this one, which is why the rule is stated as
 a pairing — *this* command takes three dots, *that* command takes two — and
 not as a blanket prohibition.
 
+### Edit 8 — `.agents/foreman/` (the foreman loads the result-file rule)
+
+Made by the foreman seat, in its own files, in the main checkout. Untracked and
+unstaged, per the founder's decision.
+
+**The gap.** The foreman loaded `.agents/rules/queue-contract.md` — the brief
+side of the privacy rule — and referred to `.agents/rules/result-contract.md`
+only for the result file's **format**. The rule that a result file states the
+**decision** and the **paths**, never the personal content behind them, lived
+in a file the foreman never loaded. But the foreman is the seat that reads
+that file before it goes to the reviewer, and a result file is **public once
+merged** — a squash merge puts it on `main` whatever `.gitignore` says about
+the task branch. That is the layer the leak came from: the brief was
+authored one step earlier, and the rule that would have stopped it was in the
+reviewer's file, not the brief-writer's.
+
+**After — `.agents/foreman/agent.md:17-23`**, the rules-to-load block now
+names the result file as a rule the foreman follows:
+
+> **The result file the worker writes:** `.agents/rules/result-contract.md` —
+> its format, and the rule that a result file states the **decision** and the
+> **paths**, never the personal content behind them. You are the seat that
+> reads that file before it goes to the reviewer, and a result file is
+> **public once merged** … Both rules live in one place each: the reviewer
+> points at the same file you do, and neither of you restates it.
+
+**After — `.agents/foreman/rules/extensions.md:208-217`**, the Reporting
+format section says to read what the result file SAYS, not just what it
+changes, and that the fix for a leak is to have the worker state the decision
+neutrally — **not** to delete the file, and not to edit it yourself.
+
+**After — `.agents/foreman/rules/extensions.md:51-66`**, a **"Where the rules
+live"** table: each rule has one authoritative file, and the reviewer points
+at the same files the foreman does. The shape is the reviewer's own
+`.agents/reviewer/rules/extensions.md` table, so the two seats are symmetric.
+
+**No second copy of the rule.** The content rule stays in
+`result-contract.md` → **What a result file must not contain**. Both seats
+point at it; neither restates it. That is the same shape the reviewer seat
+and the foreman seat converged on for the three-surface privacy check — one
+place a reader looks, not two copies to drift.
+
 ## The tracking decision — recorded, not changed
 
 The founder decided (2026-10-22) that **`.agents/` stays off this repo**. The
