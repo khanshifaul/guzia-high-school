@@ -147,9 +147,9 @@ the memory compact itself is unchanged and its tests pass.
 - Kit: branch `foreman/office-kit-installer-excludes`, commit
   `f6efcf39ceb4816a654b132dcdba433f265a0dc0`, PR
   <https://github.com/khanshifaul/zolly/pull/7>. **Not merged.**
-- Guzia: `COMMIT_PLACEHOLDER` (the commit that added this file; recorded by
-  the follow-up commit on this branch, because a commit cannot name its own
-  SHA).
+- Guzia: `18cc76ec98c47677862e9f71103bfdcdc735180a` (the commit that added
+  this file, recorded by the follow-up commit on this branch, because a commit
+  cannot name its own SHA).
 
 ## Blockers
 
