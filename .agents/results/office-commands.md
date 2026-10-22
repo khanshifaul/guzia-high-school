@@ -324,6 +324,36 @@ point at it; neither restates it. That is the same shape the reviewer seat
 and the foreman seat converged on for the three-surface privacy check — one
 place a reader looks, not two copies to drift.
 
+### Edit 9 — `.agents/reviewer/agent.md` (read the file that ships, not the diff)
+
+Made by the foreman seat, in its own persona, in the main checkout. Untracked
+and unstaged, per the founder's decision.
+
+**The gap.** These personas and rules are **copied into every office that
+installs the kit** — `install.sh:480` is `cp -R "$TEMPLATE/." "$AGENTS_DIR/"` —
+so a change here is a change to every future office, and a personal detail
+written into one of these files is copied into every future checkout. The
+persona did not say so, so a reviewer here was reviewing a *project* when the
+artefact under review was a *template*.
+
+**After — `.agents/reviewer/agent.md:18-34`**, the reviewer is told to read
+the whole file before the diff, and to read it as a file that ships:
+
+- **Re-read the file you are judging, in full, before the diff.** A persona
+  or a rule edited in one place can contradict the same file edited in
+  another, and the copy in front of you may not be the copy that shipped.
+  Measured 2026-10-22: this office's reviewer persona carried
+  `gh pr checks <pr-number> --required` — which on a base branch with no
+  protection exits `1` on a **green** PR — while the rule file beside it
+  already said when to OBJECT. Two files, two rules, one seat that loads
+  both.
+- **A rule written here travels further than a rule written in a project.** The
+  category in a rule must be the widest one that still says what the rule
+  needs to say, because every install copies it.
+
+The same rule is in the kit's own reviewer persona (kit PR #4, `18f6f0a`), in
+the kit's voice and against the kit's own `install.sh:480`.
+
 ## The tracking decision — recorded, not changed
 
 The founder decided (2026-10-22) that **`.agents/` stays off this repo**. The
