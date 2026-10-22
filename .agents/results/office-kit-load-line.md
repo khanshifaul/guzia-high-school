@@ -67,7 +67,10 @@ the five files that name it (`foreman/agent.md`, `foreman/rules/extensions.md`,
 `foreman/boot/foreman.md`, `zolly/agent.md`, `reviewer/rules/extensions.md`);
 `-- --model` 4 command sites (3 in `foreman/agent.md`, 1 in
 `foreman/rules/extensions.md`); `--cwd "$(git
-rev-parse --show-toplevel)"` 3 command sites; `<short-id>` 4 sites;
+rev-parse --show-toplevel)"` 3 command sites; `worker-…-<short-id>` 8 mentions
+across the three files that name seats (4 `foreman/agent.md`, 3
+`foreman/rules/extensions.md`, 1 `zolly/rules/extensions.md` — of which 3 are
+`herdr agent start` commands and 2 are `zolly worker-brief` commands);
 `name,state,bucket` 1; zero `gh pr checks <n> --required` commands. So the
 checked-in persona is what a fresh install gets — `install.sh` needed no edit for
 this.
@@ -162,23 +165,44 @@ turn while the dispatch looks healthy). Everything else — `--cwd`, absolute
 
 - herdr caps an **agent name** at **32 characters** and rejects a longer one
   with `invalid_agent_name`.
-- `worker-<frequency>-` is 8 characters plus the frequency. A 17-character
-  frequency leaves **7** for the short id, so the form is
-  **`worker-<frequency>-<short-id>`** with the short id **at most 7
-  characters**; a shorter frequency leaves room, but 7 is the rule that holds at
-  every frequency.
+- The prefix `worker-<frequency>-` is `7` for `worker-` + the frequency + `1` for
+  the joining `-`; the budget for the short id is `32` minus that prefix. At a
+  17-character frequency the prefix renders to 25 and the budget is **7**, so the
+  form is **`worker-<frequency>-<short-id>`** with the short id **at most 7
+  characters**; a shorter frequency leaves room, but 7 is the budget the kit
+  states. Count the **rendered** name, never the template's placeholders.
 - **Only the herdr agent name is abbreviated.** The radio handle
   (`worker-<task-id>`), queue path (`.agents/queue/<task-id>.md`), branch
   (`foreman/<task-id>`), result file (`.agents/results/<task-id>.md`) and
   worktree path (`.agents/worktrees/<task-id>/`) keep the full task id.
-- `pr-reviewer-<frequency>` is 12 + the frequency, so it fits a 17-character
-  frequency at 29; it must not grow a suffix.
+- `pr-reviewer-<frequency>`: the prefix `pr-reviewer-` is `12`, so a
+  17-character frequency renders to **29** characters
+  (`python3 -c "print(len('pr-reviewer-guzia-high-school'))"` → `29`), leaving 3
+  characters of room; it must not grow a suffix longer than that.
 
-Worked example: frequency `guzia-high-school` (17) with task id
-`office-kit-load-line` (18) would give
-`worker-guzia-high-school-office-kit-load-line` — **38** characters, rejected.
-Short id `kitline` gives `worker-guzia-high-school-kitline` — **32**, exactly
-the cap.
+Worked example, every length taken from the command shown:
+
+```console
+$ python3 -c "print(len('guzia-high-school'))"
+17
+$ python3 -c "print(len('office-kit-load-line'))"
+20
+$ python3 -c "print(len('worker-guzia-high-school-'))"
+25
+$ python3 -c "print(len('worker-guzia-high-school-office-kit-load-line'))"
+45
+$ python3 -c "print(len('worker-guzia-high-school-okl'))"
+28
+$ python3 -c "print(len('worker-guzia-high-school-kitline'))"
+32
+```
+
+So frequency `guzia-high-school` (17) with task id `office-kit-load-line` (**20**,
+not 18) renders to `worker-guzia-high-school-office-kit-load-line` — **45**
+characters, rejected. The prefix `worker-guzia-high-school-` is 25, so the short
+id has 32 − 25 = **7** characters. Short id `okl` gives
+`worker-guzia-high-school-okl` — **28**, which fits. Short id `kitline` gives
+`worker-guzia-high-school-kitline` — **32**, exactly the cap.
 
 ## Commit
 
