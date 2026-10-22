@@ -175,7 +175,7 @@ The invariant both enforce: **one `Promoted to:` line per retracted entry.**
   `f874cdd71481e972ec6cc79cd8579051526525e4` (`memory: make retract
   idempotent`), PR <https://github.com/khanshifaul/zolly/pull/5> — updated,
   not a second PR.
-- Guzia: this file — commit `C2F76D5_PLACEHOLDER` (recorded by the follow-up
+- Guzia: this file — commit `c1e624729f47a2ced084889678ce0ad3f284fd37` (recorded by the follow-up
   commit that fills this line, because a commit cannot name its own sha).
 
 ## Blockers
