@@ -170,9 +170,10 @@ string.
   PR.
 - guzia branch `foreman/office-kit-load-line`: `4cde346da129f91abe016f33e8d17ab9b9252ec0`
   corrects `.agents/results/office-kit-load-line.md`; it lands on PR #10.
-- this result file: the first commit on `foreman/office-kit-bus-rule`; its SHA is
-  recorded by the follow-up commit on the same branch (a commit cannot name its
-  own SHA).
+- this result file: `512601ac1a4a81f6c154f1ca95c4fb8be4ee21e0`
+  (`docs(office): record the three-surface privacy rule and the arithmetic fix`).
+  The follow-up commit on the same branch records that SHA, because a commit
+  cannot name its own.
 
 ## Blockers
 
