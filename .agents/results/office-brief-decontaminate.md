@@ -202,6 +202,37 @@ Checked for the fact, no correction needed:
 - `.agents/reviewer/agent.md:194` — lists category examples ("health,
   neurodivergence, …"), names no condition.
 
+### Correction to the check above — the rule file's category was too narrow
+
+The first bullet above judged the rule file's wording acceptable on the ground
+that it names "a category". **That judgement was wrong, and the reviewer seat
+overturned it after the merge.** The rule file is not like a result file: a
+rule is copied into every office that installs the kit, so a narrow category
+in a rule republishes that category to every future office. The narrowing is
+the part that leaks.
+
+So `.agents/rules/result-contract.md:69` now uses the wide category, and a
+new bullet states the principle: **this file travels; a decision file does
+not.** A decision record may name the category it was about — it lives on one
+machine and records one decision — but a rule must use the widest category
+that still says what the rule needs to say. The bullet also notes that even a
+**before-snippet** in a rule file is a copy that travels, so a rule quotes
+nothing narrower than it needs. That is not true of a result file, where a
+before-snippet is the honest record of what was removed.
+
+The rule file was contradicting its own rule: it named a narrow category in
+its worked example while a bullet two lines below said naming *which* personal
+detail is what publishes it. That is the same shape as a procedure that pairs
+a command with a comment that cannot both be right — the shape the reviewer
+found in the `--required` trap in the same week.
+
+**And the root cause was this office's, not the worker's.** The brief
+specified the literal replacement wording, so the worker applied it faithfully
+and the phrase reached a public file. A brief that says "use this exact
+wording" moves the judgement to the foreman and then freezes it; a brief that
+says "use the category the founder's decision used" keeps the judgement where
+it belongs, and the worker picks the wording that fits.
+
 ## Commit
 
 `80f1960` (`80f1960fec0e68280c3491113cf2b1d535f55ec4`) — the commit that adds
