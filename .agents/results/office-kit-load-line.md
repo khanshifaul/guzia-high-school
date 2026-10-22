@@ -63,10 +63,14 @@ EXIT=0
 
 `install.sh <throwaway git repo> --no-binary --no-systemd --yes --founder Test`
 → `INSTALL OK`, and in the installed `.agents/`: `queue-contract` = 1 in each of
-the five loader files this branch edits; `-- --model` 5 sites; `--cwd "$(git
-rev-parse --show-toplevel)"` 2 sites; `<short-id>` 4 sites; `name,state,bucket`
-1; zero `gh pr checks <n> --required` commands. So the checked-in persona is
-what a fresh install gets — `install.sh` needed no edit for this.
+the five files that name it (`foreman/agent.md`, `foreman/rules/extensions.md`,
+`foreman/boot/foreman.md`, `zolly/agent.md`, `reviewer/rules/extensions.md`);
+`-- --model` 4 command sites (3 in `foreman/agent.md`, 1 in
+`foreman/rules/extensions.md`); `--cwd "$(git
+rev-parse --show-toplevel)"` 3 command sites; `<short-id>` 4 sites;
+`name,state,bucket` 1; zero `gh pr checks <n> --required` commands. So the
+checked-in persona is what a fresh install gets — `install.sh` needed no edit for
+this.
 
 ### `grep -c queue-contract` per persona — kit `origin/main` (`8d5e84e`) → branch
 
@@ -86,7 +90,7 @@ what a fresh install gets — `install.sh` needed no edit for this.
 | Defect | before | after |
 |---|---|---|
 | `herdr worktree create --branch …` without `--cwd` | 3 (2 `foreman/agent.md`, 1 `foreman/rules/extensions.md`) | 0 |
-| `herdr agent start … --kind omp` without `-- --model` | 0 of 4 sites | 4 of 4 (5 including the reviewer start) |
+| `herdr agent start … --kind omp` without `-- --model` | 0 of 4 command sites | 4 of 4 |
 | worker herdr name `worker-{{FREQUENCY}}-<task-id>` | 8 (4 + 3 + 1) | 0 |
 | `gh pr checks <pr-number> --required` as a command | 1 | 0 (`--required` now appears only as a prohibition) |
 | `gh pr checks --json name,state,bucket` | 0 | 1 |
