@@ -175,6 +175,65 @@ $ grep -n "herdr worktree create" .agents/foreman/agent.md .agents/foreman/rules
 
 (`agent.md:111` is the prose tool list, not a command site.)
 
+### Edits 4-6 — `.agents/reviewer/agent.md` (the CI gate), made by the reviewer seat
+
+These three were made by the **pr-reviewer seat itself**, not by a worker on
+a brief, and they are recorded here so they are not lost with a bus message.
+Untracked and unstaged, per the founder's decision — same state as every other
+persona edit above.
+
+**Edit 4 — the `gh pr checks` exit-code table.** Before: the persona said only
+"pending is not failing" in prose, with no number. After, at
+`.agents/reviewer/agent.md:197-206`:
+
+| Exit | Meaning | Your move |
+|---|---|---|
+| `0` | every check passed | merge |
+| `8` | checks are **pending** | wait — pending is not failing |
+| `1` | a check **failed** | OBJECTION — do not merge |
+
+plus: "Anything else is a non-zero exit that is not a failure verdict: **treat
+it as unknown, not as a failure.** Never bounce a PR because the runner is
+slow." The gap that closed was the last clause: an agent told "non-zero =
+objection" would have bounced a PR whose runner was merely slow.
+
+**Edit 5 — the bucket form.** After, at `.agents/reviewer/agent.md:213-218`:
+`gh pr checks <pr-number> --json name,state,bucket`, with `bucket` one of
+`pass`, `fail`, `pending`, `skipping`, `cancel`, and "merge only when no
+bucket is `fail`; `pending` means wait." The gate then never has to reason
+about exit codes.
+
+**Edit 6 — `--delete-branch` must be explicit.** After, at
+`.agents/reviewer/agent.md:220-227`: a repository can have
+`delete_branch_on_merge` turned off, in which case the task branch survives the
+merge and the next task's worktree can collide with it — so pass
+`--delete-branch` every time, and check afterwards with
+`git ls-remote --heads origin 'foreman/<task-id>'`, which must print nothing.
+
+**Why `--required` stays out**, measured on 2026-10-22 and unchanged by these
+edits: `gh api repos/khanshifaul/guzia-high-school/branches/main/protection`
+-> `404 Branch not protected`, and on a passing PR `gh pr checks 12 --required`
+exits **1** with "no required checks reported" — indistinguishable from a real
+failure — while `gh pr checks 12` exits **0**. `gh pr checks --help` confirms
+`8: Checks pending`, and `gh pr checks 12 --json name,state,bucket` returns
+`"bucket":"pass"` on live checks.
+
+**One correction to the reviewer's own write-up of these edits.** It recorded
+the error as raised at
+`apps/api/src/admissions/dto/review-application.dto.ts:10:8` and surfacing
+through `ValidateBy:16`. The shape is right — the error surfaces in a filter,
+not at a raise — but two specifics do not hold in this repo: **`ValidateBy`
+does not exist anywhere in the tree** (`grep -rn "ValidateBy" --include="*.ts"
+--include="*.js" . --exclude-dir=node_modules` -> no matches), and
+`review-application.dto.ts:10` is `export class ReviewApplicationDto {` — a
+class declaration, not a raise site. The decorators that raise are
+`@IsEnum(AdmissionDecision)` (line 13) and `@Length(0, 500)` (line 18). The
+chain that exists is: DTO decorator -> the global `ValidationPipe`
+(`apps/api/src/main.ts:40-46`) -> **`ValidationExceptionFilter`**
+(`apps/api/src/common/filters/validation-exception.filter.ts:11`, registered at
+`main.ts:48`). Recorded because a wrong symbol in a rule is a pointer that
+sends the next reader somewhere the thing is not.
+
 ## The tracking decision — recorded, not changed
 
 The founder decided (2026-10-22) that **`.agents/` stays off this repo**. The
