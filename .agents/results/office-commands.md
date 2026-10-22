@@ -424,6 +424,46 @@ did. Rewriting 99 of them by hand would fix today's instances and leave the
 next edit to break them again. A rule that a later agent is told to follow is
 the only version that survives.
 
+### Edit 11 — `.agents/foreman/rules/extensions.md` (three checks for whether a fix is live)
+
+Made by the foreman seat, in its own rules, in the main checkout. Untracked and
+unstaged, per the founder's decision. The same section is in the kit's foreman
+rules (kit PR #4, `9f71afd`).
+
+**The rule.** Three checks, and **each answers a different question**. Using the
+wrong one is how a fix gets "verified" while it is still broken — and all three
+of these went wrong in one session:
+
+| Check | What it can answer | What it cannot |
+|---|---|---|
+| **Behaviour** — run the thing, look at what changed | the **state** | the cause |
+| **Source at the build's commit** — `git show <build-commit>:<path>` | the **cause** | the date |
+| `nm -C` | **nothing** | whether a function is absent |
+
+- **`nm -C` must not be used to prove a function is absent.** False negatives
+  for inlined functions: measured 2026-10-22, a predicate was inlined, so its
+  symbol was absent from the symbol table of **both** the stale binary and the
+  fixed one. A symbol missing from the good build too cannot tell the good
+  build from the bad one.
+- **`git merge-base --is-ancestor` cannot tell a landed SQUASH from an
+  unmerged branch**, because the squash changes every sha. The landed-test is
+  `gh pr view <n> --json state,mergedAt`.
+- **A byte-comparison against a build you made yourself cannot tell you which
+  tree someone else's build came from.** Measured 2026-10-22: the kit's
+  release build differed from a fresh build of `origin/main` by 205,440 bytes,
+  because it was built from the kit's *working tree* — at the same commit, but
+  under different conditions. **A build artefact alone cannot answer its own
+  provenance.**
+
+**And the rule that keeps getting restated, because it is the one that was
+actually violated here:** *a rule about a tool is a claim about the tool, and
+the tool is what runs.* A source tree can be correct while the installed
+binary is not — measured 2026-10-22, the gate-predicate fix was merged and
+the binary on disk was built **24 minutes before it**, so the founder's `haa`
+ran the pre-fix code while every source-tree check said the fix was live. The
+office's rules now say: **check the running thing, or state plainly that you
+checked the source and not the artefact.**
+
 ## The tracking decision — recorded, not changed
 
 The founder decided (2026-10-22) that **`.agents/` stays off this repo**. The
