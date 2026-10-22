@@ -79,6 +79,33 @@ And it keeps the part that is this office's: the result file for such a task
 still goes in **this** repo, on this repo's task branch, with the other repo's
 PR linked from it — this office is the one with a result-file convention.
 
+**Two refinements, added after the manager answered the ownership question.**
+
+**The route, stated.** "Do not open a worktree there and do not wait for one.
+Write the defect report with the exact lines and the acceptance criteria, and
+hand it to the seat that works in that repo." For the kit that seat is a
+**bare omp agent** — pane `wH:p1`, cwd `/home/khan/Projects/zolly`, reachable
+only by `herdr agent prompt wH:p1`, and **not** on the radio bus under any
+frequency (`radio handles` -> 0 matches). It commits to a branch, opens a PR,
+and the founder merges. That is not a workaround; it is the design.
+
+**Why, in one line: the kit is a factory, not a project.** A factory is not
+installed into itself — it is worked on by a seat, and its output is reviewed
+by whoever owns the factory. Installing an office into the kit would be a
+category error, not a missing step, and it would overwrite `.agents/`, which
+in the kit **is** the template, with a deployed office's rules.
+
+**And the report must name the commit the defect was measured against, and
+the seat must re-measure before acting.** "The exact lines" is half of it;
+the other half is the commit those lines were read from. Measured twice on
+2026-10-22: a defect report was accurate when written and wrong when read,
+because the fix landed between the measurement and the report. The gate
+predicate fix landed in `c42975a` at 05:05:53, **twenty-four minutes** after
+the binary it would have applied to was built (`46ad3a5`, 04:41:47), so the
+branch and the running binary were at different commits. A report that names
+the commit can be aged; one that names only a line number is a pointer into
+the past.
+
 ## Verify
 
 ### Kit tests — `cd tool && cargo test`
