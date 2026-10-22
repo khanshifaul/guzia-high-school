@@ -389,6 +389,41 @@ the whole file before the diff, and to read it as a file that ships:
 The same rule is in the kit's own reviewer persona (kit PR #4, `18f6f0a`), in
 the kit's voice and against the kit's own `install.sh:480`.
 
+### Edit 10 — `.agents/rules/result-contract.md` (cite a rule by its phrase)
+
+Made by the foreman seat, in the rules file, in the main checkout. Untracked
+and unstaged, per the founder's decision. The same section is in the kit's
+contract (kit PR #4, `a6a126b`).
+
+**The problem.** A reviewer quoted seven line numbers for the rules in
+`.agents/reviewer/agent.md`, checked them, and **four were wrong** — they were
+right when quoted and wrong by the time the message was read, because the file
+had grown in between. They corrected the map, and the corrected map was **also
+wrong**, for the same reason: two entries were blank lines, and three landed
+on real text that was simply not the text meant.
+
+**And the second shape is the dangerous one: a citation that lands on
+something plausible is worse than one that lands nowhere**, because a reader
+who checks it finds a sentence and assumes it is the one you meant.
+
+**The rule.** A result file that records **where a rule lives** quotes the
+**phrase** that identifies it, not a line number. A line number is a
+coordinate in a file that is still being edited; a phrase is a claim about
+content, and content moves without the claim becoming false. A line number is
+still welcome **beside** the phrase, as a convenience for the reader opening
+the file right now — never alone.
+
+A `file:line` record of a **change** is still correct — "the diff replaced the
+invocation at `reviewer/agent.md:64`" is a statement about a specific edit at
+a specific moment, and the moment is what makes it checkable. It is the record
+of where a rule **lives** that must be a phrase.
+
+**Why this is a rule and not a note.** This office's result files carry
+**99** `file:line` citations, and they drift for the same reason the reviewer's
+did. Rewriting 99 of them by hand would fix today's instances and leave the
+next edit to break them again. A rule that a later agent is told to follow is
+the only version that survives.
+
 ## The tracking decision — recorded, not changed
 
 The founder decided (2026-10-22) that **`.agents/` stays off this repo**. The
