@@ -234,6 +234,54 @@ chain that exists is: DTO decorator -> the global `ValidationPipe`
 `main.ts:48`). Recorded because a wrong symbol in a rule is a pointer that
 sends the next reader somewhere the thing is not.
 
+### Edit 7 — `.agents/reviewer/agent.md` (the diff/log pairing), made by the reviewer seat
+
+Also made by the **pr-reviewer seat itself**, in its own persona, in the main
+checkout. Untracked and unstaged, per the founder's decision.
+
+The reviewer seat had the three-dot rule but not the **pairing**: which form
+belongs to which command, and why the two-dot diff is the dangerous one. After,
+at `.agents/reviewer/agent.md:53-73`:
+
+```bash
+git diff origin/main...HEAD            # the task's own change — use THIS
+git log --oneline origin/main..HEAD    # the commits on the branch — two dots here
+```
+
+with "**Three dots for the diff, two for the log.** They are not
+interchangeable", the measurement (three-dot `--name-only` gave `taskfile.txt`
+— the task's only change; two-dot gave `mainfile.txt` AND `taskfile.txt`), the
+consequence (a diff containing a **false change**, which can raise a bogus
+OBJECTION against a file the worker never edited, or lose the real change in
+the noise), and plain `git diff` named as worse still — empty on a committed
+branch.
+
+The clause added here that the office did not have anywhere: **"Run the `git
+log` form as well. When the diff is empty — a worker that committed nothing,
+or a branch that is already merged — the log is what shows what is actually
+there."** The three-dot form alone leaves a reader with no way to tell "the
+worker changed nothing" from "the diff is looking at the wrong thing".
+
+**The same clause was applied to the foreman's two files**, which already
+carried the pairing and the "false change" reason but not the log-as-companion
+instruction: `.agents/foreman/agent.md:192-194` and
+`.agents/foreman/rules/extensions.md:119-121`. All three seats now carry the
+same three-part rule: the pairing, the false-change reason, and the log as
+companion.
+
+**One two-dot diff that is correct, and why it must not be "fixed".**
+`.agents/foreman/rules/extensions.md:58` reads
+`git diff origin/main origin/<branch> --stat   # empty = the content is merged`,
+and it is the **opposite** rule: it uses the two-dot form deliberately, because
+comparing the two tips is exactly the question "is this branch's content
+already in main?". The same file says there that the log is **not** the test
+there — a squash merge leaves the branch's commits out of main's ancestry, so
+`git log origin/main..origin/<branch>` lists every commit the branch
+contained (twelve of them) while the diff is empty. A rule that said "two dots
+are never right" would have broken this one, which is why the rule is stated as
+a pairing — *this* command takes three dots, *that* command takes two — and
+not as a blanket prohibition.
+
 ## The tracking decision — recorded, not changed
 
 The founder decided (2026-10-22) that **`.agents/` stays off this repo**. The
