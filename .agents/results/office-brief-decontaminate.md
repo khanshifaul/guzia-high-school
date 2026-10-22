@@ -60,6 +60,46 @@ it — `.agents/memory/{personality,decisions,learnings}.md`,
 inside `.agents-backup-20261021T201944Z/`. All were cleaned. The `.agents/rules/`
 directory was already clean.
 
+**The scope of a privacy scan is part of the scan, and it is the part that is
+easiest to get wrong.** Measured 2026-10-22 on this office, after the
+cleanup, scanning `.agents/` and excluding `worktrees/`, `node_modules/`,
+`apps/` and `trash/`:
+
+| Pattern | Result |
+|---|---|
+| the token alone, whole-word | **0 files** |
+| the token **together with** the phrase around it | **6 lines across 4 files** |
+
+All six compound-pattern hits are false positives, and each is a file that
+*legitimately* quotes the phrase while writing the token as a placeholder:
+
+- `.agents/memory/personality.md:31` — a live persona quoting the phrase in
+  its own operational instruction.
+- `.agents/reviewer/agent.md:121-122` — the rule **quoting the phrase inside
+  its own explanation** of why not to scan for the phrase.
+- `.agents/results/office-brief-decontaminate.md:133-134` — this file,
+  quoting the before/after pair.
+- `.agents/inbox/reply-pr-reviewer-225.md:18` — a note that quoted the phrase
+  while reporting on it.
+
+**So the rule that warns against the compound pattern is itself a false
+positive for it**, and that is expected rather than a defect. The reviewer
+persona now says so, and says the general form: **a scan is only evidence
+about what it looked at.** The token-only scan answers "is the office clean";
+the compound one answers "what does this pattern touch", and the answer is
+partly the rule that explains the pattern.
+
+**And the scope is not a detail — it is the difference between a clean result
+and a wall of hits.** Measured without excluding `trash/`, the same compound
+pattern returns **24 files**: three of them carry *real* mentions (the
+pre-install backup clone `.agents/trash/voicefix-superseded-clone/`), and
+eighteen are Rust build artefacts (`.rlib`, `.rmeta`) where the term is a
+coincidental byte run. `trash/` is gitignored, so it is invisible to
+`git status` and easy to forget. A reader who ran the compound pattern
+without excluding it would get a wall that mixes real mentions with false
+positives — and would be **right** to be alarmed. That is why the scope is
+now named in the rule rather than left to the reader.
+
 ### Scan after cleanup
 
 ```bash
