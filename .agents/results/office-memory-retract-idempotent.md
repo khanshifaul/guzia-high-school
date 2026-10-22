@@ -132,6 +132,22 @@ The seven surplus entries (`L-0006`, `L-0013`, `L-0014`, `L-0019`, `L-0026`,
 `L-0027`, `L-0030`) reduce to one pointer each: two were exact duplicates and
 five named two different targets. `retract` no longer creates that state.
 
+### Fixture — a legacy surplus (the shape of those seven entries)
+
+```
+before: 121B, 2 pointers
+$ memory retract L-0001        # no target: leaves the surplus for compact
+memory: L-0001 already retracted in learnings.md — 2 recorded 'Promoted to:' lines (.agents/rules/new.md, .agents/rules/old.md); unchanged — run 'memory compact' to collapse them
+after:  121B, 2 pointers
+
+$ memory retract L-0001 --promoted-to .agents/rules/newer.md
+memory: L-0001 already retracted in learnings.md — promotion target replaced: 2 recorded pointers (.agents/rules/new.md, .agents/rules/old.md) -> .agents/rules/newer.md
+after:  89B, 1 pointer
+```
+
+A target-less retract reports the surplus and points at `compact`; a retract
+with a new target collapses it to one line and names every discarded target.
+
 ## Policy — what a re-retraction does
 
 **Replace, and say so.** The new `--promoted-to` target wins; the recorded line
