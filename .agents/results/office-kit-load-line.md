@@ -184,8 +184,8 @@ the cap.
 
 - result file: `c391254785af80c63b6d6267ed92b2f613012369`
   (`docs(office): record the kit load-line, reviewer rules and command fixes`).
-  The follow-up commit on `foreman/office-kit-load-line` records that SHA,
-  because a commit cannot name its own.
+  The branch's follow-up commits record that SHA and correct the counts, because
+  a commit cannot name its own.
 - kit branch `foreman/office-kit-load-line`, commit
   `6db280174cbed2b177f13bbe68bca4b96d8d5360` (parent `8d5e84e`), PR
   https://github.com/khanshifaul/zolly/pull/4
