@@ -102,12 +102,45 @@ audits. `radio log` is read-only and prints message bodies to any seat. This is
 stated in both files, because the wrong command is the one an agent reaches for
 first.
 
-The rule also states, in the contract: the term must not appear in a **command**
-either (the agent quoting a verification command believes it did the careful
-thing, and the copy still outlives the tree), so the canonical form of a check
-is the placeholder; the bus is **shared across offices**, so a clean result on
-one frequency is not a clean bus; and the ledger is **a record and is not ours
-to scrub** — the fix is the rule going forward, not a deletion.
+> **Corrected after review, and the correction is stronger than the original
+> reason.** The bus's own source says what `radio show` does: `cmd_show`'s
+> docstring reads *"Print one message body (the exact envelope the pane
+> received). Reading as the addressed recipient records the delivery — that is
+> the pull path's acknowledgement"*, and the function ends with
+> `UPDATE deliveries SET status='delivered', delivered_at=?`. So it is an
+> **ack**, not a read, and the consequence is sharper than "consumes what it
+> checks": an audit written against it **silently marks the inbox delivered**,
+> so it destroys the inbox state it is auditing and the next reader sees those
+> messages as already read. Both files now say that, from the source.
+
+> **And a second correction: the bus check's gap is SCOPE, not truncation.**
+> This record first said the log's undercount was body truncation in the
+> rendering. It is not — `cmd_log` prints `row["text"]` in full, verbatim, one
+> message per line, so no term is clipped out of a long line. What the
+> undercount is: `cmd_log`'s docstring reads *"Inside a pane only this
+> workspace's traffic; outside herdr the full ledger"*, and its query is
+> `WHERE from_ws = ? OR to_ws = ?` with the current scope. **Inside a pane it
+> selects only this office's traffic.** Measured 2026-10-22 on the shared
+> ledger: the raw table held **58** messages carrying the term across two
+> offices; the in-pane log showed **40**; the other office's **18** were not
+> in scope and the log gave no indication of that. So the number means **"this
+> many in this office"** — never "this many in the ledger", and never "the
+> ledger is clean".
+
+> **And a third, from the same review: prose needs its own rule, and it is the
+> leak.** Re-classifying every occurrence in the raw table by context gives
+> **76 in a command context and 46 in prose** — the prose spread across both
+> offices and all three seats. So the rule now carries two different rules:
+> a **command** containing the term is diligence-shaped but still names it
+> (fix by habit — the argument is the placeholder), while **prose naming the
+> condition** is disclosure, not diligence (fix by stating the decision and the
+> paths, and saying nothing about what was behind them). The command form is
+> the deceptive one, because the agent believes it did the careful thing; the
+> prose form is the damaging one, because nothing about it looks like a
+> mistake. **The prose form is also the one a tree-and-inbox audit misses**,
+> because the bus was never in scope for anyone doing that audit — which is
+> the general sentence this session kept arriving at: **a scan is only
+> evidence about what it looked at.**
 
 I did not run the three checks against this office: they require the term, and
 looking it up is the disclosure this task exists to prevent. The rule text and

@@ -28,6 +28,31 @@ this office's reviewer does not merge there.
 
 - `.agents/results/office-kit-load-line.md` (this file, guzia-high-school)
 
+**The brief itself was corrected after the review**, and the correction is
+recorded here because `.agents/queue/` is **gitignored** — the brief is
+machine-local, so a change to it lives only in this checkout and would
+otherwise leave no trace. The reviewer seat checked the brief's measurements
+against the kit's current `main` and found lines describing it as it was at
+`c42975a`:
+
+- The command-defect table's *"Measured on the kit's merged `origin/main`
+  (`c42975a`)"* now names which state it was measured against **and** carries
+  the re-measurement on `8d5e84e` — unchanged: `--cwd` 0, `-- --model` 0,
+  and the full-length agent name at 4 + 3 + 1 sites.
+- **The reviewer-side fix is one REPLACEMENT plus the exit-code table**, and
+  only then the other three rules. The kit's `reviewer/agent.md:64` reads
+  `gh pr checks <pr-number> --required` and `:65` reads "# If CI is failing,
+  OBJECTION — do not merge" — on a base branch with no branch protection
+  those two cannot both be right, because `--required` exits `1` on a PR
+  whose checks **all pass**. A worker told to *add* four rules to a file
+  whose existing line is actively wrong may leave the wrong line in place.
+- **Re-read the kit's own template files before editing them.** PR #3 rewrote
+  **six** template files, not three, and the kit **is** what other offices
+  install from — so a personal detail written into any of them is copied into
+  every future office's checkout. The files the task edits had already been
+  edited once that day by a privacy pass, so read them in full rather than
+  only the diff you are about to make.
+
 Kit-side changes are on a separate branch and PR in `khanshifaul/zolly`:
 
 - `.agents/foreman/agent.md` — seat names (`<short-id>` + the 32-char cap),
