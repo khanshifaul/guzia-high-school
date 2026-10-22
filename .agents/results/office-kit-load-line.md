@@ -46,6 +46,39 @@ Kit-side changes are on a separate branch and PR in `khanshifaul/zolly`:
 - `.agents/worker/generic.md` — a Guardrails bullet for the one case the worker
   is asked to carry out: a brief that tells it to write a personal fact.
 
+### A foreman-persona rule added after that task: cross-repo routing
+
+`.agents/foreman/rules/extensions.md` gained a section, **"A task in another
+repo has no reviewer — say so, do not assume one"**, after the kit work
+exposed the gap.
+
+The gap: the kit repo has no deployed office, so its PRs have no reviewer
+**by construction** — not because nobody looked, but because there is no seat
+to look with. Measured 2026-10-22 on `khanshifaul/zolly`: `grep -c "{{"
+.agents/zolly/config.toml` -> 5 unfilled placeholders, no `.agents/queue/`, no
+`.agents/results/`, and the Rust tool at `tool/` rather than under
+`.agents/`. This office's reviewer is the only path to main **for the repo
+this office is deployed in**, so it cannot review the kit's PRs, and it should
+not be asked to.
+
+The rule says three things a foreman would otherwise get wrong:
+
+- **Name the door in the brief and the report** — "this PR is opened, not
+  merged; it needs the founder or the bare seat at pane `<pane-id>`" — not
+  "this PR is open", which reads as "waiting for review" and is false when
+  there is no reviewer to wait for.
+- **Do not extend this office's reviewer to another repo by one-off
+  instruction.** That turns "the reviewer merges" into "the reviewer merges
+  when asked", and the rule erodes without anyone deciding to erode it.
+- **Do not install an office into a repo whose `.agents/` is the template
+  being edited** — `install.sh:455` sets `AGENTS_DIR="$TARGET/.agents"` and
+  `install.sh:480` copies the checked-in template over it, so installing
+  would overwrite the very files the task is changing.
+
+And it keeps the part that is this office's: the result file for such a task
+still goes in **this** repo, on this repo's task branch, with the other repo's
+PR linked from it — this office is the one with a result-file convention.
+
 ## Verify
 
 ### Kit tests — `cd tool && cargo test`
