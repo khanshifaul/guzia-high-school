@@ -189,9 +189,11 @@ cargo_exit=0
 
 ## Commit
 
-- Guzia result file: the first commit on `foreman/office-memory-compact`; its
-  SHA is recorded by the follow-up commit on the same branch (a commit cannot
-  name its own SHA).
+- Guzia result file:
+  `c2f76d57052c0d88d96e07644d8e85e8b00ca306`
+  (`docs(office): record the memory compact result and its design answers`).
+  The follow-up commit on the same branch records that SHA, because a commit
+  cannot name its own.
 - Kit: branch `foreman/office-memory-compact`, commit
   `19d9fa52f25882145e67f3bc91e26c2f8e45baab` (short `19d9fa5`), PR
   <https://github.com/khanshifaul/zolly/pull/5>.
