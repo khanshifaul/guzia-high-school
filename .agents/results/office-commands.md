@@ -175,6 +175,113 @@ $ grep -n "herdr worktree create" .agents/foreman/agent.md .agents/foreman/rules
 
 (`agent.md:111` is the prose tool list, not a command site.)
 
+### Edits 4-6 — `.agents/reviewer/agent.md` (the CI gate), made by the reviewer seat
+
+These three were made by the **pr-reviewer seat itself**, not by a worker on
+a brief, and they are recorded here so they are not lost with a bus message.
+Untracked and unstaged, per the founder's decision — same state as every other
+persona edit above.
+
+**Edit 4 — the `gh pr checks` exit-code table.** Before: the persona said only
+"pending is not failing" in prose, with no number. After, at
+`.agents/reviewer/agent.md:197-206`:
+
+| Exit | Meaning | Your move |
+|---|---|---|
+| `0` | every check passed | merge |
+| `8` | checks are **pending** | wait — pending is not failing |
+| `1` | a check **failed** | OBJECTION — do not merge |
+
+plus: "Anything else is a non-zero exit that is not a failure verdict: **treat
+it as unknown, not as a failure.** Never bounce a PR because the runner is
+slow." The gap that closed was the last clause: an agent told "non-zero =
+objection" would have bounced a PR whose runner was merely slow.
+
+**Edit 5 — the bucket form.** After, at `.agents/reviewer/agent.md:213-218`:
+`gh pr checks <pr-number> --json name,state,bucket`, with `bucket` one of
+`pass`, `fail`, `pending`, `skipping`, `cancel`, and "merge only when no
+bucket is `fail`; `pending` means wait." The gate then never has to reason
+about exit codes.
+
+**Edit 6 — `--delete-branch` must be explicit.** After, at
+`.agents/reviewer/agent.md:220-227`: a repository can have
+`delete_branch_on_merge` turned off, in which case the task branch survives the
+merge and the next task's worktree can collide with it — so pass
+`--delete-branch` every time, and check afterwards with
+`git ls-remote --heads origin 'foreman/<task-id>'`, which must print nothing.
+
+**Why `--required` stays out**, measured on 2026-10-22 and unchanged by these
+edits: `gh api repos/khanshifaul/guzia-high-school/branches/main/protection`
+-> `404 Branch not protected`, and on a passing PR `gh pr checks 12 --required`
+exits **1** with "no required checks reported" — indistinguishable from a real
+failure — while `gh pr checks 12` exits **0**. `gh pr checks --help` confirms
+`8: Checks pending`, and `gh pr checks 12 --json name,state,bucket` returns
+`"bucket":"pass"` on live checks.
+
+**One correction to the reviewer's own write-up of these edits.** It recorded
+the error as raised at
+`apps/api/src/admissions/dto/review-application.dto.ts:10:8` and surfacing
+through `ValidateBy:16`. The shape is right — the error surfaces in a filter,
+not at a raise — but two specifics do not hold in this repo: **`ValidateBy`
+does not exist anywhere in the tree** (`grep -rn "ValidateBy" --include="*.ts"
+--include="*.js" . --exclude-dir=node_modules` -> no matches), and
+`review-application.dto.ts:10` is `export class ReviewApplicationDto {` — a
+class declaration, not a raise site. The decorators that raise are
+`@IsEnum(AdmissionDecision)` (line 13) and `@Length(0, 500)` (line 18). The
+chain that exists is: DTO decorator -> the global `ValidationPipe`
+(`apps/api/src/main.ts:40-46`) -> **`ValidationExceptionFilter`**
+(`apps/api/src/common/filters/validation-exception.filter.ts:11`, registered at
+`main.ts:48`). Recorded because a wrong symbol in a rule is a pointer that
+sends the next reader somewhere the thing is not.
+
+### Edit 7 — `.agents/reviewer/agent.md` (the diff/log pairing), made by the reviewer seat
+
+Also made by the **pr-reviewer seat itself**, in its own persona, in the main
+checkout. Untracked and unstaged, per the founder's decision.
+
+The reviewer seat had the three-dot rule but not the **pairing**: which form
+belongs to which command, and why the two-dot diff is the dangerous one. After,
+at `.agents/reviewer/agent.md:53-73`:
+
+```bash
+git diff origin/main...HEAD            # the task's own change — use THIS
+git log --oneline origin/main..HEAD    # the commits on the branch — two dots here
+```
+
+with "**Three dots for the diff, two for the log.** They are not
+interchangeable", the measurement (three-dot `--name-only` gave `taskfile.txt`
+— the task's only change; two-dot gave `mainfile.txt` AND `taskfile.txt`), the
+consequence (a diff containing a **false change**, which can raise a bogus
+OBJECTION against a file the worker never edited, or lose the real change in
+the noise), and plain `git diff` named as worse still — empty on a committed
+branch.
+
+The clause added here that the office did not have anywhere: **"Run the `git
+log` form as well. When the diff is empty — a worker that committed nothing,
+or a branch that is already merged — the log is what shows what is actually
+there."** The three-dot form alone leaves a reader with no way to tell "the
+worker changed nothing" from "the diff is looking at the wrong thing".
+
+**The same clause was applied to the foreman's two files**, which already
+carried the pairing and the "false change" reason but not the log-as-companion
+instruction: `.agents/foreman/agent.md:192-194` and
+`.agents/foreman/rules/extensions.md:119-121`. All three seats now carry the
+same three-part rule: the pairing, the false-change reason, and the log as
+companion.
+
+**One two-dot diff that is correct, and why it must not be "fixed".**
+`.agents/foreman/rules/extensions.md:58` reads
+`git diff origin/main origin/<branch> --stat   # empty = the content is merged`,
+and it is the **opposite** rule: it uses the two-dot form deliberately, because
+comparing the two tips is exactly the question "is this branch's content
+already in main?". The same file says there that the log is **not** the test
+there — a squash merge leaves the branch's commits out of main's ancestry, so
+`git log origin/main..origin/<branch>` lists every commit the branch
+contained (twelve of them) while the diff is empty. A rule that said "two dots
+are never right" would have broken this one, which is why the rule is stated as
+a pairing — *this* command takes three dots, *that* command takes two — and
+not as a blanket prohibition.
+
 ## The tracking decision — recorded, not changed
 
 The founder decided (2026-10-22) that **`.agents/` stays off this repo**. The
