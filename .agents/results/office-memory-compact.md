@@ -155,6 +155,39 @@ $ memory check            -> live size 9207B / 24576B budget — OK (exit 0)
 No `archive/` directory was created: compaction is not a roll, and all three
 ids remain live.
 
+### Real store, on a copy — the defect the task measured
+
+The source was `.agents/memory/learnings.md` in the guzia office, copied to
+`/tmp/realstore/` first so the real file was never hand-edited. This is the
+store that refused the lesson; the copy is what was compacted.
+
+```
+before: 22135B, 27 entry headers, 33 'Promoted to:' lines
+$ memory check    -> live size 22135B / 24576B budget — OK
+$ memory compact  -> compacted 26 retracted entries — reclaimed 18562B
+                     kept 27 entries — believed bodies and every header/pointer are intact
+                     (live 3573B / 24576B budget)                            exit 0
+after:  3573B, 27 entry headers, 26 'Promoted to:' lines
+$ memory check    -> live size 3573B / 24576B budget — OK
+$ memory compact  -> nothing to compact                                     exit 0
+```
+
+Two entries carried a duplicate line and five carried a second **different**
+target; each was reduced to one pointer and every discarded target was printed
+(the first line is the latest retraction). The 33 pointer lines became 26 — one
+per retracted id — so every citation still resolves.
+
+Then the motivating failure was re-run against the compacted copy with a
+628-byte lesson (the brief's refused lesson was 167–700 B):
+
+```
+$ memory add learning "Foreman: a measurement AGES. ..."  # 628 B
+memory: wrote L-0033 to learnings.md
+$ memory check -> live size 4270B / 24576B budget — OK
+```
+
+A write that was refused before compaction now fits with ~20 KB of headroom.
+
 ### Named ids and unknown ids
 
 ```
