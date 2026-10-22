@@ -50,7 +50,7 @@ OK
 exit=0
 ```
 
-21 tests before this change, 23 after (the two new ones). The nine `compact`
+21 tests before this change, 23 after (the two new ones). All eight `compact`
 tests still pass.
 
 ### Kit suite
