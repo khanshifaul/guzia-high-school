@@ -218,6 +218,41 @@ failure — while `gh pr checks 12` exits **0**. `gh pr checks --help` confirms
 `8: Checks pending`, and `gh pr checks 12 --json name,state,bucket` returns
 `"bucket":"pass"` on live checks.
 
+**The reviewer seat's reproduction adds two things this record did not have.**
+Reproduced end to end on a **fully green** merged PR, with the exit code
+measured without a pipe in the way (`gh pr checks 2 --required >out 2>&1; echo
+$?` — a `| head` masks the code, which is how a first reading gets it wrong):
+
+```
+$ gh pr checks 2 --required
+no required checks reported on the 'feat/neon-deploy' branch
+EXIT=1
+$ gh pr checks 2
+CodeRabbit   pass  0
+GitGuardian  pass  1s
+EXIT=0
+```
+
+**Why the trap survives: it depends on the repo, not on the reviewer.** Where
+the base branch **is** protected, `--required` works and the defect is
+invisible. Where it is not, the same command on the same green PR exits `1`.
+So it survives in exactly the offices that have no branch protection — the
+ones least likely to have CI configured, and the ones whose review gate is
+therefore decorative.
+
+**And the framing is that the template CONTRADICTED ITSELF, not that a rule
+was missing.** The kit's persona paired `gh pr checks <pr-number> --required`
+with "# If CI is failing, OBJECTION — do not merge" — and on an unprotected
+base those two lines cannot both be right. A reviewer following the template
+would OBJECTION a green PR and report "CI is failing", which is simply false.
+The consequence for how a fix is specified: the reviewer-side change is **one
+REPLACEMENT** (`gh pr checks <pr-number>` for the `--required` form) plus the
+exit-code table that says what `1` means — and only then the other three
+rules. A worker told to *add* four rules to a file whose existing line is
+actively wrong may leave the wrong line in place. Both the kit's persona and
+this office's now carry that framing, in the reviewer's `agent.md` and in the
+kit's PR #4.
+
 **One correction to the reviewer's own write-up of these edits.** It recorded
 the error as raised at
 `apps/api/src/admissions/dto/review-application.dto.ts:10:8` and surfacing
