@@ -67,15 +67,15 @@ Acceptance checks:
 ```
 $ git diff --stat origin/main...HEAD
  .agents/results/.gitkeep                  |   0
- .agents/results/office-critic-personas.md |  88 +++++++++++++++++++++
- HANDOFF.md                                | 103 +++++++++++++++++++++++--
- agents/critic/00-orchestrator.md          |  56 --------------
- agents/critic/01-guest-public.md          |  68 -----------------
- agents/critic/02-admin.md                 | 119 -----------------------------
- agents/critic/03-teacher.md               | 123 ------------------------------
- agents/critic/04-student.md               |  94 -----------------------
+ .agents/results/office-critic-personas.md | 127 ++++++++++++++++++++++++++++++
+ HANDOFF.md                                | 103 ++++++++++++++++++++++--
+ agents/critic/00-orchestrator.md          |  56 -------------
+ agents/critic/01-guest-public.md          |  68 ----------------
+ agents/critic/02-admin.md                 | 119 ----------------------------
+ agents/critic/03-teacher.md               | 123 -----------------------------
+ agents/critic/04-student.md               |  94 ----------------------
  agents/critic/05-parent.md                |  80 -------------------
- 9 files changed, 186 insertions(+), 545 deletions(-)
+ 9 files changed, 225 insertions(+), 545 deletions(-)
 $ git ls-tree --name-only HEAD agents/critic/
 (no output)
 $ git status --porcelain agents/critic/
@@ -84,9 +84,9 @@ $ git ls-tree -r --name-only HEAD agents/critic/ | grep -c 'report-'
 0
 ```
 
-The diff stat above is the first commit (`dde45a1`). The follow-up commit only
-edits this file, so `git diff --stat origin/main...HEAD` still lists these nine
-paths and no others.
+The block is `origin/main...HEAD` at the branch head, not the first commit's
+own stat: the follow-up commits touch only this file, so the path set stays
+these nine and only this file's line grows.
 
 PR state, read after the branch was pushed:
 
