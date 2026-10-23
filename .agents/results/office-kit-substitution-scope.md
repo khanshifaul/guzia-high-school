@@ -126,8 +126,9 @@ behaviour (function-local positional parameters).
   `9d4830b02fec5b0fe5ec74f676d64dd867c8de9b`, PR
   <https://github.com/khanshifaul/zolly/pull/22>. **Opened, not merged; needs
   the founder.**
-- Guzia: _recorded by the follow-up commit on this branch; a commit cannot name
-  its own SHA._
+- Guzia: `cb3531272852b95c12e0fe64b143a2d2c62672fa` (the commit that added
+  this file, named by the follow-up commit on this branch because a commit
+  cannot name its own SHA).
 
 ## Blockers
 
