@@ -11,8 +11,9 @@ gate: auto
 and `.py` under `.agents/` with no exclusion list, and it runs **after** a
 reinstall restores `results`, `queue`, `days`, `events`, `inbox`, `trash` and
 `memory/archive` from the backup. A restored record containing a placeholder
-was therefore rewritten in place — the `M` on
-`results/office-kit-load-line.md` in this checkout was that defect.
+was therefore rewritten in place — the `M` reported on
+`.agents/results/office-kit-load-line.md` in the guzia checkout was that
+defect.
 
 The fix adds one `RECORD_EXCLUDES` value next to `TAR_EXCLUDES` and prunes
 those paths in the substitution `find`. `memory/` itself still renders because
