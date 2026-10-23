@@ -104,3 +104,56 @@ error box. Nothing else: the queue, results, memory, this file and the
 schedule are on disk. The other two offices' ponder timers
 (`pijunctionbd`, `zylosync`) were left running — this close covered
 `guzia-high-school` only.
+
+---
+
+## 2026-10-23, evening — day close
+
+Measured at close, 23:05 +06. Every line below was read from git, `gh`, herdr
+or systemd in this run.
+
+### Landed
+
+- **guzia** — main is `c0f6765`, clean apart from this file and the schedule.
+  Today's merges: `#26` `094552f` (public wording; body screened 0 category /
+  0 token), `#27` `696bd9f` (installer placeholder-scope record), `#28`
+  `473a0ef` (six critic briefs retired, this file landed, `.gitkeep`), `#29`
+  `e1940e7` (seat-replay result), `#30` `c0f6765` (login cold-start retry,
+  merged after this close was written).
+- **kit** — main is `581c1c3`: `#22` `c16d449` (the installer never rewrites
+  records), `#23` `57dd6ca` (a gate read from a task branch), `#24` `581c1c3`
+  (boot prompt is the first turn; `agent_wait` accepts `done`).
+- **binary** — rebuilt from `581c1c3`, 9757400 bytes at 22:58, installed to
+  `~/.local/bin/zolly` (`cmp` identical), `zolly@guzia-high-school.service`
+  restarted and active. First live proof: `zolly reviewer
+  product-login-retry` exited 0 in 272 s and returned `PASS: merged` — the
+  first reviewer call today that did not time out after its merge.
+- **other offices** — `pijunctionbd` and `zylosync` still hold the old deleted
+  binary (started 12:40:09). Not touched: they are separate offices. Restart
+  their units to give them the same fix.
+- **office** — 12/12 queue entries done, 0 worktrees, 0 open PRs in both
+  repos. The six critic briefs are worker personas at
+  `.agents/worker/critic*.md`; the rewritten originals are in `stash@{0}`.
+
+### Filed at close, then landed
+
+- `product-login-retry` was filed as a queued brief at this close and merged
+  later the same evening as `c0f6765` (#30): an opt-in retry on 502/503/504
+  with a "server is waking" message, 7 new client tests. It is on `main`, and
+  Vercel deploys `main`, so the deployed web app carries it. No API change.
+- Render's `WEB_ORIGIN` is still the dev value. A dashboard change, not a repo
+  change. `gate: human`.
+
+### Single next action
+
+Land this file and `tomorrow_schedule.md` through the reviewer — both are
+uncommitted on `main`, and `zolly close` refuses while they are dirty. Then
+close `product-login-retry`; its ledger line is the only thing that close
+cannot finish tonight.
+
+### What dies with the session
+
+The three seat panes and their scrollback. Not the queue, results, memory,
+this file, the schedule, the installed binary or the listener. The guzia
+ponder timer is stopped; `pijunctionbd` and `zylosync` are separate offices
+and were not touched.
