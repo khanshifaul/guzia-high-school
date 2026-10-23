@@ -105,6 +105,16 @@ pre-fix record content: probe
 
 The defect reproduces and the probe distinguishes fixed from broken.
 
+### A target path containing glob characters
+
+The find runs from `.agents/`, so the prune patterns are literal paths, not
+globs. Measured with the target `/tmp/sub-scope-[probe]`:
+
+```
+bracket target record: {{FREQUENCY}}
+bracket target config: frequency = "probe"
+```
+
 ### Kit suite
 
 ```sh
@@ -123,7 +133,7 @@ behaviour (function-local positional parameters).
 ## Commit
 
 - Kit: branch `foreman/office-kit-substitution-scope`, commit
-  `9d4830b02fec5b0fe5ec74f676d64dd867c8de9b`, PR
+  `b7706327698353a2424da7a9d945e662c273b432`, PR
   <https://github.com/khanshifaul/zolly/pull/22>. **Opened, not merged; needs
   the founder.**
 - Guzia: `cb3531272852b95c12e0fe64b143a2d2c62672fa` (the commit that added
