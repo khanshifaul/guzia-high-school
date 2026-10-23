@@ -41,26 +41,32 @@ Nothing under `apps/` or any other guzia path was touched.
 ### Fresh target, two installs, measured at kit commit `cf0c41b` + this patch
 
 ```sh
+WT=/home/khan/Projects/zolly/.agents/worktrees/office-kit-substitution-scope
 T=/tmp/sub-scope-probe
 rm -rf "$T"; mkdir -p "$T/home"
 git -C "$T" init -q
 git -C "$T" config user.email t@example.com
 git -C "$T" config user.name Test
 git -C "$T" commit -q --allow-empty -m init
-HOME="$T/home" install.sh "$T" --yes --no-binary --no-mcp --no-telegram \
+HOME="$T/home" "$WT/install.sh" "$T" --yes --no-binary --no-mcp --no-telegram \
   --no-systemd --no-ponder --name probe --founder Probe
 printf '%s\n' '{{FREQUENCY}} {{PROJECT_NAME}} {{FOUNDER}}' > "$T/.agents/results/probe.md"
 printf '%s\n' '{{FOUNDER}}' > "$T/.agents/memory/archive/probe.md"
 git -C "$T" add -A && git -C "$T" commit -q -m records
+echo "== before"
 sha256sum "$T/.agents/results/probe.md" "$T/.agents/memory/archive/probe.md"
-HOME="$T/home" install.sh "$T" --yes --force --no-binary --no-mcp \
+HOME="$T/home" "$WT/install.sh" "$T" --yes --force --no-binary --no-mcp \
   --no-telegram --no-systemd --no-ponder --name probe --founder Probe
+echo "== after"
 sha256sum "$T/.agents/results/probe.md" "$T/.agents/memory/archive/probe.md"
-cat "$T/.agents/results/probe.md" "$T/.agents/memory/archive/probe.md"
+echo "== record"; cat "$T/.agents/results/probe.md"
+echo "== archive"; cat "$T/.agents/memory/archive/probe.md"
+echo "== status"
 git -C "$T" status --porcelain -- .agents/results/ .agents/memory/archive/
+echo "== config"
 grep -E '^(frequency|founder|base_branch|project)' "$T/.agents/zolly/config.toml"
-grep -c '{{' "$T/.agents/rules/workflows.md"
-grep -c 'Probe' "$T/.agents/memory/founder.md"
+echo -n "== workflow tokens "; grep -c '{{' "$T/.agents/rules/workflows.md" || true
+echo -n "== founder.md hits "; grep -c 'Probe' "$T/.agents/memory/founder.md" || true
 ```
 
 ```
@@ -89,13 +95,54 @@ the reinstall. The template still rendered: `config.toml` carries `probe` and
 `Probe`, `rules/workflows.md` has zero remaining `{{` tokens, and
 `memory/founder.md` carries the founder name twice.
 
+### Every restored record directory
+
+The same probe with one file in each directory the restore path names:
+
+```sh
+for d in results queue days events inbox trash memory/archive; do
+  mkdir -p "$T/.agents/$d"
+  printf '%s\n' '{{FREQUENCY}}' > "$T/.agents/$d/probe.md"
+done
+# commit, reinstall --force
+for d in results queue days events inbox trash memory/archive; do
+  printf '%-14s %s\n' "$d" "$(cat "$T/.agents/$d/probe.md")"
+done
+git -C "$T" status --porcelain -- .agents/results/ .agents/queue/ .agents/days/ \
+  .agents/events/ .agents/inbox/ .agents/trash/ .agents/memory/archive/
+```
+
+```
+results        {{FREQUENCY}}
+queue          {{FREQUENCY}}
+days           {{FREQUENCY}}
+events         {{FREQUENCY}}
+inbox          {{FREQUENCY}}
+trash          {{FREQUENCY}}
+memory/archive {{FREQUENCY}}
+```
+
+`git status` printed nothing. On the same fresh target, before any record was
+written, `grep -rn '{{[A-Z_]*}}' .agents --include='*.md' --include='*.toml'`
+printed `none`, so every template file still rendered.
+
 ### The same probe against pre-fix `install.sh` from `cf0c41b`
 
 ```sh
-git show cf0c41b:install.sh > .bugcheck-install.sh
-# install, write '{{FREQUENCY}}' to results/probe.md, commit, reinstall --force
-cat "$T/.agents/results/probe.md"
+git -C "$WT" show cf0c41b:install.sh > "$WT/.bugcheck-install.sh"
+chmod +x "$WT/.bugcheck-install.sh"
+T=/tmp/sub-bug-probe; rm -rf "$T"; mkdir -p "$T/home"
+git -C "$T" init -q; git -C "$T" config user.email t@example.com
+git -C "$T" config user.name Test; git -C "$T" commit -q --allow-empty -m init
+HOME="$T/home" "$WT/.bugcheck-install.sh" "$T" --yes --no-binary --no-mcp \
+  --no-telegram --no-systemd --no-ponder --name probe --founder Probe
+printf '%s\n' '{{FREQUENCY}}' > "$T/.agents/results/probe.md"
+git -C "$T" add -A; git -C "$T" commit -q -m records
+HOME="$T/home" "$WT/.bugcheck-install.sh" "$T" --yes --force --no-binary \
+  --no-mcp --no-telegram --no-systemd --no-ponder --name probe --founder Probe
+echo "pre-fix record content: $(cat "$T/.agents/results/probe.md")"
 git -C "$T" status --porcelain -- .agents/results/
+rm -f "$WT/.bugcheck-install.sh"
 ```
 
 ```
