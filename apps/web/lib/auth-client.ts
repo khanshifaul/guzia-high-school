@@ -48,9 +48,14 @@ export function useSession(): AuthState & { refresh: () => void } {
 }
 
 export async function login(email: string, password: string): Promise<SessionUser> {
+    // The only caller that opts into the gateway retry: the API host wakes
+    // from a cold start by answering 502 for a while, and login is the first
+    // request a returning user makes. Re-sending is safe — a failed attempt
+    // set no cookie, and a successful one resolves and stops the retries.
     const payload = await api<{ data: { user: SessionUser } }>("/auth/login", {
         method: "POST",
         body: { email, password },
+        retryTransient: true,
     });
     return payload.data.user;
 }
