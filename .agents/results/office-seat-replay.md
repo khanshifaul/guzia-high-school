@@ -172,9 +172,11 @@ and still replays parked mail. Two checks prove a later rebuild carries it:
   <https://github.com/khanshifaul/zolly/pull/24>. **Opened, not merged.** The
   kit has no reviewer seat, so this PR's door is the founder or the bare seat
   — not a reviewer.
-- Guzia: this file, on branch `foreman/office-seat-replay` against `main`
-  (`473a0ef`). The PR carries only this file; the branch head SHA is the
-  commit, and a commit cannot name its own SHA.
+- Guzia: `62e7202` added this file on branch `foreman/office-seat-replay`
+  against `main` (`473a0ef`); PR
+  <https://github.com/khanshifaul/guzia-high-school/pull/29>. That branch
+  carries only this file. A commit cannot name its own SHA, so the PR link
+  arrives in the follow-up commit on the same branch.
 
 ## Blockers
 
