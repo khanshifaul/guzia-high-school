@@ -66,22 +66,61 @@ Acceptance checks:
 
 ```
 $ git diff --stat origin/main...HEAD
-<recorded in the follow-up commit>
+ .agents/results/.gitkeep                  |   0
+ .agents/results/office-critic-personas.md |  88 +++++++++++++++++++++
+ HANDOFF.md                                | 103 +++++++++++++++++++++++--
+ agents/critic/00-orchestrator.md          |  56 --------------
+ agents/critic/01-guest-public.md          |  68 -----------------
+ agents/critic/02-admin.md                 | 119 -----------------------------
+ agents/critic/03-teacher.md               | 123 ------------------------------
+ agents/critic/04-student.md               |  94 -----------------------
+ agents/critic/05-parent.md                |  80 -------------------
+ 9 files changed, 186 insertions(+), 545 deletions(-)
 $ git ls-tree --name-only HEAD agents/critic/
-<empty>
+(no output)
 $ git status --porcelain agents/critic/
-<empty>
-$ gh pr view --json number,state,mergeable,baseRefName
-<recorded in the follow-up commit>
+(no output)
+$ git ls-tree -r --name-only HEAD agents/critic/ | grep -c 'report-'
+0
 ```
 
-No test was run: this change touches no `apps/` code and adds no executable
-file, so `test-command` exercises nothing it changes. `zolly verify` may still
-rewrite this section; if it does, its output supersedes the line above.
+The diff stat above is the first commit (`dde45a1`). The follow-up commit only
+edits this file, so `git diff --stat origin/main...HEAD` still lists these nine
+paths and no others.
+
+PR state, read after the branch was pushed:
+
+```
+$ gh pr view 28 --json number,state,mergeable,baseRefName,headRefName,url
+{"baseRefName":"main","headRefName":"foreman/office-critic-personas","mergeable":"MERGEABLE","number":28,"state":"OPEN","url":"https://github.com/khanshifaul/guzia-high-school/pull/28"}
+```
+
+`mergeStateStatus` was `UNSTABLE` at that reading — checks still in progress,
+which is not a conflict. Mergeability is `MERGEABLE`.
+
+The project's `test-command`, run in a fresh worktree (no `node_modules/`
+existed there before this run):
+
+```
+$ bun install --frozen-lockfile && bun run test
+$ echo "test-command exit: $?"
+test-command exit: 0
+@guzia/api test: Test Suites: 16 passed, 16 total
+@guzia/api test: Tests:       167 passed, 167 total
+@guzia/web test:  Test Files  2 passed (2)
+@guzia/web test:       Tests  54 passed (54)
+```
+
+This is a docs-only change, so the suite passing is a guard against an
+accidental tree change, not proof the change works; the acceptance commands
+above are that proof.
 
 ## Commit
 
-<recorded in the follow-up commit>
+- first commit, work + this result file: `dde45a1355a4f4f16657ee83bd09a7324e50d09a`
+  (`docs(office): retire the six critic briefs, land HANDOFF.md and results/.gitkeep`)
+- the follow-up commit on the same branch records that SHA and the PR reading
+  above, because a commit cannot name its own.
 
 ## Blockers
 
