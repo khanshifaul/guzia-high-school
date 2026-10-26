@@ -605,6 +605,45 @@ model GalleryItem {
   createdAt DateTime @default(now())
 }
 
+// ─── Public content pages (admin-editable) ───────────────────────────
+// A public page whose sections are Block rows. `slug` is the page identity:
+// "home", "about", "academics", and "global" for the site-wide lists (footer
+// links, the /pages sitemap, emergency hotlines).
+model Page {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  titleBn   String   @default("")
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  blocks Block[]
+}
+
+// One section of a page. `bodyEn` and `bodyBn` are JSON text with the same
+// shape; `bodyEn` is authoritative for structure and for the fields that are
+// not language-specific (icon name, href, number, colour). The shape per
+// `kind` lives in apps/web/lib/page-blocks.ts.
+model Block {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  key       String
+  kind      String
+  sortOrder Int      @default(0)
+  bodyEn    String   @default("{}")
+  bodyBn    String   @default("{}")
+  imageUrl  String   @default("")
+  linkUrl   String   @default("")
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([pageId, key])
+  @@index([pageId, sortOrder])
+}
+
 // AI-generated revision material (flashcards or a mind map) persisted so the
 // teacher can reopen it later. `content` is the validated JSON payload:
 //   FLASHCARDS { cards: { front, back }[] }

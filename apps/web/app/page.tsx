@@ -3,6 +3,10 @@
 // app/page.tsx — public landing page. Rich, sectioned design following the
 // alumni-app / MyLab-guzia reference: hero, animated stats, why-choose-us,
 // events, programs, facilities, testimonials, achievements, gallery, CTA.
+//
+// Every section body below comes from GET /pages/home (Page + Block rows).
+// There is no local array of content: unpublishing a block removes its section,
+// and the admin edits the same words the visitor reads.
 
 import * as React from "react";
 import Link from "next/link";
@@ -11,15 +15,28 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-    FaGraduationCap, FaChalkboardUser, FaBookOpen, FaFlask, FaTrophy, FaUsers,
-    FaUserGraduate, FaSchool, FaAward, FaCalendarCheck, FaMicroscope, FaLaptopCode,
-    FaDumbbell, FaMusic, FaBook, FaQuoteLeft, FaStar, FaPersonRunning, FaUtensils,
-    FaBus, FaArrowRight, FaHeart,
+    FaArrowRight,
+    FaCalendarCheck,
+    FaGraduationCap,
+    FaQuoteLeft,
+    FaSchool,
 } from "react-icons/fa6";
-import { ONLINE_SERVICES } from "@/lib/online-services";
 import { PUBLIC_EVENTS, nextEvent } from "@/lib/public-content";
 import { Navbar } from "@/components/public/navbar";
 import { Footer } from "@/components/public/footer";
+import { PageUnavailable } from "@/components/public/page-unavailable";
+import { useLanguage } from "@/lib/language-context";
+import { useSiteConfig } from "@/lib/site-config";
+import { blockOf, usePage } from "@/lib/pages";
+import {
+    GALLERY_TINTS,
+    bodyFor,
+    numberOf,
+    text,
+    type BlockBody,
+    type BlockItem,
+} from "@/lib/page-blocks";
+import { resolveIcon } from "@/lib/icon-registry";
 
 const fadeIn = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
 const fadeInUp = { hidden: { opacity: 0, y: 40 }, visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" as const } } };
@@ -64,65 +81,42 @@ function Reveal({ children, className }: { children: React.ReactNode; className?
     );
 }
 
-
-const highlights = [
-    { icon: FaGraduationCap, title: "Academic Excellence", desc: "Consistent top results in national board examinations with 95%+ pass rate." },
-    { icon: FaChalkboardUser, title: "Expert Faculty", desc: "Highly qualified teachers with advanced degrees and years of experience." },
-    { icon: FaBookOpen, title: "Modern Curriculum", desc: "Updated curriculum blending national standards with global perspectives." },
-    { icon: FaFlask, title: "Science Labs", desc: "Fully equipped physics, chemistry, and biology laboratories." },
-    { icon: FaTrophy, title: "Co-Curricular", desc: "Debate, sports, cultural programs, and science fair opportunities." },
-    { icon: FaUsers, title: "Community", desc: "Strong parent-teacher collaboration for holistic student development." },
-];
-
-const programs = [
-    { icon: FaMicroscope, title: "Science", desc: "Science, ICT & advanced Mathematics for future scientists and engineers." },
-    { icon: FaLaptopCode, title: "Commerce", desc: "Accounting, Finance, Economics & Entrepreneurship for business leaders." },
-    { icon: FaBookOpen, title: "Arts", desc: "History, Literature & Social Studies for holistic thinkers." },
-];
-
-const facilities = [
-    { icon: FaFlask, title: "Science Labs", desc: "Fully equipped physics, chemistry & biology labs." },
-    { icon: FaLaptopCode, title: "Computer Lab", desc: "Modern computer lab with 40+ workstations." },
-    { icon: FaBook, title: "Library", desc: "10,000+ books, journals & digital resources." },
-    { icon: FaPersonRunning, title: "Sports Complex", desc: "Football field, basketball court & indoor games." },
-    { icon: FaMusic, title: "Music & Arts", desc: "Dedicated music room, art studio & stage." },
-    { icon: FaDumbbell, title: "Gymnasium", desc: "Fully equipped indoor gym for all students." },
-    { icon: FaUtensils, title: "Cafeteria", desc: "Hygienic, nutritious meals & snacks daily." },
-    { icon: FaBus, title: "Transport", desc: "Safe bus service covering all major routes." },
-];
-
-const testimonials = [
-    { name: "Fatima Begum", role: "Alumna, Class of 2021", quote: "Guzia Bilateral High School shaped my character and gave me the confidence to pursue my dreams. The teachers here don't just teach — they mentor." },
-    { name: "Rafiq Hasan", role: "Current Parent", quote: "I chose Guzia for my children because of its academic reputation. Seeing their growth in both studies and values confirms it was the right decision." },
-    { name: "MD. SHAHINUR ALOM", role: "Acting Headmaster", quote: "Our mission is to nurture every student into a responsible citizen who excels not just academically but also in character and leadership." },
-];
-
-const achievements = [
-    { icon: FaTrophy, title: "Recognized", desc: "Government recognition since 1 July 1962" },
-    { icon: FaAward, title: "MPO Institution", desc: "Government pay order, no. 7610041302" },
-    { icon: FaStar, title: "National Rank 1861", desc: "In the national school ranking" },
-    { icon: FaHeart, title: "JSC 94.94% Pass", desc: "1,031 of 1,086 students passed, 2010–2019" },
-];
-const ESTABLISHED_YEAR = 1958;
-const stats = [
-    { icon: FaUserGraduate, end: 536, suffix: "", label: "Students" },
-    { icon: FaChalkboardUser, end: 18, suffix: "", label: "Teachers" },
-    { icon: FaSchool, end: new Date().getFullYear() - ESTABLISHED_YEAR, suffix: "", label: "Years of Excellence" },
-    { icon: FaAward, end: 97.3, suffix: "%", label: "SSC Pass Rate, 2022" },
-];
-
-const gallery = [
-    { label: "Science Lab", bg: "from-blue-400/20 to-blue-600/20" },
-    { label: "Library", bg: "from-emerald-400/20 to-emerald-600/20" },
-    { label: "Sports Ground", bg: "from-green-400/20 to-green-600/20" },
-    { label: "Computer Lab", bg: "from-purple-400/20 to-purple-600/20" },
-    { label: "Annual Event", bg: "from-rose-400/20 to-rose-600/20" },
-    { label: "Classroom", bg: "from-amber-400/20 to-amber-600/20" },
-    { label: "Auditorium", bg: "from-indigo-400/20 to-indigo-600/20" },
-    { label: "Campus", bg: "from-cyan-400/20 to-cyan-600/20" },
-];
+/** The rows of a block; a block without rows renders nothing. */
+function itemsOf(body: BlockBody | null): BlockItem[] {
+    return body && Array.isArray(body.items) ? body.items : [];
+}
 
 export default function HomePage() {
+    const { language } = useLanguage();
+    const cfg = useSiteConfig();
+    const { page, loading } = usePage("home");
+
+    const body = (key: string): BlockBody | null => {
+        const block = blockOf(page, key);
+        return block ? bodyFor(block.kind, block.bodyEn, block.bodyBn, language) : null;
+    };
+
+    const statsBody = body("stats");
+    const highlightsBody = body("highlights");
+    const programsBody = body("programs");
+    const facilitiesBody = body("facilities");
+    const testimonialsBody = body("testimonials");
+    const achievementsBody = body("achievements");
+    const galleryBody = body("gallery");
+    const services = body("services");
+
+    // "Years of Excellence" is derived from the admin-editable established year,
+    // so it stays correct without freezing a number into the database.
+    const establishedYear = Number(cfg.established);
+    const statValue = (item: BlockItem): number => {
+        if (item.compute === "years-since-established" && Number.isFinite(establishedYear)) {
+            return Math.max(0, new Date().getFullYear() - establishedYear);
+        }
+        return numberOf(item.end);
+    };
+
+    const unavailable = !loading && !page;
+
     return (
         <div className="min-h-screen flex flex-col">
             <Navbar />
@@ -134,7 +128,7 @@ export default function HomePage() {
                         <motion.div initial="hidden" animate="visible" variants={stagger} className="max-w-3xl mx-auto text-center">
                             <motion.div variants={fadeIn} className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-6">
                                 <span className="size-2 rounded-full bg-primary animate-pulse" />
-                                Guzia Bilateral High School · Est. 1958 · Bogura
+                                {cfg.schoolName} · Est. {cfg.established} · Bogura
                             </motion.div>
                             <motion.h1 variants={fadeIn} className="text-[clamp(2rem,6vw,3.5rem)] font-black tracking-tight text-foreground leading-none mb-4">
                                 Shaping Tomorrow <span className="text-primary">Leaders</span>
@@ -169,292 +163,348 @@ export default function HomePage() {
                     </div>
                 </section>
 
-                {/* STATS */}
-                <section className="py-16 md:py-20 bg-primary/5 border-y border-border/60">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <Reveal>
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-                                {stats.map((s) => (
-                                    <motion.div key={s.label} variants={fadeInUp} className="text-center">
-                                        <div className="inline-flex items-center justify-center size-14 rounded-2xl bg-primary/10 mb-4">
-                                            <s.icon className="size-6 text-primary" />
+                {unavailable ? (
+                    <PageUnavailable />
+                ) : (
+                    <>
+                        {/* STATS */}
+                        {statsBody && itemsOf(statsBody).length > 0 ? (
+                            <section className="py-16 md:py-20 bg-primary/5 border-y border-border/60">
+                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                                    <Reveal>
+                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+                                            {itemsOf(statsBody).map((s, index) => {
+                                                const Icon = resolveIcon(s.icon);
+                                                return (
+                                                    <motion.div key={`${text(s.label)}-${index}`} variants={fadeInUp} className="text-center">
+                                                        <div className="inline-flex items-center justify-center size-14 rounded-2xl bg-primary/10 mb-4">
+                                                            <Icon className="size-6 text-primary" />
+                                                        </div>
+                                                        <div className="text-[clamp(1.8rem,4vw,2.8rem)] font-black text-foreground leading-none mb-1">
+                                                            <Counter end={statValue(s)} suffix={text(s.suffix)} duration={2.5} />
+                                                        </div>
+                                                        <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{text(s.label)}</p>
+                                                    </motion.div>
+                                                );
+                                            })}
                                         </div>
-                                        <div className="text-[clamp(1.8rem,4vw,2.8rem)] font-black text-foreground leading-none mb-1">
-                                            <Counter end={s.end} suffix={s.suffix} duration={2.5} />
-                                        </div>
-                                        <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{s.label}</p>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        </Reveal>
-                    </div>
-                </section>
+                                    </Reveal>
+                                </div>
+                            </section>
+                        ) : null}
 
-                {/* ACTING HEADMASTER'S MESSAGE */}
-                <section className="py-20 md:py-28">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <Reveal>
-                            <motion.div variants={fadeInUp} className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-                                <motion.div variants={fadeIn} className="md:col-span-1">
-                                    <div className="relative aspect-[4/5] rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-border/60 flex flex-col items-center justify-center overflow-hidden">
-                                        <FaGraduationCap className="size-16 text-primary/40" />
-                                        <span className="mt-3 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Acting Headmaster</span>
-                                    </div>
-                                </motion.div>
-                                <motion.div variants={fadeIn} className="md:col-span-2">
-                                    <p className="text-[10px] font-black text-primary uppercase tracking-[0.25em] mb-3">Acting Headmaster&apos;s Message</p>
-                                    <h2 className="text-[clamp(1.5rem,4vw,2.25rem)] font-black tracking-tight text-foreground mb-4">
-                                        Nurturing Minds, <span className="text-primary">Forming Hearts</span>
-                                    </h2>
-                                    <p className="text-muted-foreground leading-relaxed mb-4">
-                                        Welcome to Guzia Bilateral High School. Since 1958 we have been committed to academic
-                                        excellence and the formation of character. Our dedicated faculty mentor every
-                                        student — not just to succeed in examinations, but to grow into responsible,
-                                        compassionate citizens who will serve their community and country.
-                                    </p>
-                                    <p className="text-muted-foreground leading-relaxed mb-5">
-                                        We pair a rigorous curriculum with sports, culture, and science, so every child
-                                        discovers their strength. I invite you to join our community of learners and
-                                        leaders.
-                                    </p>
-                                    <div className="flex items-center gap-3 pt-4 border-t border-border/40">
-                                        <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black">SA</div>
-                                        <div>
-                                            <p className="font-bold text-sm text-foreground">MD. SHAHINUR ALOM</p>
-                                            <p className="text-[11px] text-muted-foreground">Acting Headmaster, Guzia Bilateral High School</p>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            </motion.div>
-                        </Reveal>
-                    </div>
-                </section>
-
-                {/* WHY CHOOSE US */}
-                <section className="py-20 md:py-28">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <Reveal>
-                            <motion.div variants={stagger} className="text-center mb-14">
-                                <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-3">Why Choose Guzia Bilateral High School?</motion.h2>
-                                <motion.p variants={fadeIn} className="text-muted-foreground max-w-xl mx-auto">We are committed to providing quality education that prepares students for the challenges of tomorrow.</motion.p>
-                            </motion.div>
-                            <motion.div variants={stagger} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {highlights.map((item) => (
-                                    <motion.div key={item.title} variants={fadeIn}>
-                                        <Card className="h-full border-border/60 hover:border-primary/30 transition-colors group">
-                                            <CardContent className="p-6">
-                                                <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                                                    <item.icon className="size-6 text-primary" />
-                                                </div>
-                                                <h3 className="font-bold text-lg text-foreground mb-2">{item.title}</h3>
-                                                <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
-                                            </CardContent>
-                                        </Card>
-                                    </motion.div>
-                                ))}
-                            </motion.div>
-                        </Reveal>
-                    </div>
-                </section>
-
-                {/* EVENTS */}
-                <section className="py-20 md:py-28 bg-muted/30 border-y border-border/60">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <Reveal>
-                            <motion.div variants={stagger} className="text-center mb-12">
-                                <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-2">Upcoming Events</motion.h2>
-                                <motion.p variants={fadeIn} className="text-muted-foreground">Stay updated with school activities and important dates.</motion.p>
-                            </motion.div>
-                            <motion.div variants={stagger} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                                {PUBLIC_EVENTS.map((e) => (
-                                    <motion.div key={e.title} variants={fadeInUp}>
-                                        <Card className="h-full border-border/60 hover:border-primary/30 transition-colors overflow-hidden group">
-                                            <div className="h-2 w-full bg-gradient-to-r from-primary to-primary/40" />
-                                            <CardContent className="p-5">
-                                                <Badge className={`text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider mb-3 ${e.color}`}>{e.type}</Badge>
-                                                <h3 className="font-bold text-sm text-foreground mb-2 line-clamp-2">{e.title}</h3>
-                                                <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-                                                    <FaCalendarCheck className="size-3 shrink-0 text-primary" />
-                                                    <span>{new Date(e.date).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}</span>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                    </motion.div>
-                                ))}
-                            </motion.div>
-                        </Reveal>
-                    </div>
-                </section>
-
-                {/* PROGRAMS */}
-                <section className="py-20 md:py-28" id="programs">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <Reveal>
-                            <motion.div variants={stagger} className="text-center mb-14">
-                                <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-3">Academic Programs</motion.h2>
-                                <motion.p variants={fadeIn} className="text-muted-foreground max-w-xl mx-auto">Explore our diverse range of academic streams designed for every ambition.</motion.p>
-                            </motion.div>
-                            <motion.div variants={stagger} className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                {programs.map((p) => (
-                                    <motion.div key={p.title} variants={fadeInUp} className="relative group">
-                                        <div className="relative p-8 rounded-2xl border border-border/60 hover:border-primary/30 transition-colors text-center">
-                                            <div className="inline-flex items-center justify-center size-16 rounded-2xl bg-primary/10 mb-5 group-hover:bg-primary/20 transition-colors mx-auto">
-                                                <p.icon className="size-7 text-primary" />
+                        {/* ACTING HEADMASTER'S MESSAGE */}
+                        <section className="py-20 md:py-28">
+                            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                                <Reveal>
+                                    <motion.div variants={fadeInUp} className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+                                        <motion.div variants={fadeIn} className="md:col-span-1">
+                                            <div className="relative aspect-[4/5] rounded-2xl bg-gradient-to-br from-primary/15 to-primary/5 border border-border/60 flex flex-col items-center justify-center overflow-hidden">
+                                                <FaGraduationCap className="size-16 text-primary/40" />
+                                                <span className="mt-3 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Acting Headmaster</span>
                                             </div>
-                                            <h3 className="text-xl font-black text-foreground mb-3">{p.title}</h3>
-                                            <p className="text-sm text-muted-foreground leading-relaxed">{p.desc}</p>
-                                            <div className="mt-6 pt-6 border-t border-border/40">
-                                                <span className="text-xs font-bold text-primary uppercase tracking-widest">Grades 6–10</span>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </motion.div>
-                        </Reveal>
-                    </div>
-                </section>
-
-                {/* FACILITIES */}
-                <section className="py-20 md:py-28 bg-primary/5 border-y border-border/60" id="facilities">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <Reveal>
-                            <motion.div variants={stagger} className="text-center mb-14">
-                                <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-3">Our Facilities</motion.h2>
-                                <motion.p variants={fadeIn} className="text-muted-foreground max-w-xl mx-auto">World-class infrastructure that supports holistic development.</motion.p>
-                            </motion.div>
-                            <motion.div variants={stagger} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-                                {facilities.map((f) => (
-                                    <motion.div key={f.title} variants={fadeInUp}>
-                                        <Card className="h-full border-border/60 hover:border-primary/30 transition-colors group">
-                                            <CardContent className="p-5 text-center">
-                                                <div className="inline-flex items-center justify-center size-11 rounded-xl bg-primary/10 mb-3 group-hover:bg-primary/20 transition-colors mx-auto">
-                                                    <f.icon className="size-5 text-primary" />
-                                                </div>
-                                                <h3 className="font-bold text-sm text-foreground mb-1">{f.title}</h3>
-                                                <p className="text-[11px] text-muted-foreground leading-snug">{f.desc}</p>
-                                            </CardContent>
-                                        </Card>
-                                    </motion.div>
-                                ))}
-                            </motion.div>
-                        </Reveal>
-                    </div>
-                </section>
-
-                {/* TESTIMONIALS */}
-                <section className="py-20 md:py-28">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <Reveal>
-                            <motion.div variants={stagger} className="text-center mb-14">
-                                <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-3">What People Say</motion.h2>
-                                <motion.p variants={fadeIn} className="text-muted-foreground max-w-xl mx-auto">Hear from our alumni, parents, and educators.</motion.p>
-                            </motion.div>
-                            <motion.div variants={stagger} className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                {testimonials.map((t) => (
-                                    <motion.div key={t.name} variants={fadeInUp} className="relative">
-                                        <FaQuoteLeft className="size-8 text-primary/15 absolute -top-2 -left-2" />
-                                        <div className="relative p-6 rounded-2xl border border-border/60 bg-card hover:border-primary/30 transition-colors h-full flex flex-col">
-                                            <p className="text-sm text-muted-foreground leading-relaxed italic mb-6 flex-1">&ldquo;{t.quote}&rdquo;</p>
+                                        </motion.div>
+                                        <motion.div variants={fadeIn} className="md:col-span-2">
+                                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.25em] mb-3">Acting Headmaster&apos;s Message</p>
+                                            <h2 className="text-[clamp(1.5rem,4vw,2.25rem)] font-black tracking-tight text-foreground mb-4">
+                                                Nurturing Minds, <span className="text-primary">Forming Hearts</span>
+                                            </h2>
+                                            <p className="text-muted-foreground leading-relaxed mb-4">
+                                                Welcome to Guzia Bilateral High School. Since 1958 we have been committed to academic
+                                                excellence and the formation of character. Our dedicated faculty mentor every
+                                                student — not just to succeed in examinations, but to grow into responsible,
+                                                compassionate citizens who will serve their community and country.
+                                            </p>
+                                            <p className="text-muted-foreground leading-relaxed mb-5">
+                                                We pair a rigorous curriculum with sports, culture, and science, so every child
+                                                discovers their strength. I invite you to join our community of learners and
+                                                leaders.
+                                            </p>
                                             <div className="flex items-center gap-3 pt-4 border-t border-border/40">
-                                                <div className="size-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
-                                                    {t.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                                                </div>
+                                                <div className="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black">SA</div>
                                                 <div>
-                                                    <p className="font-bold text-sm text-foreground">{t.name}</p>
-                                                    <p className="text-[11px] text-muted-foreground">{t.role}</p>
+                                                    <p className="font-bold text-sm text-foreground">MD. SHAHINUR ALOM</p>
+                                                    <p className="text-[11px] text-muted-foreground">Acting Headmaster, Guzia Bilateral High School</p>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </motion.div>
                                     </motion.div>
-                                ))}
-                            </motion.div>
-                        </Reveal>
-                    </div>
-                </section>
+                                </Reveal>
+                            </div>
+                        </section>
 
-                {/* ACHIEVEMENTS */}
-                <section className="py-20 md:py-28 bg-gradient-to-br from-primary/[0.04] via-background to-primary/[0.02] border-y border-border/60">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <Reveal>
-                            <motion.div variants={stagger} className="text-center mb-14">
-                                <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-3">Our Achievements</motion.h2>
-                                <motion.p variants={fadeIn} className="text-muted-foreground max-w-xl mx-auto">Celebrating excellence across academics, sports, and co-curricular activities.</motion.p>
-                            </motion.div>
-                            <motion.div variants={stagger} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {achievements.map((a) => (
-                                    <motion.div key={a.title} variants={fadeInUp} className="relative overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-primary to-primary/20 rounded-r" />
-                                        <div className="pl-5 py-1">
-                                            <div className="inline-flex items-center justify-center size-10 rounded-xl bg-amber-100 dark:bg-amber-950/30 mb-3">
-                                                <a.icon className="size-5 text-amber-600 dark:text-amber-400" />
-                                            </div>
-                                            <h3 className="font-black text-lg text-foreground mb-1">{a.title}</h3>
-                                            <p className="text-xs text-muted-foreground">{a.desc}</p>
-                                        </div>
+                        {/* WHY CHOOSE US */}
+                        {highlightsBody && itemsOf(highlightsBody).length > 0 ? (
+                            <section className="py-20 md:py-28">
+                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                                    <Reveal>
+                                        <motion.div variants={stagger} className="text-center mb-14">
+                                            <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-3">{text(highlightsBody.title)}</motion.h2>
+                                            <motion.p variants={fadeIn} className="text-muted-foreground max-w-xl mx-auto">{text(highlightsBody.subtitle)}</motion.p>
+                                        </motion.div>
+                                        <motion.div variants={stagger} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {itemsOf(highlightsBody).map((item, index) => {
+                                                const Icon = resolveIcon(item.icon);
+                                                return (
+                                                    <motion.div key={`${text(item.title)}-${index}`} variants={fadeIn}>
+                                                        <Card className="h-full border-border/60 hover:border-primary/30 transition-colors group">
+                                                            <CardContent className="p-6">
+                                                                <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                                                                    <Icon className="size-6 text-primary" />
+                                                                </div>
+                                                                <h3 className="font-bold text-lg text-foreground mb-2">{text(item.title)}</h3>
+                                                                <p className="text-sm text-muted-foreground leading-relaxed">{text(item.desc)}</p>
+                                                            </CardContent>
+                                                        </Card>
+                                                    </motion.div>
+                                                );
+                                            })}
+                                        </motion.div>
+                                    </Reveal>
+                                </div>
+                            </section>
+                        ) : null}
+
+                        {/* EVENTS */}
+                        <section className="py-20 md:py-28 bg-muted/30 border-y border-border/60">
+                            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                                <Reveal>
+                                    <motion.div variants={stagger} className="text-center mb-12">
+                                        <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-2">Upcoming Events</motion.h2>
+                                        <motion.p variants={fadeIn} className="text-muted-foreground">Stay updated with school activities and important dates.</motion.p>
                                     </motion.div>
-                                ))}
-                            </motion.div>
-                        </Reveal>
-                    </div>
-                </section>
-
-                {/* GALLERY */}
-                <section className="py-20 md:py-28">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <Reveal>
-                            <motion.div variants={stagger} className="text-center mb-14">
-                                <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-3">Campus Gallery</motion.h2>
-                                <motion.p variants={fadeIn} className="text-muted-foreground max-w-xl mx-auto">A glimpse into life at Guzia Bilateral High School.</motion.p>
-                            </motion.div>
-                            <motion.div variants={stagger} className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {gallery.map((g) => (
-                                    <motion.div key={g.label} variants={fadeInUp}>
-                                        <div className={`relative aspect-[4/3] rounded-xl bg-gradient-to-br ${g.bg} border border-border/60 overflow-hidden group cursor-pointer`}>
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <FaSchool className="size-10 text-foreground/20 group-hover:scale-110 transition-transform duration-300" />
-                                            </div>
-                                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/40 to-transparent p-3">
-                                                <p className="text-white text-xs font-bold">{g.label}</p>
-                                            </div>
-                                        </div>
+                                    <motion.div variants={stagger} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                                        {PUBLIC_EVENTS.map((e) => (
+                                            <motion.div key={e.title} variants={fadeInUp}>
+                                                <Card className="h-full border-border/60 hover:border-primary/30 transition-colors overflow-hidden group">
+                                                    <div className="h-2 w-full bg-gradient-to-r from-primary to-primary/40" />
+                                                    <CardContent className="p-5">
+                                                        <Badge className={`text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider mb-3 ${e.color}`}>{e.type}</Badge>
+                                                        <h3 className="font-bold text-sm text-foreground mb-2 line-clamp-2">{e.title}</h3>
+                                                        <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                                                            <FaCalendarCheck className="size-3 shrink-0 text-primary" />
+                                                            <span>{new Date(e.date).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}</span>
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            </motion.div>
+                                        ))}
                                     </motion.div>
-                                ))}
-                            </motion.div>
-                        </Reveal>
-                    </div>
-                </section>
+                                </Reveal>
+                            </div>
+                        </section>
 
-                {/* ONLINE SERVICES */}
-                <section className="py-20 md:py-28 bg-muted/30 border-y border-border/60" id="notices">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <Reveal>
-                            <motion.div variants={stagger} className="text-center mb-12">
-                                <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-2">Online Services</motion.h2>
-                                <motion.p variants={fadeIn} className="text-muted-foreground">Apply, and follow your attendance, results and fees — each link opens the right page for you.</motion.p>
-                            </motion.div>
-                            <motion.div variants={stagger} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                                {ONLINE_SERVICES.map((s) => (
-                                    <motion.div key={s.key} variants={fadeInUp}>
-                                        {/* The resolver sends each visitor to the
-                                            page for their role — or to the
-                                            login page, and back here after. */}
-                                        <Link href={`/portal/${s.key}`}>
-                                            <Card className="h-full border-border/60 hover:border-primary/30 transition-colors group cursor-pointer">
-                                                <CardContent className="p-6 text-center">
-                                                    <div className="inline-flex items-center justify-center size-12 rounded-xl bg-primary/10 mb-4 group-hover:bg-primary/20 transition-colors">
-                                                        <s.icon className="size-6 text-primary" />
+                        {/* PROGRAMS */}
+                        {programsBody && itemsOf(programsBody).length > 0 ? (
+                            <section className="py-20 md:py-28" id="programs">
+                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                                    <Reveal>
+                                        <motion.div variants={stagger} className="text-center mb-14">
+                                            <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-3">{text(programsBody.title)}</motion.h2>
+                                            <motion.p variants={fadeIn} className="text-muted-foreground max-w-xl mx-auto">{text(programsBody.subtitle)}</motion.p>
+                                        </motion.div>
+                                        <motion.div variants={stagger} className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                            {itemsOf(programsBody).map((p, index) => {
+                                                const Icon = resolveIcon(p.icon);
+                                                return (
+                                                    <motion.div key={`${text(p.title)}-${index}`} variants={fadeInUp} className="relative group">
+                                                        <div className="relative p-8 rounded-2xl border border-border/60 hover:border-primary/30 transition-colors text-center">
+                                                            <div className="inline-flex items-center justify-center size-16 rounded-2xl bg-primary/10 mb-5 group-hover:bg-primary/20 transition-colors mx-auto">
+                                                                <Icon className="size-7 text-primary" />
+                                                            </div>
+                                                            <h3 className="text-xl font-black text-foreground mb-3">{text(p.title)}</h3>
+                                                            <p className="text-sm text-muted-foreground leading-relaxed">{text(p.desc)}</p>
+                                                            {text(programsBody.footnote) ? (
+                                                                <div className="mt-6 pt-6 border-t border-border/40">
+                                                                    <span className="text-xs font-bold text-primary uppercase tracking-widest">{text(programsBody.footnote)}</span>
+                                                                </div>
+                                                            ) : null}
+                                                        </div>
+                                                    </motion.div>
+                                                );
+                                            })}
+                                        </motion.div>
+                                    </Reveal>
+                                </div>
+                            </section>
+                        ) : null}
+
+                        {/* FACILITIES */}
+                        {facilitiesBody && itemsOf(facilitiesBody).length > 0 ? (
+                            <section className="py-20 md:py-28 bg-primary/5 border-y border-border/60" id="facilities">
+                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                                    <Reveal>
+                                        <motion.div variants={stagger} className="text-center mb-14">
+                                            <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-3">{text(facilitiesBody.title)}</motion.h2>
+                                            <motion.p variants={fadeIn} className="text-muted-foreground max-w-xl mx-auto">{text(facilitiesBody.subtitle)}</motion.p>
+                                        </motion.div>
+                                        <motion.div variants={stagger} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+                                            {itemsOf(facilitiesBody).map((f, index) => {
+                                                const Icon = resolveIcon(f.icon);
+                                                return (
+                                                    <motion.div key={`${text(f.title)}-${index}`} variants={fadeInUp}>
+                                                        <Card className="h-full border-border/60 hover:border-primary/30 transition-colors group">
+                                                            <CardContent className="p-5 text-center">
+                                                                <div className="inline-flex items-center justify-center size-11 rounded-xl bg-primary/10 mb-3 group-hover:bg-primary/20 transition-colors mx-auto">
+                                                                    <Icon className="size-5 text-primary" />
+                                                                </div>
+                                                                <h3 className="font-bold text-sm text-foreground mb-1">{text(f.title)}</h3>
+                                                                <p className="text-[11px] text-muted-foreground leading-snug">{text(f.desc)}</p>
+                                                            </CardContent>
+                                                        </Card>
+                                                    </motion.div>
+                                                );
+                                            })}
+                                        </motion.div>
+                                    </Reveal>
+                                </div>
+                            </section>
+                        ) : null}
+
+                        {/* TESTIMONIALS */}
+                        {testimonialsBody && itemsOf(testimonialsBody).length > 0 ? (
+                            <section className="py-20 md:py-28">
+                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                                    <Reveal>
+                                        <motion.div variants={stagger} className="text-center mb-14">
+                                            <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-3">{text(testimonialsBody.title)}</motion.h2>
+                                            <motion.p variants={fadeIn} className="text-muted-foreground max-w-xl mx-auto">{text(testimonialsBody.subtitle)}</motion.p>
+                                        </motion.div>
+                                        <motion.div variants={stagger} className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                            {itemsOf(testimonialsBody).map((t, index) => (
+                                                <motion.div key={`${text(t.name)}-${index}`} variants={fadeInUp} className="relative">
+                                                    <FaQuoteLeft className="size-8 text-primary/15 absolute -top-2 -left-2" />
+                                                    <div className="relative p-6 rounded-2xl border border-border/60 bg-card hover:border-primary/30 transition-colors h-full flex flex-col">
+                                                        <p className="text-sm text-muted-foreground leading-relaxed italic mb-6 flex-1">&ldquo;{text(t.quote)}&rdquo;</p>
+                                                        <div className="flex items-center gap-3 pt-4 border-t border-border/40">
+                                                            <div className="size-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
+                                                                {text(t.name).split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-bold text-sm text-foreground">{text(t.name)}</p>
+                                                                <p className="text-[11px] text-muted-foreground">{text(t.role)}</p>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <h3 className="font-bold text-foreground mb-1">{s.title}</h3>
-                                                    <p className="text-xs text-muted-foreground">{s.desc}</p>
-                                                </CardContent>
-                                            </Card>
-                                        </Link>
-                                    </motion.div>
-                                ))}
-                            </motion.div>
-                        </Reveal>
-                    </div>
-                </section>
+                                                </motion.div>
+                                            ))}
+                                        </motion.div>
+                                    </Reveal>
+                                </div>
+                            </section>
+                        ) : null}
+
+                        {/* ACHIEVEMENTS */}
+                        {achievementsBody && itemsOf(achievementsBody).length > 0 ? (
+                            <section className="py-20 md:py-28 bg-gradient-to-br from-primary/[0.04] via-background to-primary/[0.02] border-y border-border/60">
+                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                                    <Reveal>
+                                        <motion.div variants={stagger} className="text-center mb-14">
+                                            <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-3">{text(achievementsBody.title)}</motion.h2>
+                                            <motion.p variants={fadeIn} className="text-muted-foreground max-w-xl mx-auto">{text(achievementsBody.subtitle)}</motion.p>
+                                        </motion.div>
+                                        <motion.div variants={stagger} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                            {itemsOf(achievementsBody).map((a, index) => {
+                                                const Icon = resolveIcon(a.icon);
+                                                return (
+                                                    <motion.div key={`${text(a.title)}-${index}`} variants={fadeInUp} className="relative overflow-hidden">
+                                                        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-primary to-primary/20 rounded-r" />
+                                                        <div className="pl-5 py-1">
+                                                            <div className="inline-flex items-center justify-center size-10 rounded-xl bg-amber-100 dark:bg-amber-950/30 mb-3">
+                                                                <Icon className="size-5 text-amber-600 dark:text-amber-400" />
+                                                            </div>
+                                                            <h3 className="font-black text-lg text-foreground mb-1">{text(a.title)}</h3>
+                                                            <p className="text-xs text-muted-foreground">{text(a.desc)}</p>
+                                                        </div>
+                                                    </motion.div>
+                                                );
+                                            })}
+                                        </motion.div>
+                                    </Reveal>
+                                </div>
+                            </section>
+                        ) : null}
+
+                        {/* GALLERY */}
+                        {galleryBody && itemsOf(galleryBody).length > 0 ? (
+                            <section className="py-20 md:py-28">
+                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                                    <Reveal>
+                                        <motion.div variants={stagger} className="text-center mb-14">
+                                            <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-3">{text(galleryBody.title)}</motion.h2>
+                                            <motion.p variants={fadeIn} className="text-muted-foreground max-w-xl mx-auto">{text(galleryBody.subtitle)}</motion.p>
+                                        </motion.div>
+                                        <motion.div variants={stagger} className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            {itemsOf(galleryBody).map((g, index) => {
+                                                const imageUrl = text(g.imageUrl);
+                                                const tint = text(g.tint) || GALLERY_TINTS[index % GALLERY_TINTS.length];
+                                                return (
+                                                    <motion.div key={`${text(g.label)}-${index}`} variants={fadeInUp}>
+                                                        <div className={`relative aspect-[4/3] rounded-xl bg-gradient-to-br ${tint} border border-border/60 overflow-hidden group cursor-pointer`}>
+                                                            {imageUrl ? (
+                                                                // eslint-disable-next-line @next/next/no-img-element
+                                                                <img
+                                                                    src={imageUrl}
+                                                                    alt={text(g.label)}
+                                                                    className="absolute inset-0 size-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <div className="absolute inset-0 flex items-center justify-center">
+                                                                    <FaSchool className="size-10 text-foreground/20 group-hover:scale-110 transition-transform duration-300" />
+                                                                </div>
+                                                            )}
+                                                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/40 to-transparent p-3">
+                                                                <p className="text-white text-xs font-bold">{text(g.label)}</p>
+                                                            </div>
+                                                        </div>
+                                                    </motion.div>
+                                                );
+                                            })}
+                                        </motion.div>
+                                    </Reveal>
+                                </div>
+                            </section>
+                        ) : null}
+
+                        {/* ONLINE SERVICES */}
+                        {services && itemsOf(services).length > 0 ? (
+                            <section className="py-20 md:py-28 bg-muted/30 border-y border-border/60" id="notices">
+                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                                    <Reveal>
+                                        <motion.div variants={stagger} className="text-center mb-12">
+                                            <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-2">{text(services.title)}</motion.h2>
+                                            <motion.p variants={fadeIn} className="text-muted-foreground">{text(services.subtitle)}</motion.p>
+                                        </motion.div>
+                                        <motion.div variants={stagger} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                                            {itemsOf(services).map((s, index) => {
+                                                const Icon = resolveIcon(s.icon);
+                                                const key = text(s.key);
+                                                return (
+                                                    <motion.div key={`${key}-${index}`} variants={fadeInUp}>
+                                                        {/* The resolver sends each visitor to the
+                                                            page for their role — or to the
+                                                            login page, and back here after. */}
+                                                        <Link href={`/portal/${key}`}>
+                                                            <Card className="h-full border-border/60 hover:border-primary/30 transition-colors group cursor-pointer">
+                                                                <CardContent className="p-6 text-center">
+                                                                    <div className="inline-flex items-center justify-center size-12 rounded-xl bg-primary/10 mb-4 group-hover:bg-primary/20 transition-colors">
+                                                                        <Icon className="size-6 text-primary" />
+                                                                    </div>
+                                                                    <h3 className="font-bold text-foreground mb-1">{text(s.title)}</h3>
+                                                                    <p className="text-xs text-muted-foreground">{text(s.desc)}</p>
+                                                                </CardContent>
+                                                            </Card>
+                                                        </Link>
+                                                    </motion.div>
+                                                );
+                                            })}
+                                        </motion.div>
+                                    </Reveal>
+                                </div>
+                            </section>
+                        ) : null}
+                    </>
+                )}
 
                 {/* CTA */}
                 <section className="py-20 bg-primary/5 border-y border-border/60" id="cta">

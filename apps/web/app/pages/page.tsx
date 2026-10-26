@@ -12,23 +12,21 @@ import { Navbar } from "@/components/public/navbar";
 import { Footer } from "@/components/public/footer";
 import { useLanguage } from "@/lib/language-context";
 import { useSiteConfig } from "@/lib/site-config";
+import { blockOf, usePage } from "@/lib/pages";
+import { bodyFor, text } from "@/lib/page-blocks";
 
 const fadeIn = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
 const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 
-const sitemap = [
-    { href: "/", label: "Home", labelBn: "হোম" },
-    { href: "/about", label: "About Us", labelBn: "আমাদের সম্পর্কে" },
-    { href: "/academics", label: "Academics", labelBn: "একাডেমিক" },
-    { href: "/admission", label: "Admissions", labelBn: "ভর্তি" },
-    { href: "/news", label: "News & Events", labelBn: "সংবাদ ও অনুষ্ঠান" },
-    { href: "/contact", label: "Contact", labelBn: "যোগাযোগ" },
-    { href: "/login", label: "Portal Login", labelBn: "পোর্টাল লগইন" },
-];
-
 export default function PagesPage() {
     const { language, t } = useLanguage();
     const cfg = useSiteConfig();
+    const { page } = usePage("global");
+    const sitemapBlock = blockOf(page, "sitemap-links");
+    const sitemap = sitemapBlock
+        ? bodyFor(sitemapBlock.kind, sitemapBlock.bodyEn, sitemapBlock.bodyBn, language)
+        : null;
+    const sitemapItems = sitemap?.items ?? [];
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -95,17 +93,23 @@ export default function PagesPage() {
                             <Card className="border-border/60">
                                 <CardContent className="p-6">
                                     <h2 className="font-black text-lg text-foreground mb-3 flex items-center gap-2">
-                                        <FaSitemap className="text-primary" /> {t("Sitemap", "সাইটম্যাপ")}
+                                        <FaSitemap className="text-primary" /> {text(sitemap?.title, t("Sitemap", "সাইটম্যাপ"))}
                                     </h2>
-                                    <ul className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
-                                        {sitemap.map((s) => (
-                                            <li key={s.href}>
-                                                <Link href={s.href} className="text-muted-foreground hover:text-primary transition-colors font-semibold">
-                                                    {language === "bn" ? s.labelBn : s.label}
-                                                </Link>
-                                            </li>
-                                        ))}
-                                    </ul>
+                                    {sitemapItems.length > 0 ? (
+                                        <ul className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
+                                            {sitemapItems.map((s, index) => (
+                                                <li key={`${text(s.href)}-${index}`}>
+                                                    <Link href={text(s.href, "/")} className="text-muted-foreground hover:text-primary transition-colors font-semibold">
+                                                        {text(s.label)}
+                                                    </Link>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground">
+                                            {t("The sitemap is not published.", "সাইটম্যাপ প্রকাশিত হয়নি।")}
+                                        </p>
+                                    )}
                                 </CardContent>
                             </Card>
                         </motion.div>

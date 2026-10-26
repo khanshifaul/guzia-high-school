@@ -1,27 +1,17 @@
-// lib/online-services.ts — the public homepage's "Online Services" section.
+// lib/online-services.ts — where each portal service LIVES for each role.
 //
-// One definition per service, shared by the homepage (which renders the
-// cards) and the /portal/[service] resolver (which knows where each
-// service lives for each role). The homepage and the resolver must agree
-// on where a service goes, so they read the same table — there is no
-// second list to drift.
-
-import type { IconType } from "react-icons";
-import {
-    FaUserCheck,
-    FaCalendarCheck,
-    FaGraduationCap,
-    FaMoneyBillWave,
-} from "react-icons/fa6";
+// The service's title and description are content, so they are stored in the
+// `services` block of the home page (apps/api/src/pages/page-seed.ts) and
+// rendered from there. This file keeps only what is code: the key that joins a
+// card to its routes, the per-role destinations, and the anonymous target.
+// The homepage and the /portal/[service] resolver read the same keys, so there
+// is no second list to drift.
 
 export type PortalRole = "ADMIN" | "TEACHER" | "STUDENT" | "PARENT";
 
 export interface OnlineService {
-    /** The URL segment: /portal/<key>. */
+    /** The URL segment: /portal/<key>. Must match the item key in the block. */
     key: string;
-    icon: IconType;
-    title: string;
-    desc: string;
     /**
      * Where the service lives for each role. A role with no entry for the
      * service falls back to its dashboard.
@@ -38,9 +28,6 @@ export interface OnlineService {
 export const ONLINE_SERVICES: OnlineService[] = [
     {
         key: "admission",
-        icon: FaUserCheck,
-        title: "Online Admission",
-        desc: "Apply and track admission online.",
         // Applying is public; an applicant with an account tracks their
         // application, and the staff review the queue.
         routes: {
@@ -52,9 +39,6 @@ export const ONLINE_SERVICES: OnlineService[] = [
     },
     {
         key: "attendance",
-        icon: FaCalendarCheck,
-        title: "Attendance",
-        desc: "Daily attendance for students & parents.",
         routes: {
             STUDENT: "/student/attendance",
             PARENT: "/parent/attendance",
@@ -65,9 +49,6 @@ export const ONLINE_SERVICES: OnlineService[] = [
     },
     {
         key: "grades",
-        icon: FaGraduationCap,
-        title: "Results & GPA",
-        desc: "Published results with canonical GPA.",
         routes: {
             STUDENT: "/student/grades",
             PARENT: "/parent/progress",
@@ -78,9 +59,6 @@ export const ONLINE_SERVICES: OnlineService[] = [
     },
     {
         key: "fees",
-        icon: FaMoneyBillWave,
-        title: "Fee Payment",
-        desc: "View dues and payment history.",
         routes: {
             STUDENT: "/student/fees",
             PARENT: "/parent/fees",
