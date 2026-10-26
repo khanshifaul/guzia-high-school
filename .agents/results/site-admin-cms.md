@@ -175,9 +175,10 @@ Runtime checks against the running API and web app:
 
 ## Commit
 
-`feat(pages): admin-editable bilingual public content` on
-`foreman/site-gov-compliance`. This file cannot name its own SHA; the follow-up
-commit on the same branch records it.
+`9f599391fb826c65e95ade7bfcfa0e10f25c4595`
+(`feat(pages): admin-editable bilingual public content`) on
+`foreman/site-gov-compliance`, pushed to `origin` as a branch. This file's own
+commit follows on the same branch.
 
 ## Blockers
 
