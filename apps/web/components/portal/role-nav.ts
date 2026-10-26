@@ -69,7 +69,7 @@ export const ADMIN_NAV: NavSection[] = [
     },
     {
         title: "System",
-        items: [{ label: "Settings", href: "/admin/settings", icon: FaGear }],
+        items: [{ label: "Pages", href: "/admin/pages", icon: FaFileLines }, { label: "Settings", href: "/admin/settings", icon: FaGear }],
     },
 ];
 

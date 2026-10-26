@@ -85,6 +85,8 @@ export const ModelName = {
   SiteSetting: 'SiteSetting',
   ContactMessage: 'ContactMessage',
   GalleryItem: 'GalleryItem',
+  Page: 'Page',
+  Block: 'Block',
   StudyMaterial: 'StudyMaterial',
   Workspace: 'Workspace',
   WorkspaceSource: 'WorkspaceSource',
@@ -589,6 +591,37 @@ export const GalleryItemScalarFieldEnum = {
 } as const
 
 export type GalleryItemScalarFieldEnum = (typeof GalleryItemScalarFieldEnum)[keyof typeof GalleryItemScalarFieldEnum]
+
+
+export const PageScalarFieldEnum = {
+  id: 'id',
+  slug: 'slug',
+  title: 'title',
+  titleBn: 'titleBn',
+  published: 'published',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PageScalarFieldEnum = (typeof PageScalarFieldEnum)[keyof typeof PageScalarFieldEnum]
+
+
+export const BlockScalarFieldEnum = {
+  id: 'id',
+  pageId: 'pageId',
+  key: 'key',
+  kind: 'kind',
+  sortOrder: 'sortOrder',
+  bodyEn: 'bodyEn',
+  bodyBn: 'bodyBn',
+  imageUrl: 'imageUrl',
+  linkUrl: 'linkUrl',
+  published: 'published',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type BlockScalarFieldEnum = (typeof BlockScalarFieldEnum)[keyof typeof BlockScalarFieldEnum]
 
 
 export const StudyMaterialScalarFieldEnum = {
