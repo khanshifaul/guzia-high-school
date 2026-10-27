@@ -2,18 +2,17 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { Plus, Trash2, GripVertical, Eye, EyeOff, Save } from "lucide-react";
+import { FaPlus, FaTrash, FaGripVertical, FaEye, FaEyeSlash, FaFloppyDisk } from "react-icons/fa6";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/components/ui/use-toast";
 import { getAdminHeroSlides, createHeroSlide, updateHeroSlide, deleteHeroSlide, reorderHeroSlides, type HeroSlide } from "@/lib/hero-slides";
 
 export default function AdminHeroSlidesPage() {
-  const { toast } = useToast();
+  
   const [slides, setSlides] = React.useState<HeroSlide[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
@@ -35,7 +34,7 @@ export default function AdminHeroSlidesPage() {
       const data = await getAdminHeroSlides();
       setSlides(data);
     } catch (e: any) {
-      toast({ title: "Error", description: e.message || "Failed to load slides", variant: "destructive" });
+      console.error(e.message || "Failed to load slides");
     } finally {
       setLoading(false);
     }
@@ -45,17 +44,17 @@ export default function AdminHeroSlidesPage() {
 
   const handleCreate = async () => {
     if (!form.titleEn || !form.subtitleEn || !form.imageUrl) {
-      toast({ title: "Missing fields", description: "Title (EN), subtitle (EN), and image URL are required", variant: "destructive" });
+      alert("Title (EN), subtitle (EN), and image URL are required");
       return;
     }
     setSaving(true);
     try {
       await createHeroSlide({ ...form, sortOrder: slides.length });
-      toast({ title: "Created", description: "Hero slide created" });
+      alert("Hero slide created");
       setForm({ titleEn: "", titleBn: "", subtitleEn: "", subtitleBn: "", imageUrl: "", ctaTextEn: "", ctaTextBn: "", ctaLink: "/admission", published: true, sortOrder: 0 });
       await load();
     } catch (e: any) {
-      toast({ title: "Error", description: e.message, variant: "destructive" });
+      alert(e.message);
     } finally {
       setSaving(false);
     }
@@ -65,9 +64,8 @@ export default function AdminHeroSlidesPage() {
     try {
       await updateHeroSlide(slide.id, { published: !slide.published });
       await load();
-      toast({ title: slide.published ? "Unpublished" : "Published" });
     } catch (e: any) {
-      toast({ title: "Error", description: e.message, variant: "destructive" });
+      alert(e.message);
     }
   };
 
@@ -76,9 +74,9 @@ export default function AdminHeroSlidesPage() {
     try {
       await deleteHeroSlide(id);
       await load();
-      toast({ title: "Deleted" });
+      alert("Deleted");
     } catch (e: any) {
-      toast({ title: "Error", description: e.message, variant: "destructive" });
+      alert(e.message);
     }
   };
 
@@ -92,7 +90,7 @@ export default function AdminHeroSlidesPage() {
     try {
       await reorderHeroSlides(items);
     } catch (e: any) {
-      toast({ title: "Error", description: e.message, variant: "destructive" });
+      alert(e.message);
       await load();
     }
   };
@@ -108,7 +106,7 @@ export default function AdminHeroSlidesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Plus className="h-5 w-5" /> Add New Slide</CardTitle>
+          <CardTitle className="flex items-center gap-2"><FaPlus className="h-5 w-5" /> Add New Slide</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
@@ -149,7 +147,7 @@ export default function AdminHeroSlidesPage() {
               <Label>Published</Label>
             </div>
           </div>
-          <Button onClick={handleCreate} disabled={saving}><Save className="mr-2 h-4 w-4" /> {saving ? "Saving..." : "Create Slide"}</Button>
+          <Button onClick={handleCreate} disabled={saving}><FaFloppyDisk className="mr-2 h-4 w-4" /> {saving ? "Saving..." : "Create Slide"}</Button>
         </CardContent>
       </Card>
 
@@ -161,8 +159,8 @@ export default function AdminHeroSlidesPage() {
           {loading ? <p className="text-muted-foreground">Loading...</p> : slides.length === 0 ? <p className="text-muted-foreground">No slides yet. Create one above.</p> : slides.map((slide, idx) => (
             <div key={slide.id} className="flex items-center gap-4 p-4 border rounded-lg">
               <div className="flex flex-col gap-1">
-                <Button variant="ghost" size="icon" onClick={() => move(idx, -1)} disabled={idx === 0}><GripVertical className="h-4 w-4 rotate-90" /></Button>
-                <Button variant="ghost" size="icon" onClick={() => move(idx, 1)} disabled={idx === slides.length - 1}><GripVertical className="h-4 w-4 -rotate-90" /></Button>
+                <Button variant="ghost" size="icon" onClick={() => move(idx, -1)} disabled={idx === 0}><FaGripVertical className="h-4 w-4 rotate-90" /></Button>
+                <Button variant="ghost" size="icon" onClick={() => move(idx, 1)} disabled={idx === slides.length - 1}><FaGripVertical className="h-4 w-4 -rotate-90" /></Button>
               </div>
               <div className="relative h-16 w-28 rounded overflow-hidden flex-shrink-0">
                 <Image src={slide.imageUrl} alt={slide.titleEn} fill className="object-cover" />
@@ -173,10 +171,10 @@ export default function AdminHeroSlidesPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" onClick={() => togglePublish(slide)}>
-                  {slide.published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                  {slide.published ? <FaEye className="h-4 w-4" /> : <FaEyeSlash className="h-4 w-4" />}
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => handleDelete(slide.id)}>
-                  <Trash2 className="h-4 w-4 text-destructive" />
+                  <FaTrash className="h-4 w-4 text-destructive" />
                 </Button>
               </div>
             </div>
