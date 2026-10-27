@@ -9,11 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import {
     FaGraduationCap, FaChalkboardUser, FaBookOpen, FaFlask, FaTrophy, FaUsers,
     FaUserGraduate, FaSchool, FaAward, FaCalendarCheck, FaMicroscope, FaLaptopCode,
-    FaDumbbell, FaMusic, FaBook, FaQuoteLeft, FaStar, FaPersonRunning, FaUtensils,
+    FaDumbbell, FaMusic, FaBook, FaStar, FaPersonRunning, FaUtensils,
     FaBus, FaArrowRight, FaHeart,
 } from "react-icons/fa6";
 import { ONLINE_SERVICES } from "@/lib/online-services";
-import { PUBLIC_EVENTS, nextEvent } from "@/lib/public-content";
+import { PUBLIC_EVENTS } from "@/lib/public-content";
 import { Navbar } from "@/components/public/navbar";
 import { Footer } from "@/components/public/footer";
 import { HeroSlider } from "@/components/hero/hero-slider";
@@ -85,13 +85,13 @@ const facilities = [
     { icon: FaBus, title: "Transport", desc: "Safe bus service covering all major routes." },
 ];
 
-const testimonials = [
+const _testimonials = [
     { name: "Fatima Begum", role: "Alumna, Class of 2021", quote: "Guzia Bilateral High School shaped my character and gave me the confidence to pursue my dreams. The teachers here don't just teach — they mentor." },
     { name: "Rafiq Hasan", role: "Current Parent", quote: "I chose Guzia for my children because of its academic reputation. Seeing their growth in both studies and values confirms it was the right decision." },
     { name: "MD. SHAHINUR ALOM", role: "Acting Headmaster", quote: "Our mission is to nurture every student into a responsible citizen who excels not just academically but also in character and leadership." },
 ];
 
-const achievements = [
+const _achievements = [
     { icon: FaTrophy, title: "Recognized", desc: "Government recognition since 1 July 1962" },
     { icon: FaAward, title: "MPO Institution", desc: "Government pay order, no. 7610041302" },
     { icon: FaStar, title: "National Rank 1861", desc: "In the national school ranking" },
@@ -311,7 +311,7 @@ export default function HomePage() {
                                 <motion.p variants={fadeIn} className="text-muted-foreground">A glimpse of life at Guzia Bilateral High School.</motion.p>
                             </motion.div>
                             <motion.div variants={stagger} className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {gallery.slice(0, 8).map((g, i) => (
+                                {gallery.slice(0, 8).map((g) => (
                                     <motion.div key={g.label} variants={fadeInUp} className={`relative aspect-square rounded-xl overflow-hidden bg-gradient-to-br ${g.bg} border border-border/60 group cursor-pointer`}>
                                         <div className="absolute inset-0 flex items-center justify-center">
                                             <span className="text-xs font-bold text-foreground/70 group-hover:text-foreground transition-colors">{g.label}</span>
