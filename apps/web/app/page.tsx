@@ -340,14 +340,14 @@ export default function HomePage() {
                             </motion.div>
                             <motion.div variants={stagger} className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {ONLINE_SERVICES.map((svc) => (
-                                    <motion.div key={svc.href} variants={fadeInUp}>
-                                        <Link href={svc.href}>
+                                    <motion.div key={svc.key} variants={fadeInUp}>
+                                        <Link href={svc.anonymous || "/login"}>
                                             <Card className="hover:border-primary/30 transition-colors group h-full">
                                                 <CardContent className="p-4 flex items-center gap-3">
                                                     <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                                                        <svc.icon className="size-4 text-primary" />
+                                                        <FaGraduationCap className="size-4 text-primary" />
                                                     </div>
-                                                    <span className="text-sm font-semibold text-foreground">{svc.title}</span>
+                                                    <span className="text-sm font-semibold text-foreground capitalize">{svc.key}</span>
                                                 </CardContent>
                                             </Card>
                                         </Link>
