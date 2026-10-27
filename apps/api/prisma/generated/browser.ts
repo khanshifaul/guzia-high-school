@@ -188,6 +188,16 @@ export type ContactMessage = Prisma.ContactMessageModel
  */
 export type GalleryItem = Prisma.GalleryItemModel
 /**
+ * Model Page
+ * 
+ */
+export type Page = Prisma.PageModel
+/**
+ * Model Block
+ * 
+ */
+export type Block = Prisma.BlockModel
+/**
  * Model StudyMaterial
  * 
  */
@@ -212,3 +222,8 @@ export type ChatThread = Prisma.ChatThreadModel
  * 
  */
 export type ChatMessage = Prisma.ChatMessageModel
+/**
+ * Model HeroSlide
+ * 
+ */
+export type HeroSlide = Prisma.HeroSlideModel

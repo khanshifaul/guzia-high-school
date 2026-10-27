@@ -18,6 +18,7 @@ import {
     FaFolderOpen,
     FaImages,
     FaFilePen,
+    FaSliders,
 } from "react-icons/fa6";
 
 export interface NavItem {
@@ -69,7 +70,11 @@ export const ADMIN_NAV: NavSection[] = [
     },
     {
         title: "System",
-        items: [{ label: "Settings", href: "/admin/settings", icon: FaGear }],
+        items: [
+            { label: "Hero Slider", href: "/admin/hero-slides", icon: FaSliders },
+            { label: "Pages", href: "/admin/pages", icon: FaFileLines },
+            { label: "Settings", href: "/admin/settings", icon: FaGear },
+        ],
     },
 ];
 

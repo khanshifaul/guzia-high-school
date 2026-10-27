@@ -1,9 +1,5 @@
 "use client";
 
-// app/page.tsx — public landing page. Rich, sectioned design following the
-// alumni-app / MyLab-guzia reference: hero, animated stats, why-choose-us,
-// events, programs, facilities, testimonials, achievements, gallery, CTA.
-
 import * as React from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
@@ -20,6 +16,7 @@ import { ONLINE_SERVICES } from "@/lib/online-services";
 import { PUBLIC_EVENTS, nextEvent } from "@/lib/public-content";
 import { Navbar } from "@/components/public/navbar";
 import { Footer } from "@/components/public/footer";
+import { HeroSlider } from "@/components/hero/hero-slider";
 
 const fadeIn = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
 const fadeInUp = { hidden: { opacity: 0, y: 40 }, visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" as const } } };
@@ -29,8 +26,6 @@ function Counter({ end, suffix = "", duration = 2 }: { end: number; suffix?: str
     const [count, setCount] = React.useState(0);
     const ref = React.useRef<HTMLSpanElement>(null);
     const done = React.useRef(false);
-    // A fractional target (e.g. a pass rate) keeps one decimal; a whole one
-    // counts up as an integer.
     const decimals = Number.isInteger(end) ? 0 : 1;
 
     React.useEffect(() => {
@@ -63,7 +58,6 @@ function Reveal({ children, className }: { children: React.ReactNode; className?
         </motion.div>
     );
 }
-
 
 const highlights = [
     { icon: FaGraduationCap, title: "Academic Excellence", desc: "Consistent top results in national board examinations with 95%+ pass rate." },
@@ -128,46 +122,7 @@ export default function HomePage() {
             <Navbar />
 
             <main className="flex-1">
-                {/* HERO */}
-                <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-primary/5 py-24 md:py-36">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <motion.div initial="hidden" animate="visible" variants={stagger} className="max-w-3xl mx-auto text-center">
-                            <motion.div variants={fadeIn} className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-6">
-                                <span className="size-2 rounded-full bg-primary animate-pulse" />
-                                Guzia Bilateral High School · Est. 1958 · Bogura
-                            </motion.div>
-                            <motion.h1 variants={fadeIn} className="text-[clamp(2rem,6vw,3.5rem)] font-black tracking-tight text-foreground leading-none mb-4">
-                                Shaping Tomorrow <span className="text-primary">Leaders</span>
-                            </motion.h1>
-                            <motion.p variants={fadeIn} className="text-lg md:text-xl text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">
-                                A government-recognised secondary school for Classes 6–10, where students
-                                excel academically, build character, and prepare for a bright future.
-                            </motion.p>
-                            <motion.div variants={fadeIn} className="flex flex-col sm:flex-row gap-3 justify-center">
-                                <Link href="/login">
-                                    <Button size="lg" className="w-full sm:w-auto gap-2 text-base px-8 font-black uppercase tracking-wider shadow-md shadow-primary/20">
-                                        Enter Portal <FaArrowRight size={14} />
-                                    </Button>
-                                </Link>
-                                <Link href="/news">
-                                    <Button variant="outline" size="lg" className="w-full sm:w-auto gap-2 text-base px-8 font-black uppercase tracking-wider">
-                                        News &amp; Events
-                                    </Button>
-                                </Link>
-                            </motion.div>
-                            <motion.div variants={fadeIn} className="mt-6 flex justify-center">
-                                <Link
-                                    href="/news"
-                                    className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/70 px-4 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
-                                >
-                                    <FaCalendarCheck className="size-3 text-primary" />
-                                    Next: <span className="text-foreground">{nextEvent().title}</span>
-                                    <span>· {new Date(nextEvent().date).toLocaleDateString("en-US", { day: "numeric", month: "short" })}</span>
-                                </Link>
-                            </motion.div>
-                        </motion.div>
-                    </div>
-                </section>
+                <HeroSlider />
 
                 {/* STATS */}
                 <section className="py-16 md:py-20 bg-primary/5 border-y border-border/60">
@@ -298,14 +253,16 @@ export default function HomePage() {
                                 {programs.map((p) => (
                                     <motion.div key={p.title} variants={fadeInUp} className="relative group">
                                         <div className="relative p-8 rounded-2xl border border-border/60 hover:border-primary/30 transition-colors text-center">
-                                            <div className="inline-flex items-center justify-center size-16 rounded-2xl bg-primary/10 mb-5 group-hover:bg-primary/20 transition-colors mx-auto">
-                                                <p.icon className="size-7 text-primary" />
+                                            <div className="size-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+                                                <p.icon className="size-8 text-primary" />
                                             </div>
                                             <h3 className="text-xl font-black text-foreground mb-3">{p.title}</h3>
-                                            <p className="text-sm text-muted-foreground leading-relaxed">{p.desc}</p>
-                                            <div className="mt-6 pt-6 border-t border-border/40">
-                                                <span className="text-xs font-bold text-primary uppercase tracking-widest">Grades 6–10</span>
-                                            </div>
+                                            <p className="text-muted-foreground leading-relaxed mb-6">{p.desc}</p>
+                                            <Link href="/academics">
+                                                <Button variant="ghost" className="gap-2 text-primary font-bold">
+                                                    Learn More <FaArrowRight size={12} />
+                                                </Button>
+                                            </Link>
                                         </div>
                                     </motion.div>
                                 ))}
@@ -315,23 +272,27 @@ export default function HomePage() {
                 </section>
 
                 {/* FACILITIES */}
-                <section className="py-20 md:py-28 bg-primary/5 border-y border-border/60" id="facilities">
+                <section className="py-20 md:py-28 bg-muted/30 border-y border-border/60">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <Reveal>
                             <motion.div variants={stagger} className="text-center mb-14">
                                 <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-3">Our Facilities</motion.h2>
-                                <motion.p variants={fadeIn} className="text-muted-foreground max-w-xl mx-auto">World-class infrastructure that supports holistic development.</motion.p>
+                                <motion.p variants={fadeIn} className="text-muted-foreground max-w-xl mx-auto">Modern infrastructure to support comprehensive learning.</motion.p>
                             </motion.div>
-                            <motion.div variants={stagger} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+                            <motion.div variants={stagger} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {facilities.map((f) => (
                                     <motion.div key={f.title} variants={fadeInUp}>
                                         <Card className="h-full border-border/60 hover:border-primary/30 transition-colors group">
-                                            <CardContent className="p-5 text-center">
-                                                <div className="inline-flex items-center justify-center size-11 rounded-xl bg-primary/10 mb-3 group-hover:bg-primary/20 transition-colors mx-auto">
-                                                    <f.icon className="size-5 text-primary" />
+                                            <CardContent className="p-5">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                                                        <f.icon className="size-5 text-primary" />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold text-sm text-foreground mb-1">{f.title}</h4>
+                                                        <p className="text-xs text-muted-foreground leading-relaxed">{f.desc}</p>
+                                                    </div>
                                                 </div>
-                                                <h3 className="font-bold text-sm text-foreground mb-1">{f.title}</h3>
-                                                <p className="text-[11px] text-muted-foreground leading-snug">{f.desc}</p>
                                             </CardContent>
                                         </Card>
                                     </motion.div>
@@ -341,111 +302,52 @@ export default function HomePage() {
                     </div>
                 </section>
 
-                {/* TESTIMONIALS */}
+                {/* GALLERY PREVIEW */}
                 <section className="py-20 md:py-28">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <Reveal>
-                            <motion.div variants={stagger} className="text-center mb-14">
-                                <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-3">What People Say</motion.h2>
-                                <motion.p variants={fadeIn} className="text-muted-foreground max-w-xl mx-auto">Hear from our alumni, parents, and educators.</motion.p>
-                            </motion.div>
-                            <motion.div variants={stagger} className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                {testimonials.map((t) => (
-                                    <motion.div key={t.name} variants={fadeInUp} className="relative">
-                                        <FaQuoteLeft className="size-8 text-primary/15 absolute -top-2 -left-2" />
-                                        <div className="relative p-6 rounded-2xl border border-border/60 bg-card hover:border-primary/30 transition-colors h-full flex flex-col">
-                                            <p className="text-sm text-muted-foreground leading-relaxed italic mb-6 flex-1">&ldquo;{t.quote}&rdquo;</p>
-                                            <div className="flex items-center gap-3 pt-4 border-t border-border/40">
-                                                <div className="size-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
-                                                    {t.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-sm text-foreground">{t.name}</p>
-                                                    <p className="text-[11px] text-muted-foreground">{t.role}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </motion.div>
-                        </Reveal>
-                    </div>
-                </section>
-
-                {/* ACHIEVEMENTS */}
-                <section className="py-20 md:py-28 bg-gradient-to-br from-primary/[0.04] via-background to-primary/[0.02] border-y border-border/60">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <Reveal>
-                            <motion.div variants={stagger} className="text-center mb-14">
-                                <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-3">Our Achievements</motion.h2>
-                                <motion.p variants={fadeIn} className="text-muted-foreground max-w-xl mx-auto">Celebrating excellence across academics, sports, and co-curricular activities.</motion.p>
-                            </motion.div>
-                            <motion.div variants={stagger} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {achievements.map((a) => (
-                                    <motion.div key={a.title} variants={fadeInUp} className="relative overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-primary to-primary/20 rounded-r" />
-                                        <div className="pl-5 py-1">
-                                            <div className="inline-flex items-center justify-center size-10 rounded-xl bg-amber-100 dark:bg-amber-950/30 mb-3">
-                                                <a.icon className="size-5 text-amber-600 dark:text-amber-400" />
-                                            </div>
-                                            <h3 className="font-black text-lg text-foreground mb-1">{a.title}</h3>
-                                            <p className="text-xs text-muted-foreground">{a.desc}</p>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </motion.div>
-                        </Reveal>
-                    </div>
-                </section>
-
-                {/* GALLERY */}
-                <section className="py-20 md:py-28">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <Reveal>
-                            <motion.div variants={stagger} className="text-center mb-14">
-                                <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-3">Campus Gallery</motion.h2>
-                                <motion.p variants={fadeIn} className="text-muted-foreground max-w-xl mx-auto">A glimpse into life at Guzia Bilateral High School.</motion.p>
+                            <motion.div variants={stagger} className="text-center mb-12">
+                                <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-2">Campus Gallery</motion.h2>
+                                <motion.p variants={fadeIn} className="text-muted-foreground">A glimpse of life at Guzia Bilateral High School.</motion.p>
                             </motion.div>
                             <motion.div variants={stagger} className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                {gallery.map((g) => (
-                                    <motion.div key={g.label} variants={fadeInUp}>
-                                        <div className={`relative aspect-[4/3] rounded-xl bg-gradient-to-br ${g.bg} border border-border/60 overflow-hidden group cursor-pointer`}>
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <FaSchool className="size-10 text-foreground/20 group-hover:scale-110 transition-transform duration-300" />
-                                            </div>
-                                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/40 to-transparent p-3">
-                                                <p className="text-white text-xs font-bold">{g.label}</p>
-                                            </div>
+                                {gallery.slice(0, 8).map((g, i) => (
+                                    <motion.div key={g.label} variants={fadeInUp} className={`relative aspect-square rounded-xl overflow-hidden bg-gradient-to-br ${g.bg} border border-border/60 group cursor-pointer`}>
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <span className="text-xs font-bold text-foreground/70 group-hover:text-foreground transition-colors">{g.label}</span>
                                         </div>
                                     </motion.div>
                                 ))}
+                            </motion.div>
+                            <motion.div variants={fadeIn} className="text-center mt-8">
+                                <Link href="/gallery">
+                                    <Button variant="outline" className="gap-2 font-bold">
+                                        View Full Gallery <FaArrowRight size={12} />
+                                    </Button>
+                                </Link>
                             </motion.div>
                         </Reveal>
                     </div>
                 </section>
 
                 {/* ONLINE SERVICES */}
-                <section className="py-20 md:py-28 bg-muted/30 border-y border-border/60" id="notices">
+                <section className="py-16 md:py-20 bg-muted/30 border-y border-border/60">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <Reveal>
-                            <motion.div variants={stagger} className="text-center mb-12">
-                                <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-2">Online Services</motion.h2>
-                                <motion.p variants={fadeIn} className="text-muted-foreground">Apply, and follow your attendance, results and fees — each link opens the right page for you.</motion.p>
+                            <motion.div variants={stagger} className="text-center mb-10">
+                                <motion.h2 variants={fadeIn} className="text-[clamp(1.25rem,3vw,1.75rem)] font-black tracking-tight text-foreground mb-2">Online Services</motion.h2>
+                                <motion.p variants={fadeIn} className="text-muted-foreground">Quick access to school services</motion.p>
                             </motion.div>
-                            <motion.div variants={stagger} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                                {ONLINE_SERVICES.map((s) => (
-                                    <motion.div key={s.key} variants={fadeInUp}>
-                                        {/* The resolver sends each visitor to the
-                                            page for their role — or to the
-                                            login page, and back here after. */}
-                                        <Link href={`/portal/${s.key}`}>
-                                            <Card className="h-full border-border/60 hover:border-primary/30 transition-colors group cursor-pointer">
-                                                <CardContent className="p-6 text-center">
-                                                    <div className="inline-flex items-center justify-center size-12 rounded-xl bg-primary/10 mb-4 group-hover:bg-primary/20 transition-colors">
-                                                        <s.icon className="size-6 text-primary" />
+                            <motion.div variants={stagger} className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {ONLINE_SERVICES.map((svc) => (
+                                    <motion.div key={svc.href} variants={fadeInUp}>
+                                        <Link href={svc.href}>
+                                            <Card className="hover:border-primary/30 transition-colors group h-full">
+                                                <CardContent className="p-4 flex items-center gap-3">
+                                                    <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                                                        <svc.icon className="size-4 text-primary" />
                                                     </div>
-                                                    <h3 className="font-bold text-foreground mb-1">{s.title}</h3>
-                                                    <p className="text-xs text-muted-foreground">{s.desc}</p>
+                                                    <span className="text-sm font-semibold text-foreground">{svc.title}</span>
                                                 </CardContent>
                                             </Card>
                                         </Link>
@@ -457,19 +359,27 @@ export default function HomePage() {
                 </section>
 
                 {/* CTA */}
-                <section className="py-20 bg-primary/5 border-y border-border/60" id="cta">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger}>
-                            <motion.h2 variants={fadeIn} className="text-[clamp(1.5rem,4vw,2.5rem)] font-black tracking-tight text-foreground mb-3">Start Your Journey Today</motion.h2>
-                            <motion.p variants={fadeIn} className="text-muted-foreground max-w-lg mx-auto mb-8">Join our community of learners and take the first step toward a bright future.</motion.p>
-                            <motion.div variants={fadeIn}>
-                                <Link href="/login">
-                                    <Button size="lg" className="gap-2 text-base px-10 font-black uppercase tracking-wider shadow-md shadow-primary/20">
-                                        Enter Portal <FaArrowRight size={14} />
-                                    </Button>
-                                </Link>
-                            </motion.div>
-                        </motion.div>
+                <section className="py-20 md:py-28">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-primary/80 p-8 md:p-16 text-center">
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_50%)]" />
+                            <div className="relative max-w-2xl mx-auto">
+                                <h2 className="text-[clamp(1.75rem,5vw,2.75rem)] font-black text-primary-foreground mb-4 tracking-tight">Start Your Journey With Us</h2>
+                                <p className="text-lg text-primary-foreground/90 mb-8">Join Guzia Bilateral High School and become part of a community dedicated to excellence, character, and leadership.</p>
+                                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                                    <Link href="/admission">
+                                        <Button size="lg" variant="secondary" className="w-full sm:w-auto gap-2 text-base px-8 font-black uppercase tracking-wider">
+                                            Apply Now <FaArrowRight size={14} />
+                                        </Button>
+                                    </Link>
+                                    <Link href="/contact">
+                                        <Button size="lg" variant="outline" className="w-full sm:w-auto gap-2 text-base px-8 font-black uppercase tracking-wider border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
+                                            Contact Us
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </section>
             </main>
