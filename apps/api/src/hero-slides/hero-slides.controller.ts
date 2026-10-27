@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Public } from '../auth/decorators/public.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { HeroSlidesService } from './hero-slides.service';
 
 @ApiTags('Hero Slides')

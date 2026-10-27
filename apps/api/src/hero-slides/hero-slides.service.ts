@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { DatabaseService } from '../database/database.service';
 import { CreateHeroSlideDto } from './dto/create-hero-slide.dto';
 import { UpdateHeroSlideDto } from './dto/update-hero-slide.dto';
 
 @Injectable()
 export class HeroSlidesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: DatabaseService) {}
 
   findAllPublic() {
     return this.prisma.heroSlide.findMany({

@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { HeroSlidesService } from './hero-slides.service';
 import { HeroSlidesController } from './hero-slides.controller';
 import { AdminHeroSlidesController } from './admin-hero-slides.controller';
-import { PrismaModule } from '../prisma/prisma.module';
+import { DatabaseModule } from '../database/database.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [DatabaseModule],
   controllers: [HeroSlidesController, AdminHeroSlidesController],
   providers: [HeroSlidesService],
   exports: [HeroSlidesService],

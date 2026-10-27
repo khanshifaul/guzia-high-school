@@ -1,16 +1,16 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+import { AccessTokenGuard } from '../common/guards/access-token.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '../../prisma/generated/client';
 import { HeroSlidesService } from './hero-slides.service';
 import { CreateHeroSlideDto } from './dto/create-hero-slide.dto';
 import { UpdateHeroSlideDto } from './dto/update-hero-slide.dto';
 
 @ApiTags('Admin - Hero Slides')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(AccessTokenGuard, RolesGuard)
 @Roles(Role.ADMIN)
 @Controller('admin/hero-slides')
 export class AdminHeroSlidesController {
