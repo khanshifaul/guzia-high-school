@@ -38,7 +38,7 @@ export default function AdminHeroSlidesPage() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   React.useEffect(() => { load(); }, [load]);
 
