@@ -3,8 +3,9 @@
 // components/public/footer.tsx — public footer following the MyLab/guzia
 // reference design (4 columns: brand+social · quick links · resources ·
 // contact+legal), plus the Important Links bar and a "Developed by" credit.
-// Contact, socials, EIIN/board, and links are admin-controlled via /site-settings;
-// the "Developed by" credit is hardcoded in code (see lib/site-config.ts).
+// Contact, socials and links are admin-controlled via /site-settings; the two
+// link lists and the hotline strip come from the `global` page blocks.
+// The "Developed by" credit is hardcoded in code (see lib/site-config.ts).
 
 import Link from "next/link";
 import {
@@ -14,29 +15,22 @@ import {
 import { useLanguage } from "@/lib/language-context";
 import { DEVELOPED_BY, DEVELOPED_BY_URL, useSiteConfig } from "@/lib/site-config";
 import { EmergencyHotlines } from "@/components/public/emergency-hotlines";
-
-const navLinks = [
-    { href: "/", labelEn: "Home", labelBn: "হোম" },
-    { href: "/about", labelEn: "About Us", labelBn: "আমাদের সম্পর্কে" },
-    { href: "/academics", labelEn: "Academics", labelBn: "একাডেমিক" },
-    { href: "/admission", labelEn: "Admissions", labelBn: "ভর্তি" },
-    { href: "/news", labelEn: "News", labelBn: "সংবাদ" },
-    { href: "/gallery", labelEn: "Gallery", labelBn: "গ্যালারি" },
-    { href: "/contact", labelEn: "Contact", labelBn: "যোগাযোগ" },
-];
-
-const resourceLinks = [
-    { href: "/academics", labelEn: "Curriculum", labelBn: "পাঠ্যক্রম" },
-    { href: "/academics", labelEn: "Faculty", labelBn: "শিক্ষকবৃন্দ" },
-    { href: "/about", labelEn: "Our Achievements", labelBn: "সাফল্য" },
-    { href: "/pages", labelEn: "Privacy Policy", labelBn: "গোপনীয়তা নীতি" },
-    { href: "/login", labelEn: "Portal Login", labelBn: "পোর্টাল লগইন" },
-];
+import { blockOf, usePage } from "@/lib/pages";
+import { bodyFor, text, type BlockBody } from "@/lib/page-blocks";
 
 export function Footer() {
     const { language, t } = useLanguage();
     const cfg = useSiteConfig();
-    const ln = (l: { labelEn: string; labelBn: string }) => (language === "en" ? l.labelEn : l.labelBn);
+    const { page } = usePage("global");
+
+    const body = (key: string): BlockBody | null => {
+        const block = blockOf(page, key);
+        return block ? bodyFor(block.kind, block.bodyEn, block.bodyBn, language) : null;
+    };
+
+    const quickLinks = body("footer-quick-links");
+    const resourceLinks = body("footer-resource-links");
+    const hotlines = blockOf(page, "hotlines");
 
     const socials = [
         { url: cfg.facebookUrl, icon: FaFacebook, label: "Facebook" },
@@ -79,32 +73,36 @@ export function Footer() {
                     </div>
 
                     {/* Quick Links */}
-                    <div>
-                        <h2 className="font-bold text-xs uppercase tracking-wider text-foreground mb-4">
-                            {t("Quick Links", "দ্রুত লিংক")}
-                        </h2>
-                        <ul className="space-y-2 text-xs font-semibold text-muted-foreground">
-                            {navLinks.map((link) => (
-                                <li key={link.href}>
-                                    <Link href={link.href} className="hover:text-primary transition-colors">{ln(link)}</Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                    {quickLinks && (quickLinks.items ?? []).length > 0 ? (
+                        <div>
+                            <h2 className="font-bold text-xs uppercase tracking-wider text-foreground mb-4">
+                                {text(quickLinks.title)}
+                            </h2>
+                            <ul className="space-y-2 text-xs font-semibold text-muted-foreground">
+                                {(quickLinks.items ?? []).map((link, index) => (
+                                    <li key={`${text(link.href)}-${index}`}>
+                                        <Link href={text(link.href, "/")} className="hover:text-primary transition-colors">{text(link.label)}</Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ) : null}
 
                     {/* Resources */}
-                    <div>
-                        <h2 className="font-bold text-xs uppercase tracking-wider text-foreground mb-4">
-                            {t("Resources", "রিসোর্স")}
-                        </h2>
-                        <ul className="space-y-2 text-xs font-semibold text-muted-foreground">
-                            {resourceLinks.map((link) => (
-                                <li key={link.labelEn}>
-                                    <Link href={link.href} className="hover:text-primary transition-colors">{ln(link)}</Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                    {resourceLinks && (resourceLinks.items ?? []).length > 0 ? (
+                        <div>
+                            <h2 className="font-bold text-xs uppercase tracking-wider text-foreground mb-4">
+                                {text(resourceLinks.title)}
+                            </h2>
+                            <ul className="space-y-2 text-xs font-semibold text-muted-foreground">
+                                {(resourceLinks.items ?? []).map((link, index) => (
+                                    <li key={`${text(link.href)}-${index}`}>
+                                        <Link href={text(link.href, "/")} className="hover:text-primary transition-colors">{text(link.label)}</Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ) : null}
 
                     {/* Contact */}
                     <div>
@@ -139,9 +137,11 @@ export function Footer() {
                 ) : null}
 
                 {/* Emergency Hotlines */}
-                <div className="border-t mt-8 pt-6">
-                    <EmergencyHotlines />
-                </div>
+                {hotlines ? (
+                    <div className="border-t mt-8 pt-6">
+                        <EmergencyHotlines block={hotlines} />
+                    </div>
+                ) : null}
 
                 <div className="border-t mt-8 pt-6 flex flex-col md:flex-row items-center justify-between text-xs text-muted-foreground">
                     <p>© {new Date().getFullYear()} {language === "bn" ? cfg.schoolNameBn : cfg.schoolName}. {t("All rights reserved.", "সর্বস্বত্ব সংরক্ষিত।")}</p>

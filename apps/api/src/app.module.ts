@@ -30,6 +30,7 @@ import { RateLimitGuard } from './common/rate-limiter/rate-limit.guard';
 import { HealthController } from './health.controller';
 import { AccessModule } from './common/access/access.module';
 import { TeacherDashboardModule } from './teacher-dashboard/teacher-dashboard.module';
+import { HeroSlidesModule } from './hero-slides/hero-slides.module';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { TeacherDashboardModule } from './teacher-dashboard/teacher-dashboard.mo
     EmailModule,
     ContactModule,
     GalleryModule,
+    HeroSlidesModule,
   ],
   controllers: [HealthController],
   providers: [
