@@ -231,7 +231,7 @@ async function main(): Promise<void> {
       await prisma.section.create({ data: { name: "B", classId: cls.id } }),
     ]);
   }
-  const [sectionsA, sectionsB] = sectionsByClass.get(focusClass.id)!;
+  const [_sectionsA, _sectionsB] = sectionsByClass.get(focusClass.id)!;
 
   // One catalog row per unique NCTB title; classes map onto it.
   const catalog = [...new Set([...SUBJECTS_6_8, ...SUBJECTS_9_10])];
