@@ -96,7 +96,13 @@ UPDATE` on the student's invoices; (b) keep it simple and add an
 `allocated ≤ invoice.amount` check inside the transaction so the second request
 fails loudly instead of over-allocating.
 
-**Answer.**
+**Answer.** Option (a), founder decision 2026-11-02. `recordPayment` keeps the
+pre-transaction read as a fast path only; inside `$transaction` it locks the
+student's invoices with `SELECT … FOR UPDATE` ordered by `("dueDate", id)`,
+re-reads their allocations, recomputes outstanding, and re-checks the payment
+before writing. The whole transaction retries at most 3 times on `P2034` /
+`40001` / `40P01`, and only those. Two concurrent ৳1200 payments against one
+৳1200 invoice now yield one 201 and one 400, with 1200 allocated.
 
 ## Q-0005 — re-running invoice generation double-bills every matched student
 
@@ -113,7 +119,13 @@ head, dueDate)` prevents accidental duplicates and still allows installments.
 on re-run; (b) keep duplicates allowed and require the caller to pick a new due
 date per installment, documented in the admin UI.
 
-**Answer.**
+**Answer.** Option (a) with skip, founder decision 2026-11-02. `Invoice` gained
+`@@unique([studentId, feeHeadId, dueDate])` (migration
+`20261102000000_fees_invoice_unique_per_head_due`); generation inserts with
+`skipDuplicates` in one transaction and returns `{ created, skipped }`. A re-run
+for the same fee head and due date creates 0; a new installment needs a new
+`dueDate`. The admin route's `@ApiOperation` says so; no installment picker was
+added.
 
 ## Q-0006 — a fee head's class is stored but never used when generating invoices
 

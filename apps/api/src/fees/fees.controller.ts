@@ -32,7 +32,11 @@ export class FeesController {
 
     @Roles('ADMIN')
     @Post('invoices/generate')
-    @ApiOperation({ summary: 'Bulk-assign a fee head to students' })
+    @ApiOperation({
+        summary: 'Bulk-assign a fee head to students',
+        description:
+            'Idempotent per (studentId, feeHeadId, dueDate): a student who already has an invoice for that fee head and due date is skipped and counted in `skipped`. A new installment needs a new dueDate.',
+    })
     generateInvoices(@Body() dto: GenerateInvoicesDto) {
         return this.service.generateInvoices(dto);
     }

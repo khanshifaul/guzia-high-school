@@ -37,30 +37,33 @@ export class FeesModuleService {
         const head = await this.prisma.feeHead.findUnique({ where: { id: dto.feeHeadId } });
         if (!head) throw new NotFoundException('Fee head not found');
 
-        const students = await this.prisma.student.findMany({
-            where: {
-                status: 'ACTIVE',
-                ...(dto.classId
-                    ? { OR: [{ classId: dto.classId }, { class: { id: dto.classId } }] }
-                    : {}),
-            },
-        });
-        if (students.length === 0) throw new BadRequestException('No students matched');
-
         const dueDate = new Date(dto.dueDate);
-        const result = await this.prisma.$transaction(
-            students.map((s) =>
-                this.prisma.invoice.create({
-                    data: {
-                        studentId: s.id,
-                        feeHeadId: head.id,
-                        amount: head.amount,
-                        dueDate,
-                    },
-                }),
-            ),
-        );
-        return { created: result.length, amount: head.amount };
+        // `(studentId, feeHeadId, dueDate)` is unique, so a re-run inserts
+        // nothing instead of duplicating the batch. A new installment needs a
+        // new dueDate (Q-0005).
+        const result = await this.prisma.$transaction(async (tx) => {
+            const students = await tx.student.findMany({
+                where: {
+                    status: 'ACTIVE',
+                    ...(dto.classId
+                        ? { OR: [{ classId: dto.classId }, { class: { id: dto.classId } }] }
+                        : {}),
+                },
+            });
+            if (students.length === 0) throw new BadRequestException('No students matched');
+
+            const { count } = await tx.invoice.createMany({
+                data: students.map((s) => ({
+                    studentId: s.id,
+                    feeHeadId: head.id,
+                    amount: head.amount,
+                    dueDate,
+                })),
+                skipDuplicates: true,
+            });
+            return { created: count, skipped: students.length - count };
+        });
+        return { ...result, amount: head.amount };
     }
 
     /** A student's ledger: invoices (with outstanding) + payments. */
@@ -109,59 +112,114 @@ export class FeesModuleService {
         const student = await this.prisma.student.findUnique({ where: { id: dto.studentId } });
         if (!student) throw new NotFoundException('Student not found');
 
-        const invoices = await this.prisma.invoice.findMany({
-            where: { studentId: dto.studentId },
-            include: { allocations: true },
-        });
+        // Fast path only: reject an obviously oversized payment without waiting
+        // for locks. The transaction below re-reads and re-checks for real.
+        const snapshot = await this.invoiceSnapshot(this.prisma, { studentId: dto.studentId });
+        const visibleOutstanding = snapshot.reduce((s, i) => s + outstanding(i), 0);
+        if (dto.amount > visibleOutstanding) {
+            throw new BadRequestException(
+                `Payment ${dto.amount} exceeds outstanding balance ${visibleOutstanding}`,
+            );
+        }
 
-        const asInvoiceLike: InvoiceLike[] = invoices.map((inv) => ({
+        for (let attempt = 1; ; attempt++) {
+            try {
+                return await this.prisma.$transaction(async (tx) => {
+                    // Lock the student's invoices in a deterministic order so two
+                    // concurrent payments serialise instead of both allocating
+                    // against the same stale snapshot (Q-0004).
+                    const locked = await tx.$queryRaw<{ id: string }[]>`
+                        SELECT id FROM "Invoice"
+                        WHERE "studentId" = ${dto.studentId}
+                        ORDER BY "dueDate", id
+                        FOR UPDATE
+                    `;
+                    const invoices = await this.invoiceSnapshot(tx, {
+                        id: { in: locked.map((row) => row.id) },
+                    });
+
+                    // The fast path is never the only guard: re-check against
+                    // the locked balance.
+                    const lockedOutstanding = invoices.reduce((s, i) => s + outstanding(i), 0);
+                    if (dto.amount > lockedOutstanding) {
+                        throw new BadRequestException(
+                            `Payment ${dto.amount} exceeds outstanding balance ${lockedOutstanding}`,
+                        );
+                    }
+
+                    const result = allocateWaterfall(dto.amount, invoices);
+
+                    const created = await tx.payment.create({
+                        data: {
+                            studentId: dto.studentId,
+                            amount: dto.amount,
+                            method: dto.method,
+                            reference: dto.reference,
+                            recordedById,
+                        },
+                    });
+                    for (const alloc of result.allocations) {
+                        await tx.paymentAllocation.create({
+                            data: {
+                                paymentId: created.id,
+                                invoiceId: alloc.invoiceId,
+                                amount: alloc.amount,
+                            },
+                        });
+                    }
+                    for (const st of result.statuses) {
+                        await tx.invoice.update({
+                            where: { id: st.invoiceId },
+                            data: { status: st.status },
+                        });
+                    }
+
+                    return {
+                        paymentId: created.id,
+                        allocated: result.allocations,
+                        statuses: result.statuses,
+                    };
+                });
+            } catch (err) {
+                const retryable = isRetryableWriteConflict(err);
+                if (!retryable || attempt >= PAYMENT_MAX_ATTEMPTS) throw err;
+            }
+        }
+    }
+
+    /** Invoices with their allocated totals, shaped for the waterfall. */
+    private async invoiceSnapshot(
+        db: Pick<DatabaseService, 'invoice'>,
+        where: { studentId: string } | { id: { in: string[] } },
+    ): Promise<InvoiceLike[]> {
+        const invoices = await db.invoice.findMany({
+            where,
+            include: { allocations: true },
+            orderBy: [{ dueDate: 'asc' }, { id: 'asc' }],
+        });
+        return invoices.map((inv) => ({
             id: inv.id,
             amount: inv.amount,
             dueDate: inv.dueDate,
             allocated: inv.allocations.reduce((s, a) => s + a.amount, 0),
         }));
-
-        const totalOutstanding = asInvoiceLike.reduce((s, i) => s + outstanding(i), 0);
-        if (dto.amount > totalOutstanding) {
-            throw new BadRequestException(
-                `Payment ${dto.amount} exceeds outstanding balance ${totalOutstanding}`,
-            );
-        }
-
-        const result = allocateWaterfall(dto.amount, asInvoiceLike);
-
-        const payment = await this.prisma.$transaction(async (tx) => {
-            const created = await tx.payment.create({
-                data: {
-                    studentId: dto.studentId,
-                    amount: dto.amount,
-                    method: dto.method,
-                    reference: dto.reference,
-                    recordedById,
-                },
-            });
-            for (const alloc of result.allocations) {
-                await tx.paymentAllocation.create({
-                    data: {
-                        paymentId: created.id,
-                        invoiceId: alloc.invoiceId,
-                        amount: alloc.amount,
-                    },
-                });
-            }
-            for (const st of result.statuses) {
-                await tx.invoice.update({
-                    where: { id: st.invoiceId },
-                    data: { status: st.status },
-                });
-            }
-            return created;
-        });
-
-        return {
-            paymentId: payment.id,
-            allocated: result.allocations,
-            statuses: result.statuses,
-        };
     }
+}
+
+/** Whole-transaction retries for concurrent payment conflicts (Q-0004). */
+const PAYMENT_MAX_ATTEMPTS = 3;
+
+/** Prisma write conflict, Postgres serialization failure, deadlock. */
+const RETRYABLE_WRITE_CODES = ['P2034', '40001', '40P01'];
+
+function isRetryableWriteConflict(err: unknown): boolean {
+    if (!err || typeof err !== 'object') return false;
+    const e = err as {
+        code?: unknown;
+        meta?: { code?: unknown };
+        cause?: { code?: unknown; originalCode?: unknown };
+    };
+    return [e.code, e.meta?.code, e.cause?.code, e.cause?.originalCode].some(
+        (code) => typeof code === 'string' && RETRYABLE_WRITE_CODES.includes(code),
+    );
 }

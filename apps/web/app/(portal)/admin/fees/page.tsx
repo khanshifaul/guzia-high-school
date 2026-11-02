@@ -105,7 +105,7 @@ export default function AdminFeesPage() {
         if (!genHeadId || !genDueDate) return;
         setBusy(true); setFeedback(null);
         try {
-            const res = await api<{ created: number; amount: number }>("/fees/invoices/generate", {
+            const res = await api<{ created: number; skipped: number; amount: number }>("/fees/invoices/generate", {
                 method: "POST",
                 body: {
                     feeHeadId: genHeadId,
@@ -115,7 +115,10 @@ export default function AdminFeesPage() {
             });
             setFeedback({
                 kind: "ok",
-                msg: `${res.created} invoice(s) created at ৳${res.amount} each`,
+                msg:
+                    res.created === 0
+                        ? `Nothing new — ${res.skipped} invoice(s) already exist for this fee head and due date (৳${res.amount} each)`
+                        : `${res.created} invoice(s) created${res.skipped > 0 ? `, ${res.skipped} already existed` : ""} at ৳${res.amount} each`,
             });
             loadHeads();
         } catch (err) {
