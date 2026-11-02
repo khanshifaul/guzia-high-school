@@ -24,6 +24,7 @@ import { WorkspacesModule } from './workspaces/workspaces.module';
 import { EmailModule } from './email/email.module';
 import { ContactModule } from './contact/contact.module';
 import { GalleryModule } from './gallery/gallery.module';
+import { PagesModule } from './pages/pages.module';
 import { AccessTokenGuard } from './common/guards/access-token.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { RateLimitGuard } from './common/rate-limiter/rate-limit.guard';
@@ -61,6 +62,7 @@ import { HeroSlidesModule } from './hero-slides/hero-slides.module';
     ContactModule,
     GalleryModule,
     HeroSlidesModule,
+    PagesModule,
   ],
   controllers: [HealthController],
   providers: [
