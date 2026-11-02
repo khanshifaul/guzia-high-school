@@ -52,6 +52,29 @@ guarded by one in-flight promise per process and tolerates a concurrent insert
 (`P2002` is ignored). A test proves it does not overwrite a row an admin edited
 and backfills only the missing key.
 
+The branch was rebased onto `origin/main` at `a20fcb6` (PR #34, hero slider); the five conflicts were resolved keeping both the Page/Block CMS and main's newer hero-slider, service-card and CTA work.
+
+## Conflict resolution
+
+- `apps/web/app/page.tsx` — hand-merged. `HeroSlider`, the headmaster message,
+  the events strip, the gradient CTA and the compact quick-access cards are
+  main's; the stats, highlights, programs, facilities, testimonials,
+  achievements, gallery and services sections come from the blocks, with
+  main's layouts where main had redesigned them. Services link through
+  `/portal/<key>` again (main's version linked `/login` for signed-in users and
+  showed the raw key as the label).
+- `apps/api/src/app.module.ts` — union: `HeroSlidesModule` (main) **and**
+  `PagesModule` (this branch). Main had the pages files but never registered the
+  module, so `/api/pages/:slug` did not exist on main.
+- `apps/web/components/portal/role-nav.ts` — main's version, which already
+  carries both the Hero Slider and Pages entries.
+- `apps/api/prisma/generated/internal/class.ts` and
+  `prismaNamespace.ts` — main's copies, then `prisma generate` from the merged
+  schema; the regenerated client is byte-identical to what the branch commits
+  (no hand-merged generated code).
+- `apps/api/prisma/schema.prisma` — the union was already main's file
+  (`Page`, `Block`, `HeroSlide`); no edit needed.
+
 ## Files changed
 
 - `apps/api/prisma/schema.prisma` — `Page`, `Block`.
@@ -136,6 +159,8 @@ returns `['values', 'achievements']`.
 
 ## Verify
 
+Re-run after the rebase, from the worktree root.
+
 ```
 $ grep -nE 'const (highlights|programs|facilities|testimonials|achievements|stats|gallery) *=' \
     apps/web/app/page.tsx apps/web/app/about/page.tsx apps/web/app/academics/page.tsx
@@ -148,45 +173,61 @@ $ bun install --frozen-lockfile && bun run test
 @guzia/web test:  Test Files  4 passed (4)
 @guzia/web test:       Tests  72 passed (72)
 
-$ (cd apps/web && bunx tsc --noEmit)
+$ bun run lint
 (no output)
+exit=0
+
 $ (cd apps/api && bunx tsc --noEmit -p tsconfig.json)
 (no output)
+exit=0
 
-$ bun run lint
-(only the two pre-existing warnings in apps/api/prisma/seed.ts: unused sectionsA/sectionsB)
+$ (cd apps/web && bunx tsc --noEmit)
+(no output)
+exit=0
+
+$ (cd apps/api && bunx prisma generate)
+Generated Prisma Client (7.10.1) to ./prisma/generated
+$ git status --short apps/api/prisma/generated
+(no output — the committed client already matches Page + Block + HeroSlide)
 
 $ (cd apps/api && bunx prisma migrate status)
-no pending migration after deploy
+22 migrations found in prisma/migrations
+Database schema is up to date!
 ```
 
-Runtime checks against the running API and web app:
+Runtime check on the merged page (API :4000, web :3004, managed Chromium):
 
-- `GET /api/pages/home` → 8 blocks; `highlights` EN/BN title correct, 6 rows in
-  both documents; stats carry `compute: "years-since-established"` for the
-  years-of-excellence row.
-- `GET /api/pages/{about,academics,global}` → 2, 2 and 4 blocks in admin order.
-- Home page in both languages: all eight sections and both footer columns render
-  the DB text (`কেন গুজিয়া …`, `দ্রুত লিংক`, `জাতীয় জরুরি সেবা`).
-- `/about`: mission/vision/values, achievements, history. `/academics`:
-  programs with subject badges, “How We Teach”. `/pages`: the seven sitemap
-  entries with their original labels and hrefs.
-- `next dev` was run and the page's console reported no errors.
+- `GET /api/pages/home` → 200, 8 blocks in admin order; `GET /api/hero-slides`
+  → 200.
+- With one temporary published slide, the homepage rendered its title and
+  subtitle and dropped the static fallback; deleting the slide restored the
+  fallback. The CMS sections rendered in both cases — the slider and the blocks
+  coexist. The slide was created and removed only for this check.
+- Home in English and Bengali: stats, highlights, programs (with the
+  `Grades 6–10` footnote), facilities, testimonials, achievements, gallery,
+  services, both footer link lists and the hotline strip all render from the
+  database (`কেন গুজিয়া …`, `দ্রুত লিংক`, `জাতীয় জরুরি সেবা`).
+- Services cards show the block's titles and descriptions and link
+  `/portal/{admission,attendance,grades,fees}`.
+- `/about` (mission/vision/values, achievements), `/academics` (programs with
+  subject badges, “How We Teach”) and `/pages` (seven sitemap entries) render.
+- Browser console: no errors on any page.
+
+The one migration main had left unapplied on the connected dev database
+(`20261026193825_add_hero_slider`) was applied through `prisma migrate deploy`
+so the merged page could be exercised; it is additive and already on `main`.
 
 ## Commit
 
-`9f599391fb826c65e95ade7bfcfa0e10f25c4595`
-(`feat(pages): admin-editable bilingual public content`) on
-`foreman/site-gov-compliance`, pushed to `origin` as a branch. This file's own
-commit follows on the same branch.
+`8909993` (`feat(pages): admin-editable bilingual public content`) is the
+post-rebase feature commit on `foreman/site-gov-compliance`. The result update
+that carries this text is the follow-up commit on the same branch, which cannot
+name its own SHA.
 
 ## Blockers
 
-None technical. **No pull request was opened:** this repository is public and
-`rules/safety.md` treats a pull-request description as publishing, which needs
-the founder to name it. The branch is committed and pushed; the reviewer's PR
-step is the one remaining action outside this task's authority. The migration is
-already applied to the connected dev database.
+None technical. PR #33 is open, rebased onto `origin/main` and awaiting review.
+This task did not merge it, close it, re-open it, or touch `main`.
 
 ## Reflection
 
