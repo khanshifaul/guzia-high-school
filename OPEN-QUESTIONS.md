@@ -19,8 +19,6 @@ below. Delete both the line and its section when the answer lands.
 - Q-0001 — the admission age window is skipped when no date of birth is sent
 - Q-0002 — roll and admission numbers are allocated from a count read outside the transaction
 - Q-0003 — a pending applicant cannot see their own application
-- Q-0004 — two payments recorded at the same moment can over-allocate one invoice
-- Q-0005 — re-running invoice generation double-bills every matched student
 - Q-0006 — a fee head's class is stored but never used when generating invoices
 - Q-0007 — a mark is accepted for a subject the exam does not include, or a student outside its class
 - Q-0008 — the per-subject pass flag is computed and never used
@@ -76,42 +74,6 @@ therefore still open.
 
 **Options.** (a) issue a temporary credential at submit so the applicant can
 track status; (b) keep the page post-approval only and correct the spec.
-
-**Answer.**
-
-## Q-0004 — two payments recorded at the same moment can over-allocate one invoice
-
-**Question.** Should `recordPayment` re-read the student's invoices inside its
-transaction (row lock or bounded retry), or is a single cashier assumed?
-
-**Why it matters.** `fees.service.ts:112` reads invoices and their allocations,
-`:124-131` computes outstanding and the waterfall on that snapshot, and only then
-`:133` opens the transaction — which writes without re-reading. Two concurrent
-payments for the same student both pass the "exceeds outstanding" guard and
-allocate the same balance twice. Measured by replaying one snapshot twice: two
-৳1200 payments both hit `inv-1` (amount 1200), leaving it with 2400 allocated.
-
-**Options.** (a) re-read and allocate inside the transaction with `SELECT … FOR
-UPDATE` on the student's invoices; (b) keep it simple and add an
-`allocated ≤ invoice.amount` check inside the transaction so the second request
-fails loudly instead of over-allocating.
-
-**Answer.**
-
-## Q-0005 — re-running invoice generation double-bills every matched student
-
-**Question.** Should `POST /invoices/generate` be idempotent per fee head and due
-date, or is a second invoice for the same head always a new installment?
-
-**Why it matters.** `fees.service.ts:40-61` creates one invoice per matched
-student unconditionally, and `Invoice` has no unique constraint
-(`schema.prisma:365-376`). A double-click, a retry after a timeout, or a second
-admin duplicates the whole batch. The answer decides the key: `(student,
-head, dueDate)` prevents accidental duplicates and still allows installments.
-
-**Options.** (a) unique on `(studentId, feeHeadId, dueDate)` plus a skip-or-fail
-on re-run; (b) keep duplicates allowed and require the caller to pick a new due
-date per installment, documented in the admin UI.
 
 **Answer.**
 

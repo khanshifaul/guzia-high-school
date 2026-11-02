@@ -373,6 +373,10 @@ model Invoice {
   status      InvoiceStatus       @default(PENDING)
   allocations PaymentAllocation[]
   createdAt   DateTime            @default(now())
+
+  // One invoice per student per fee head per due date: a re-run of generation
+  // skips, a new installment needs a new dueDate (OPEN-QUESTIONS Q-0005).
+  @@unique([studentId, feeHeadId, dueDate])
 }
 
 model Payment {
