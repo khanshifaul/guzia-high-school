@@ -105,6 +105,14 @@ The branch was rebased onto `origin/main` at `a20fcb6` (PR #34, hero slider); th
 - `apps/web/lib/page-blocks.spec.ts` — new, 11 tests.
 - `.agents/results/site-admin-cms.md` — this file.
 
+After the rebase, the diff against `origin/main` is four files —
+`.agents/results/site-admin-cms.md`, `apps/api/src/app.module.ts`,
+`apps/web/app/page.tsx` and `apps/web/lib/page-blocks.spec.ts`. The rest of the
+list above is already on `main`: PR #34 merged the CMS source. What this branch
+adds on top is the module registration main omitted (`PagesModule` was present as
+files but never imported, so `/api/pages/:slug` was not served), the block-driven
+homepage main had replaced with literals, and the EN/BN join test.
+
 ## Proof of control
 
 One block — home `highlights` — changed in the admin and read back publicly, then
