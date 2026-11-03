@@ -7,7 +7,6 @@ import { resolveTeacherId } from '../../common/access/teacher-access.util';
 import { Prisma } from 'prisma/generated/client';
 import { LlmService } from '../llm/llm.service';
 import { z } from 'zod';
-import { parseJsonObject } from '../llm/json.util';
 
 // Concrete week shape so Prisma accepts it as InputJsonValue (a bare
 // Record<string, unknown> lacks the index signature Prisma requires).
@@ -99,15 +98,22 @@ export class PlansService {
         const user = `Class: ${cls.name}\nSubject: ${subject.name}\nType: ${dto.type}\nWeeks: ${weekCount}` +
             (dto.topicsHint ? `\nFocus topics: ${dto.topicsHint}` : '');
 
-        const raw = await this.llm.complete({
-            system,
-            user,
-            json: true,
-            maxTokens: 2000,
-            mockFixture: 'plan',
-            mockCounts: { weeks: weekCount },
-        });
-        const parsed = this.parsePlan(raw, weekCount);
+        const parsed = await this.llm.completeJson(
+            {
+                system,
+                user,
+                json: true,
+                maxTokens: 2000,
+                mockFixture: 'plan',
+                mockCounts: { weeks: weekCount },
+            },
+            PlanWeeksSchema,
+        );
+        if (parsed.weeks.length !== weekCount) {
+            throw new BadRequestException(
+                `AI returned ${parsed.weeks.length} weeks; expected ${weekCount}`,
+            );
+        }
 
         const weeks = this.fillDates(parsed.weeks, dto.startDate);
 
@@ -154,14 +160,17 @@ export class PlansService {
             `Next week: ${next ? next.topics.join(', ') : '(none)'}\n` +
             `The week to rewrite covers the gap between them.`;
 
-        const raw = await this.llm.complete({
-            system,
-            user,
-            json: true,
-            maxTokens: 500,
-            mockFixture: 'week',
-        });
-        const parsed = this.parseWeek(raw);
+        const parsed = await this.llm.completeJson(
+            {
+                system,
+                user,
+                json: true,
+                maxTokens: 500,
+                mockFixture: 'week',
+            },
+            PlanWeekSchema,
+        );
+        const assessment = parsed.assessment ?? null;
 
         const updated = weeks.map((w, i) =>
             i === index
@@ -169,7 +178,7 @@ export class PlansService {
                       ...w,
                       topics: parsed.topics,
                       objective: parsed.objective,
-                      assessment: parsed.assessment ?? null,
+                      assessment,
                   }
                 : w,
         );
@@ -177,41 +186,6 @@ export class PlansService {
             where: { id },
             data: { weeks: updated as unknown as Prisma.InputJsonValue },
         });
-    }
-
-    /** Parse a single-week LLM reply ({topics, objective, assessment}). */
-    private parseWeek(raw: string): { topics: string[]; objective: string; assessment: string | null } {
-        let json: unknown;
-        try {
-            json = parseJsonObject(raw);
-        } catch {
-            throw new BadRequestException('AI returned invalid JSON; try again');
-        }
-        const result = PlanWeekSchema.safeParse(json);
-        if (!result.success) {
-            throw new BadRequestException('AI week JSON did not match the expected shape');
-        }
-        return { ...result.data, assessment: result.data.assessment ?? null };
-    }
-
-    /** Parse + validate the LLM JSON; one retry is handled by the LLM layer. */
-    private parsePlan(raw: string, expectedWeeks: number) {
-        let json: unknown;
-        try {
-            json = parseJsonObject(raw);
-        } catch {
-            throw new BadRequestException('AI returned invalid JSON; try again');
-        }
-        const result = PlanWeeksSchema.safeParse(json);
-        if (!result.success) {
-            throw new BadRequestException('AI plan JSON did not match the expected shape');
-        }
-        if (result.data.weeks.length !== expectedWeeks) {
-            throw new BadRequestException(
-                `AI returned ${result.data.weeks.length} weeks; expected ${expectedWeeks}`,
-            );
-        }
-        return result.data;
     }
 
     /** Server computes week dates from startDate, skipping Fridays (BD weekend). */

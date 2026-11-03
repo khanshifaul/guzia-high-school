@@ -18,7 +18,6 @@ import { LlmService, type LlmTurn } from '../llm/llm.service';
 import { z } from 'zod';
 import { extractText } from 'unpdf';
 import { parseOffice } from 'officeparser';
-import { parseJsonObject } from '../llm/json.util';
 import { validateOutboundUrl } from '../../common/net.util';
 import { convertWithMarkItDown } from './markitdown.util';
 import { RetrievalService } from './retrieval.service';
@@ -792,7 +791,7 @@ export class SourcesService implements OnModuleInit {
         }
     }
 
-    /** One JSON summary call, retried once when the provider breaks the JSON. */
+    /** One JSON summary contract; the LLM layer repairs once on mismatch. */
     private async summaryJson(text: string) {
         const system =
             'You are given notes from different parts of ONE school source, labelled ' +
@@ -801,22 +800,16 @@ export class SourcesService implements OnModuleInit {
             '"suggestedQuestions": string[]}. Do not describe only the first part. ' +
             'Respond with the JSON object only, starting with { and ending with }; ' +
             'no prose, no markdown fence.';
-        for (let attempt = 0; attempt < 2; attempt += 1) {
-            const raw = await this.llm.complete({
+        return this.llm.completeJson(
+            {
                 system,
                 user: text.slice(0, SUMMARY_INPUT_CHARS),
                 json: true,
                 maxTokens: 2500,
                 mockFixture: 'summary',
-            });
-            try {
-                const parsed = SummarySchema.safeParse(parseJsonObject(raw));
-                if (parsed.success) return parsed.data;
-            } catch {
-                // Empty or prose reply: try once more, then surface a 400.
-            }
-        }
-        throw new BadRequestException('AI returned invalid summary JSON');
+            },
+            SummarySchema,
+        );
     }
 
     /** JWT carries the User id; the FK references the Teacher row. Resolve it. */

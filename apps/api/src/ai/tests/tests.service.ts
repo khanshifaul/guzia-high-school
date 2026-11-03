@@ -13,7 +13,6 @@ import { resolveTeacherId } from '../../common/access/teacher-access.util';
 import { Prisma, TestMode } from 'prisma/generated/client';
 import { LlmService } from '../llm/llm.service';
 import { z } from 'zod';
-import { parseJsonObject } from '../llm/json.util';
 import { autoScore, totalScore } from './grading.util';
 import { GradeAnswerDto, SaveAnswerDto } from './dto';
 
@@ -138,15 +137,29 @@ export class TestsService {
             `Class: ${cls.name}\nSubject: ${subject.name}\nTopics: ${dto.topics.join(', ')}\n` +
             `MCQ: ${mcq}, Short: ${short}, Long: ${long}\nTotal marks: ${dto.totalMarks}, Duration: ${dto.durationMinutes} min`;
 
-        const raw = await this.llm.complete({
-            system,
-            user,
-            json: true,
-            maxTokens: 4000,
-            mockFixture: 'paper',
-            mockCounts: { mcq, short, long },
-        });
-        const paper = this.parsePaper(raw, { mcq, short, long });
+        const paper = await this.llm.completeJson(
+            {
+                system,
+                user,
+                json: true,
+                maxTokens: 4000,
+                mockFixture: 'paper',
+                mockCounts: { mcq, short, long },
+            },
+            PaperSchema,
+        );
+        const byType = (t: string) =>
+            paper.groups.find((g) => g.type === t)?.questions.length ?? 0;
+        if (
+            byType('MCQ') !== mcq ||
+            byType('SHORT') !== short ||
+            byType('LONG') !== long
+        ) {
+            throw new BadRequestException(
+                `AI returned counts MCQ=${byType('MCQ')}, SHORT=${byType('SHORT')}, LONG=${byType('LONG')}; ` +
+                    `expected ${mcq}/${short}/${long}. Try again.`,
+            );
+        }
 
         // Assign marks + enforce the total.
         let order = 0;
@@ -188,36 +201,6 @@ export class TestsService {
             include: { questions: { orderBy: { order: 'asc' } } },
         });
     }
-
-    private parsePaper(
-        raw: string,
-        counts: { mcq: number; short: number; long: number },
-    ) {
-        let json: unknown;
-        try {
-            json = parseJsonObject(raw);
-        } catch {
-            throw new BadRequestException('AI returned invalid JSON; try again');
-        }
-        const result = PaperSchema.safeParse(json);
-        if (!result.success) {
-            throw new BadRequestException('AI paper JSON did not match the expected shape');
-        }
-        const byType = (t: string) =>
-            result.data.groups.find((g) => g.type === t)?.questions.length ?? 0;
-        if (
-            byType('MCQ') !== counts.mcq ||
-            byType('SHORT') !== counts.short ||
-            byType('LONG') !== counts.long
-        ) {
-            throw new BadRequestException(
-                `AI returned counts MCQ=${byType('MCQ')}, SHORT=${byType('SHORT')}, LONG=${byType('LONG')}; ` +
-                    `expected ${counts.mcq}/${counts.short}/${counts.long}. Try again.`,
-            );
-        }
-        return result.data;
-    }
-
 
     async findOne(id: string, userId: string) {
         const teacherId = await resolveTeacherId(this.prisma, userId);
