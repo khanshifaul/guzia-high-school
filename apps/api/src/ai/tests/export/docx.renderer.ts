@@ -4,10 +4,12 @@
 // second, continuous section with two columns (the archive's 30-items-on-one-
 // page shape). The creative body stays single-column.
 //
-// Fonts are explicit on every run: Latin text in Liberation Sans and Bengali
-// (complex script) in Noto Sans Bengali. The same mapping is written as the
-// document default so Word does not fall back to a legacy face for any run the
-// renderer does not touch.
+// Fonts are explicit on every run: Latin text in Times New Roman and Bengali
+// (complex script) in Kalpurush. Bengali is a complex script, so `cs` is the
+// face Word applies; a run with only `ascii` set renders Bengali in the default
+// complex-script font. Both `w:sz` and `w:szCs` are written on every run, and
+// the same mapping is the document default so Word does not fall back to a
+// legacy face for any run the renderer does not touch.
 import {
     AlignmentType,
     BorderStyle,
@@ -31,10 +33,9 @@ const BODY_SIZE = 19;
 const SMALL_SIZE = 17;
 
 const BODY_FONT: IFontAttributesProperties = {
-    ascii: 'Liberation Sans',
-    hAnsi: 'Liberation Sans',
-    cs: 'Noto Sans Bengali',
-    eastAsia: 'Noto Sans Bengali',
+    ascii: 'Times New Roman',
+    hAnsi: 'Times New Roman',
+    cs: 'Kalpurush',
 };
 
 const OPTION_LABELS = ['ক', 'খ', 'গ', 'ঘ'] as const;
@@ -46,21 +47,31 @@ interface RunStyle {
 }
 
 function run(text: string, style: RunStyle = {}): TextRun {
-    return new TextRun({ text, font: BODY_FONT, size: BODY_SIZE, ...style });
+    const size = style.size ?? BODY_SIZE;
+    return new TextRun({
+        text,
+        font: BODY_FONT,
+        size,
+        sizeComplexScript: size,
+        bold: style.bold,
+        italics: style.italics,
+    });
 }
 
 /** Splits stored multi-line text into line-broken runs; never rewrites it. */
 function textRuns(value: string, style: RunStyle = {}): TextRun[] {
-    return value.split(/\r?\n/).map((line, index) =>
-        new TextRun({
+    return value.split(/\r?\n/).map((line, index) => {
+        const size = style.size ?? BODY_SIZE;
+        return new TextRun({
             text: line,
             font: BODY_FONT,
-            size: style.size ?? BODY_SIZE,
+            size,
+            sizeComplexScript: size,
             bold: style.bold,
             italics: style.italics,
             break: index > 0 ? 1 : undefined,
-        }),
-    );
+        });
+    });
 }
 
 function pageProperties() {
@@ -200,7 +211,11 @@ export async function renderDocx(model: PaperModel): Promise<Buffer> {
         styles: {
             default: {
                 document: {
-                    run: { font: BODY_FONT, size: BODY_SIZE },
+                    run: {
+                        font: BODY_FONT,
+                        size: BODY_SIZE,
+                        sizeComplexScript: BODY_SIZE,
+                    },
                 },
             },
         },

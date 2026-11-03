@@ -5,9 +5,11 @@
 // call time (`TYPST_BIN`, default `typst`), never at boot, so a machine without
 // it still serves every other API route.
 //
-// The UI family is listed before the non-UI family on purpose: both render the
-// same typeface, but the non-UI cut makes poppler's `pdftotext` emit each matra
-// twice (measured with 0.15.1). The UI cut extracts the stored Unicode exactly.
+// Fonts are vendored under `assets/fonts` and passed to Typst with
+// `--font-path`. Liberation Serif is metric-compatible with Times New Roman
+// (which cannot be redistributed) and is listed first so Latin glyphs never
+// come from Kalpurush; Kalpurush is the Bengali fallback. Typst selects per
+// glyph from the tuple, so the order is part of the contract.
 import { InternalServerErrorException, ServiceUnavailableException } from '@nestjs/common';
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -17,7 +19,7 @@ import { join, resolve } from 'node:path';
 import { type PaperItem, type PaperModel, type PaperSection, toBengaliDigits } from './paper.model';
 
 const COMPILE_TIMEOUT_MS = 20_000;
-const FONT_FAMILIES = '("Noto Sans Bengali UI", "Noto Sans Bengali", "Liberation Sans")';
+const FONT_FAMILIES = '("Liberation Serif", "Kalpurush")';
 
 /** The vendored font directory, unless `EXPORT_FONT_PATH` names another. */
 export function resolveFontDir(): string {
