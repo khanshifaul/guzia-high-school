@@ -30,6 +30,8 @@ const QUESTIONS = join(FIXTURES, 'questions.json');
 
 const BENCH_USER_ID = 'bench-rag-user';
 const BENCH_TEACHER_ID = 'bench-rag-teacher';
+/** Every bench document carries this classId; the guard retrieves only inside it. */
+const BENCH_SCOPE = 'bench-rag-scope';
 /** Total embedded chunks the corpus is padded to (the keyword arm needs ≥500). */
 const EMBEDDED_CORPUS = 520;
 /** Keyword-only rows: no vector, so the corpus is big enough to price the scan. */
@@ -140,15 +142,97 @@ const PAD_TOPICS: string[] = [
         'Drinking clean water prevents dehydration in hot weather.',
 ];
 
-/** Deterministic synthetic corpus text: every row is distinct (unique token). */
-function syntheticChunk(index: number, token: string, length = 1200): string {
-    const sentence =
-        'The school library keeps a copy of every prescribed textbook for the year. ' +
-        'Students may borrow one book at a time and must return it within a fortnight. ' +
-        'The reading room is open from nine in the morning until four in the afternoon. ';
-    const head = `Reference ${token} belongs to shelf ${index % 40} of the library catalogue. `;
-    let text = head;
-    while (text.length < length) text += sentence;
+/**
+ * Embedded-pad filler: varied, unrelated topics that share no vocabulary with
+ * the guard's questions (no library/borrowing text competing with the Library
+ * Rules chunk). Each row carries its own token and code, so no two rows are the
+ * same, and the striding picks a different sentence order per row.
+ */
+const PAD_FILLER: readonly (readonly string[])[] = [
+    [
+        'The machine workshop keeps spare bearings in labelled trays.',
+        'A lathe operator checks the oil level before every shift.',
+        'Cutting tools are sharpened on the grinding wheel once a week.',
+        'The drill press is bolted to a concrete plinth.',
+    ],
+    [
+        'The warehouse ledger records each delivery of cement bags.',
+        'Trucks are weighed at the gate before unloading.',
+        'Sacks are stacked on pallets so the forklift can lift them.',
+        'Damaged bags are set aside for inspection.',
+    ],
+    [
+        'The seed store keeps paddy and wheat seed in sealed bins.',
+        'A germination test is run on every new lot.',
+        'Farmers collect their seed after the first rain.',
+        'The store is fumigated before the season starts.',
+    ],
+    [
+        'The weather station records rainfall in a graduated cylinder.',
+        'A thermometer in a shaded box gives the air temperature.',
+        'Wind direction is read from the vane on the mast.',
+        'Readings are written into the log at nine and at three.',
+    ],
+    [
+        'Bus route eleven leaves the depot at half past six.',
+        'The conductor checks the ticket machine before departure.',
+        'A relief bus runs when the first one is full.',
+        'The last service leaves the terminal at nine in the evening.',
+    ],
+    [
+        'The canteen stock sheet lists rice, oil and salt.',
+        'The cook weighs each ingredient on the counter scale.',
+        'Leftovers are discarded at the end of the day.',
+        'The refrigerator temperature is written on the board.',
+    ],
+    [
+        'The standby generator is tested every Thursday afternoon.',
+        'Fuel is topped up from the steel drum in the yard.',
+        'The oil filter is replaced after two hundred hours.',
+        'An electrician signs the maintenance card each month.',
+    ],
+    [
+        'A survey map shows contour lines at ten metre intervals.',
+        'The north arrow is printed in the top corner.',
+        'A scale bar converts millimetres to kilometres.',
+        'Field notes are transferred to the map in the evening.',
+    ],
+];
+
+function fillerChunk(index: number, length = 1200): string {
+    let text =
+        `Sheet zq${String(index).padStart(4, '0')} is filed under code ${index % 97} in the annex. `;
+    let step = index;
+    while (text.length < length) {
+        const pool = PAD_FILLER[step % PAD_FILLER.length];
+        text += pool[step % pool.length] + ' ';
+        step += 3;
+    }
+    return text.slice(0, length);
+}
+
+/**
+ * Keyword-only filler: a separate domain (registry/archive) that shares no
+ * vocabulary with any guard question, so a keyword hit on a guard question can
+ * only come from the chunk that actually answers it.
+ */
+const STRESS_FILLER: readonly string[] = [
+    'The registry office files every permit by district and serial number.',
+    'A duplicate copy is kept in the steel cupboard for ten years.',
+    'Field officers send their monthly returns by courier.',
+    'The archive room is closed on public holidays.',
+    'Each envelope is stamped with the date it was received.',
+    'Missing pages are noted in the register before binding.',
+];
+
+function stressChunk(index: number, length = 800): string {
+    let text =
+        `Filing reference kw${String(index).padStart(5, '0')} sits in drawer ${index % 61} of the registry. `;
+    let step = index;
+    while (text.length < length) {
+        text += STRESS_FILLER[step % STRESS_FILLER.length] + ' ';
+        step += 5;
+    }
     return text.slice(0, length);
 }
 
@@ -234,6 +318,7 @@ async function main(): Promise<void> {
             data: {
                 id: docId,
                 teacherId: BENCH_TEACHER_ID,
+                classId: BENCH_SCOPE,
                 filename: spec.file,
                 kind: spec.path === 'image' ? 'IMAGE' : 'PDF',
                 status: 'PROCESSING',
@@ -294,6 +379,7 @@ async function main(): Promise<void> {
         data: {
             id: padDocId,
             teacherId: BENCH_TEACHER_ID,
+            classId: BENCH_SCOPE,
             filename: 'synthetic-pad.txt',
             kind: 'PDF',
             status: 'PROCESSING',
@@ -304,7 +390,7 @@ async function main(): Promise<void> {
         const topic = PAD_TOPICS[index];
         const text = topic
             ? `${topic} Reference page pad${String(index).padStart(2, '0')}.`
-            : syntheticChunk(index, `zq${String(index).padStart(4, '0')}`);
+            : fillerChunk(index);
         return {
             id: `bench:pad:${index}`,
             documentId: padDocId,
@@ -338,13 +424,14 @@ async function main(): Promise<void> {
         data: {
             id: stressDocId,
             teacherId: BENCH_TEACHER_ID,
+            classId: BENCH_SCOPE,
             filename: 'synthetic-keyword.txt',
             kind: 'PDF',
             status: 'PROCESSING',
         },
     });
     const stressRows = Array.from({ length: KEYWORD_ONLY_CORPUS }, (_, index) => {
-        const text = syntheticChunk(index, `kw${String(index).padStart(5, '0')}`, 800);
+        const text = stressChunk(index);
         return {
             id: `bench:stress:${index}`,
             documentId: stressDocId,
@@ -389,7 +476,6 @@ async function main(): Promise<void> {
     const keywordTimes: number[] = [];
     const vectorTimes: number[] = [];
     const fusionTimes: number[] = [];
-    let keywordHits = 0;
     for (const entry of questions) {
         const keyword = await timeIt(() =>
             armService.keywordSearch(BENCH_TEACHER_ID, entry.question, {}, ARM_LIMIT),
@@ -401,7 +487,6 @@ async function main(): Promise<void> {
         keywordTimes.push(keyword.ms);
         vectorTimes.push(vector.ms);
         fusionTimes.push(fusion.ms);
-        if (keyword.value.length > 0) keywordHits += 1;
     }
 
     console.log('## Retrieval arms (one call per question, query embedding cold)');
@@ -449,22 +534,73 @@ async function main(): Promise<void> {
     );
     console.log('');
 
-    // ---- quality guard -----------------------------------------------------
-    let hits = 0;
-    const misses: string[] = [];
-    for (const entry of questions) {
-        const top = await coldService.retrieve(BENCH_TEACHER_ID, entry.question, { topK: 3 });
-        const hit = top.some((chunk) => entry.expected.includes(chunk.chunkId));
-        if (hit) hits += 1;
-        else misses.push(`${entry.question} → [${top.map((chunk) => chunk.chunkId).join(', ')}]`);
+    // ---- quality scope -----------------------------------------------------
+    // Every row a guard question can retrieve must be one the bench seeded: the
+    // bench teacher owns only bench documents, and the scope classId is claimed
+    // by no other teacher's documents.
+    const scopeCheck = await prisma.$queryRaw<
+        { benchRows: number; strayTeacherRows: number; strayScopeRows: number }[]
+    >`
+        SELECT
+            (SELECT count(*)::int
+               FROM "SourceChunk" c JOIN "SourceDocument" d ON d.id = c."documentId"
+              WHERE d."teacherId" = ${BENCH_TEACHER_ID}) AS "benchRows",
+            (SELECT count(*)::int
+               FROM "SourceChunk" c JOIN "SourceDocument" d ON d.id = c."documentId"
+              WHERE d."teacherId" = ${BENCH_TEACHER_ID} AND d.id NOT LIKE 'bench-doc:%') AS "strayTeacherRows",
+            (SELECT count(*)::int
+               FROM "SourceChunk" c JOIN "SourceDocument" d ON d.id = c."documentId"
+              WHERE d."classId" = ${BENCH_SCOPE} AND d."teacherId" <> ${BENCH_TEACHER_ID}) AS "strayScopeRows"
+    `;
+    const scope = scopeCheck[0];
+    console.log('## Quality scope');
+    console.log('');
+    console.log(`- rows owned by the bench teacher: ${scope.benchRows}`);
+    console.log(`- bench-teacher rows outside bench documents: ${scope.strayTeacherRows} (must be 0)`);
+    console.log(
+        `- rows in classId "${BENCH_SCOPE}" owned by another teacher: ${scope.strayScopeRows} (must be 0)`,
+    );
+    console.log('');
+    if (scope.strayTeacherRows !== 0 || scope.strayScopeRows !== 0) {
+        console.error('Scope assertion failed: the guard could retrieve rows the bench did not seed.');
+        process.exit(1);
     }
-    console.log('## Quality guard (top-3 hit rate)');
+
+    // ---- quality guard: five runs on the same corpus -----------------------
+    // Scoped to the bench's own classId, so rows outside the seeded corpus (the
+    // dev database's other 554 embedded chunks belong to another teacher) can
+    // never enter the vector arm. A fresh service per run means a cold query
+    // cache each time; the corpus itself does not change between runs.
+    console.log(`## Quality guard — 5 runs, scoped to classId "${BENCH_SCOPE}"`);
     console.log('');
-    console.log(`- questions: ${questions.length}`);
-    console.log(`- hits: ${hits}`);
-    console.log(`- rate: ${number((hits / questions.length) * 100, 1)}%`);
-    for (const miss of misses) console.log(`- miss: ${miss}`);
+    console.log('| run | hits | rate | foreign chunks |');
+    console.log('|---|---|---|---|');
+    let guardPassed = true;
+    for (let run = 1; run <= 5; run += 1) {
+        const service = new RetrievalService(prisma, embeddings);
+        let hits = 0;
+        let foreign = 0;
+        const misses: string[] = [];
+        for (const entry of questions) {
+            const top = await service.retrieve(BENCH_TEACHER_ID, entry.question, {
+                classId: BENCH_SCOPE,
+                topK: 3,
+            });
+            if (top.some((chunk) => entry.expected.includes(chunk.chunkId))) hits += 1;
+            else misses.push(`${entry.question} → [${top.map((chunk) => chunk.chunkId).join(', ')}]`);
+            foreign += top.filter((chunk) => !chunk.chunkId.startsWith('bench:')).length;
+        }
+        console.log(
+            `| ${run} | ${hits}/${questions.length} | ${number((hits / questions.length) * 100, 1)}% | ${foreign} |`,
+        );
+        for (const miss of misses) console.log(`- run ${run} miss: ${miss}`);
+        if (hits < questions.length || foreign > 0) guardPassed = false;
+    }
     console.log('');
+    if (!guardPassed) {
+        console.error('Quality guard failed: a run was below 20/20 or returned a foreign chunk.');
+        process.exitCode = 1;
+    }
 
     // ---- re-ingest: second pass over the embedded corpus -------------------
     // Only the pad document: the keyword-only rows have no vector, so a second

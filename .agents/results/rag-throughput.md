@@ -7,15 +7,16 @@ gate: auto
 
 ## Summary
 
-A bench harness (`apps/api/scripts/bench-rag.ts`) now runs the real RAG pipeline
+A bench harness (`apps/api/scripts/bench-rag.ts`) runs the real RAG pipeline
 against the local compose Postgres and prints per-stage numbers for four
 committed fixtures plus a deterministic corpus. Measured first on `30a530e`,
 then fixed: the keyword arm reads a generated, GIN-indexed `tsvector`; embeddings
 dedupe, batch at 64 with 2/4-way batch concurrency, and reuse a stored vector by
 content hash so a re-ingest is free; retrieval sets `hnsw.ef_search` per
 transaction and memoises the query embedding (100-entry LRU, 10-minute TTL). One
-`SUPPORTED` table now decides coverage and produces the 415 body. Top-3 quality
-is unchanged at 20/20.
+`SUPPORTED` table now decides coverage and produces the 415 body. The quality
+guard is scoped to the bench's own corpus and is reproducible: 25/25 passes at
+20/20 across five invocations.
 
 ## Environment
 
@@ -34,51 +35,73 @@ is unchanged at 20/20.
 
 ## Method
 
-Baseline was taken on the unmodified code: the feature files were stashed, only
-the bench hooks (retrieval arms made public, `fuseHits` exported) were applied to
-`30a530e`'s `retrieval.service.ts`, the bench ran, and the stash was restored.
-The after run is the same bench, same fixtures, same corpus, same DB.
+Baseline was taken on the unmodified code: `apps/api/src` and the Prisma schema
+were checked out from `30a530e`, only the bench hooks (retrieval arms made
+public, `fuseHits` exported) were applied to `30a530e`'s
+`retrieval.service.ts`, the bench ran, and `HEAD` was restored. The after runs
+are the same bench, same fixtures, same corpus, same DB.
 
 ```
 DATABASE_URL=postgresql://ghs:ghs_dev_password@localhost:5434/ghs \
   bun apps/api/scripts/bench-rag.ts        # or: bun --filter @guzia/api bench:rag
 ```
 
-Corpus per run: **3000 chunks** = 520 with vectors (8 fixture chunks + 512
-synthetic pad chunks) plus 2480 keyword-only rows (no vector). The embedded
-corpus is over the 500-chunk floor; the keyword arm is timed on all 3000, which
-is where a scan versus a GIN index shows.
+**Final corpus (3000 chunks).** 520 chunks carry vectors: the 8 fixture chunks
+plus a 512-row pad. The pad is 8 distinct topic pages (Library Rules, Sports
+Day, Examination Rules, First Aid, Computer Basics, Rivers of Bangladesh, Parts
+of Speech, Food and Nutrition — the guard's expected pad chunks) plus 504 filler
+rows across eight unrelated topics (workshop, warehouse, seed store, weather
+station, bus route, canteen, generator, survey map). Every filler row has its own
+token and code and a different sentence order; none of them contains
+library/borrowing text. The remaining 2480 rows are keyword-only (no vector) and
+use a separate registry/archive vocabulary that shares no word with any guard
+question. Corpus rows are re-seeded and the HNSW graph rebuilt on every run.
+
+**Quality scope.** Every bench document carries `classId = "bench-rag-scope"`;
+the guard calls `retrieve(..., { classId: 'bench-rag-scope', topK: 3 })`. The
+bench asserts by SQL, before the guard, that (a) every row owned by
+`bench-rag-teacher` belongs to a `bench-doc:` document and (b) no document in
+that classId belongs to another teacher — so the 554 embedded chunks the dev
+database holds for a real teacher cannot enter the vector arm. On every run:
+
+```
+- rows owned by the bench teacher: 3000
+- bench-teacher rows outside bench documents: 0 (must be 0)
+- rows in classId "bench-rag-scope" owned by another teacher: 0 (must be 0)
+```
 
 ## Ingest stages — before / after
 
 Fixtures are committed in `apps/api/test/fixtures/rag/` (29,592 bytes total,
-under the 2 MB cap).
+under the 2 MB cap). After numbers are invocation 1 of five (all five in the
+reproducibility table).
 
 | fixture | bytes | pages | chunks | chars | extract ms | chunk ms | insert ms | embed ms | chunks/s |
 |---|---|---|---|---|---|---|---|---|---|
-| `multi-page.pdf` | 4,175 | 3 | 3 | 2,191 | 66.2 → 61.2 | 0.4 → 0.3 | 5.4 → 5.0 | 1626.3 → 1580.1 | 1.84 → 1.90 |
-| `notes.docx` | 1,340 | 1 | 1 | 795 | 31.5 → 25.0 | 0.0 → 0.0 | 3.5 → 3.4 | 42.9 → 36.7 | 23.29 → 27.23 |
-| `marks.csv` | 2,255 | 1 | 3 | 2,555 | 0.0 → 0.0 | 0.0 → 0.0 | 4.5 → 7.6 | 723.5 → 582.9 | 4.15 → 5.15 |
-| `page.png` | 18,372 | 1 | 1 | 348 | 0.1 → 0.1 | 0.0 → 0.0 | 4.3 → 4.6 | 70.7 → 58.9 | 14.14 → 16.99 |
-| `synthetic-pad` (512 chunks) | — | 1 | 512 | 607,598 | — | — | — | 66,504.6 → 52,829.2 | **7.70 → 9.69** |
+| `multi-page.pdf` | 4,175 | 3 | 3 | 2,191 | 59.6 → 62.7 | 0.4 → 0.3 | 5.7 → 5.0 | 1501.2 → 1591.3 | 2.00 → 1.89 |
+| `notes.docx` | 1,340 | 1 | 1 | 795 | 31.8 → 26.4 | 0.0 → 0.0 | 3.6 → 8.5 | 48.4 → 49.2 | 20.67 → 20.31 |
+| `marks.csv` | 2,255 | 1 | 3 | 2,555 | 0.0 → 0.0 | 0.0 → 0.0 | 5.1 → 6.4 | 651.8 → 633.0 | 4.60 → 4.74 |
+| `page.png` | 18,372 | 1 | 1 | 348 | 0.1 → 0.1 | 0.0 → 0.0 | 4.1 → 3.6 | 22.8 → 29.7 | 43.83 → 33.70 |
+| `synthetic-pad` (512 chunks) | — | 1 | 512 | 607,598 | — | — | — | 58,061.9 → 49,850.7 | **8.82 → 10.27** |
 
-The single-chunk fixture rows include model warm-up jitter; the 512-chunk row
-is the throughput figure (129.9 ms/chunk → 103.2 ms/chunk).
+The single-chunk rows include model warm-up jitter; the 512-chunk row is the
+throughput figure.
 
 ## 1. Keyword arm index
 
 - `20261103120000_rag_throughput` adds a stored generated column
   `tsvector` (`to_tsvector('simple', content)`) plus a GIN index, and the query
-  now ranks `c."searchVector"` in both `WHERE` and `ORDER BY`.
+  ranks `c."searchVector"` in both `WHERE` and `ORDER BY`.
 - Same corpus (3000 chunks), 20 questions, one arm call each:
 
 | keyword-arm | p50 ms | p95 ms | max ms |
 |---|---|---|---|
-| before | 245.36 | 489.38 | 508.40 |
-| after | 4.88 | 24.50 | 45.26 |
+| before | 289.36 | 348.31 | 484.31 |
+| after (invocation 1) | 2.56 | 6.54 | 21.32 |
 
-The old and new queries return the identical ordered chunk ids for the
-questions (checked in SQL), so the delta is the access path, not the ranking.
+After p50 across the five invocations: 2.56, 1.24, 1.54, 2.65, 1.37 ms. The old
+and new queries return the identical ordered chunk ids for the questions
+(checked in SQL), so the delta is the access path, not the ranking.
 
 ## 2. Embedding throughput
 
@@ -88,15 +111,18 @@ questions (checked in SQL), so the delta is the access path, not the ranking.
 - Nullable `contentHash` with `@@unique([documentId, contentHash])`; a chunk
   whose hash already has a vector copies it instead of calling the model.
   `createMany` now uses `skipDuplicates`.
-- Measured: 7.70 → **9.69 chunks/s** on the 512-chunk corpus (1.26×). The gain
-  is bounded by the local ONNX encoder saturating the CPU: two concurrent
-  batches do not double throughput, and 64-item batches are the cheap part.
+- Measured on the 512-chunk pad: **8.82 chunks/s before; 10.27 / 7.88 / 7.63 /
+  8.84 / 8.67 after** (median 8.67), i.e. **no reliable throughput gain on this
+  machine**. The pad rows are distinct, so dedupe has nothing to collapse, and
+  the local ONNX encoder is CPU-bound: two concurrent 64-item batches on one
+  machine land inside the run-to-run spread (7.63–10.27). The measured embedding
+  win here is idempotency, not throughput.
 - Re-ingest, second pass over the same 512-chunk document:
 
 | | rows | new rows inserted | rows sent to the model | vectors reused |
 |---|---|---|---|---|
 | before | 512 | 0 | 512 | 0 |
-| after | 512 | 0 | **0** | **512** |
+| after (all 5 invocations) | 512 | 0 | **0** | **512** |
 
 ## 3. Retrieval latency
 
@@ -109,14 +135,17 @@ questions (checked in SQL), so the delta is the access path, not the ranking.
 
 | pass | n | p50 ms before | p95 ms before | p50 ms after | p95 ms after |
 |---|---|---|---|---|---|
-| cold (fresh service, empty cache) | 20 | 253.08 | 494.71 | 22.65 | 42.82 |
-| warm (same service, repeated questions) | 60 | 252.00 | 501.47 | 5.51 | 19.83 |
+| cold (fresh service, empty cache) | 20 | 294.05 | 350.98 | 26.91 | 44.47 |
+| warm (same service, repeated questions) | 60 | 295.21 | 359.36 | 4.50 | 8.01 |
 
 Cold means the first use of a fresh `RetrievalService` — the embedding model was
 already loaded, the cache was not. Warm means a repeated question on the same
-service, i.e. a cache hit. The vector arm alone was 16.06 → 16.43 ms p50 (the
-`set_config` round trip is inside the noise); the before numbers are dominated by
-the keyword scan.
+service, i.e. a cache hit. After cold p50 across the five invocations: 26.91,
+21.55, 18.73, 13.87, 18.46 ms; warm: 4.50, 4.76, 4.76, 1.82, 4.66 ms. The
+vector arm's p50 moved from 10.75 to 30.85 ms because that arm's time is almost
+entirely the per-question model call (it embeds the question); its run-to-run
+p50 after was 19.22–30.85 ms. The before C/W numbers are dominated by the
+keyword scan.
 
 ## 4. Coverage
 
@@ -134,15 +163,27 @@ the keyword scan.
   to the upload allowlist.
 - Legacy `.doc/.ppt/.xls` are never accepted; they are named in the 415 body.
 
-## 5. Quality guard
+## 5. Quality guard — reproducibility
 
 `apps/api/test/fixtures/rag/questions.json` — 20 questions with expected chunk
-ids (12 fixture questions, 8 pad-topic questions).
+ids (12 fixture questions, 8 pad-topic questions). The bench runs the guard five
+times inside each invocation, each time with a fresh `RetrievalService` (cold
+query cache), scoped to `classId = "bench-rag-scope"`, and fails if any run is
+below 20/20 or returns a chunk that is not `bench:`-owned. The whole bench was
+then run **five times**, deleting and re-seeding the corpus and rebuilding the
+HNSW graph each time.
 
-| | top-3 hits | rate |
-|---|---|---|
-| before | 20 / 20 | 100% |
-| after | 20 / 20 | 100% |
+| bench invocation | guard passes | every pass | foreign chunks |
+|---|---|---|---|
+| 1 | 5 | 20/20 (100%) | 0 |
+| 2 | 5 | 20/20 (100%) | 0 |
+| 3 | 5 | 20/20 (100%) | 0 |
+| 4 | 5 | 20/20 (100%) | 0 |
+| 5 | 5 | 20/20 (100%) | 0 |
+
+25/25 passes at 20/20, 0 foreign chunks. The baseline invocation (before code,
+same final corpus and scope) also ran five passes: 20/20, 20/20, 20/20, 20/20,
+20/20.
 
 ## Migration
 
@@ -173,7 +214,8 @@ the paper-export suite, +20 tests) the total is 240; no existing test changed.
 
 ## Files changed
 
-- `apps/api/scripts/bench-rag.ts` — the bench harness.
+- `apps/api/scripts/bench-rag.ts` — the bench harness (final: distinct pad,
+  scope assertion, five guard runs).
 - `apps/api/src/ai/sources/chunk.util.ts`, `extract.util.ts`,
   `file-types.util.ts`, `embedding-cache.util.ts` — shared chunker/hash,
   extraction pipeline, coverage table, query-embedding LRU.
@@ -196,7 +238,8 @@ the paper-export suite, +20 tests) the total is 240; no existing test changed.
 ## Commit
 
 `cab6096` (`perf(ai): index the RAG keyword arm and make ingest idempotent`) on
-`foreman/rag-throughput`, rebased onto `main` at `77a9700`.
+`foreman/rag-throughput`, rebased onto `main` at `77a9700`; this follow-up adds
+`test(rag): make the quality guard reproducible`.
 
 ## Blockers
 
@@ -204,12 +247,15 @@ none.
 
 ## Reflection
 
-The first bench corpus used 512 near-identical synthetic chunks ("Reference
-zqNNNN belongs to shelf N…"). The first after run scored 16/20 and the four
-misses looked like a retrieval regression. They were not: the keyword arm's
-ordered ids were byte-identical before and after (verified in SQL), and the pad
-embeddings were degenerate enough that HNSW neighbour order was arbitrary. I
-replaced the pad corpus with eight distinct topic pages plus varied filler and
-re-measured *both* sides on the identical corpus. Cost: two extra bench runs
-(~9 minutes). A benchmark corpus of near-duplicates cannot measure ANN ranking
-stability, and a corpus change invalidates every number taken before it.
+The reviewer rejected the first recorded 20/20: two of three reruns returned
+19/20, because the pad was 504 repetitions of a library paragraph — the same
+topic as the Library Rules answer — and the vector arm's ordering among
+near-duplicates is arbitrary, so the fused top-3 moved between runs. The fix
+did not touch retrieval: the pad now has eight distinct expected-topic pages and
+504 filler rows on eight unrelated topics, the keyword-only rows use a separate
+registry vocabulary, and the guard is scoped to the bench's own `classId` with a
+pre-run SQL assertion that no other teacher's rows are in scope. Five bench
+invocations, five guard passes each: 25/25 at 20/20, 0 foreign chunks. The
+lesson already recorded on the previous round still holds and now has a second
+instance: a corpus of near-duplicates cannot measure ANN ranking, and a guard
+must own its entire retrieval scope.
