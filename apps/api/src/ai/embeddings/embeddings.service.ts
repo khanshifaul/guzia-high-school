@@ -20,7 +20,10 @@ const LOCAL_DIMENSIONS = 384;
 const REMOTE_DIMENSIONS = 2048;
 const REMOTE_DEFAULT_URL = 'https://integrate.api.nvidia.com/v1';
 const REMOTE_DEFAULT_MODEL = 'nvidia/nemotron-3-embed-1b';
-const BATCH_SIZE = 32;
+const BATCH_SIZE = 64;
+/** Batch-level concurrency: the local model is CPU-bound, the remote API is not. */
+const LOCAL_CONCURRENCY = 2;
+const REMOTE_CONCURRENCY = 4;
 const EMPTY_TEXT_PLACEHOLDER = ' ';
 const REQUEST_TIMEOUT_MS = 60_000;
 
@@ -77,19 +80,44 @@ export class EmbeddingsService implements OnModuleInit {
         this.logger.log(`Embeddings provider: ${this.provider} (${this.dimensions} dims)`);
     }
 
-    /** Embed a batch of texts; returns one vector per input. */
+    /**
+     * Embed a batch of texts; returns one vector per input, in input order.
+     *
+     * Identical normalized texts (headings, repeated table rows, overlapping
+     * chunks) are embedded once and the vector is fanned back out to every
+     * occurrence — the model call is the expensive part, the copy is not.
+     */
     async embed(texts: string[]): Promise<number[][]> {
         if (texts.length === 0) return [];
 
-        // Empty / whitespace-only inputs would tokenize to nothing; substitute a
-        // single space so every input still yields a valid vector.
-        const normalized = texts.map((text) =>
-            text.trim().length > 0 ? text : EMPTY_TEXT_PLACEHOLDER,
-        );
+        // Trim so the dedupe key is whitespace-insensitive (the tokenizer does
+        // not see leading/trailing space anyway). Empty / whitespace-only
+        // inputs would tokenize to nothing; substitute a single space so every
+        // input still yields a valid vector.
+        const normalized = texts.map((text) => {
+            const trimmed = text.trim();
+            return trimmed.length > 0 ? trimmed : EMPTY_TEXT_PLACEHOLDER;
+        });
 
-        return this.provider === 'nvidia'
-            ? this.embedRemote(normalized)
-            : this.embedLocal(normalized);
+        const uniqueTexts: string[] = [];
+        const indexByText = new Map<string, number>();
+        const sourceIndex: number[] = [];
+        for (const text of normalized) {
+            let index = indexByText.get(text);
+            if (index === undefined) {
+                index = uniqueTexts.length;
+                uniqueTexts.push(text);
+                indexByText.set(text, index);
+            }
+            sourceIndex.push(index);
+        }
+
+        const uniqueVectors =
+            this.provider === 'nvidia'
+                ? await this.embedRemote(uniqueTexts)
+                : await this.embedLocal(uniqueTexts);
+
+        return sourceIndex.map((uniqueIndex) => uniqueVectors[uniqueIndex]);
     }
 
     /** Embed a single text. */
@@ -100,20 +128,18 @@ export class EmbeddingsService implements OnModuleInit {
 
     private async embedLocal(normalized: string[]): Promise<number[][]> {
         const extractor = await this.getExtractor();
-        const vectors: number[][] = [];
-        for (let offset = 0; offset < normalized.length; offset += BATCH_SIZE) {
-            const batch = normalized.slice(offset, offset + BATCH_SIZE);
+        const batches = splitBatches(normalized);
+        const results = await runPool(batches, LOCAL_CONCURRENCY, async (batch) => {
             const output = await extractor(batch, { pooling: 'mean', normalize: true });
-            vectors.push(...(output.tolist() as number[][]));
-        }
-        return vectors;
+            return output.tolist() as number[][];
+        });
+        return results.flat();
     }
 
     /** OpenAI-compatible /embeddings (NVIDIA's integrate.api.nvidia.com). */
     private async embedRemote(normalized: string[]): Promise<number[][]> {
-        const vectors: number[][] = [];
-        for (let offset = 0; offset < normalized.length; offset += BATCH_SIZE) {
-            const batch = normalized.slice(offset, offset + BATCH_SIZE);
+        const batches = splitBatches(normalized);
+        const results = await runPool(batches, REMOTE_CONCURRENCY, async (batch) => {
             const response = await fetch(`${this.remoteUrl}/embeddings`, {
                 method: 'POST',
                 headers: {
@@ -137,17 +163,17 @@ export class EmbeddingsService implements OnModuleInit {
                     `Embedding provider returned ${rows.length} vectors for ${batch.length} inputs`,
                 );
             }
-            for (const row of rows) {
+            return rows.map((row) => {
                 const vector = row.embedding ?? [];
                 if (vector.length !== this.dimensions) {
                     throw new ServiceUnavailableException(
                         `Embedding provider returned a ${vector.length}-dim vector; expected ${this.dimensions}`,
                     );
                 }
-                vectors.push(vector);
-            }
-        }
-        return vectors;
+                return vector;
+            });
+        });
+        return results.flat();
     }
 
     private getExtractor(): Promise<FeatureExtractionPipeline> {
@@ -163,4 +189,36 @@ export class EmbeddingsService implements OnModuleInit {
         }
         return this.extractorPromise;
     }
+}
+
+/** Split into model batches of at most BATCH_SIZE inputs. */
+function splitBatches(texts: string[]): string[][] {
+    const batches: string[][] = [];
+    for (let offset = 0; offset < texts.length; offset += BATCH_SIZE) {
+        batches.push(texts.slice(offset, offset + BATCH_SIZE));
+    }
+    return batches;
+}
+
+/** Run `worker` over `items` with at most `concurrency` in flight; order kept. */
+async function runPool<T, R>(
+    items: T[],
+    concurrency: number,
+    worker: (item: T) => Promise<R>,
+): Promise<R[]> {
+    const results: R[] = [];
+    let next = 0;
+
+    const run = async (): Promise<void> => {
+        while (next < items.length) {
+            const index = next;
+            next += 1;
+            results[index] = await worker(items[index]);
+        }
+    };
+
+    await Promise.all(
+        Array.from({ length: Math.min(concurrency, items.length) }, () => run()),
+    );
+    return results;
 }

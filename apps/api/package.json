@@ -10,6 +10,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "ai:train": "bun run src/ai/train.ts",
+    "bench:rag": "bun run scripts/bench-rag.ts",
     "test": "jest",
     "test:e2e": "jest --config test/jest-e2e.json --runInBand"
   },

@@ -1,0 +1,125 @@
+[
+    {
+        "question": "What process combines evaporation with transpiration from plants?",
+        "expected": [
+            "bench:multi-page:0"
+        ]
+    },
+    {
+        "question": "Which tiny particles do cloud droplets condense on?",
+        "expected": [
+            "bench:multi-page:0"
+        ]
+    },
+    {
+        "question": "Which green pigment inside the chloroplast absorbs light?",
+        "expected": [
+            "bench:multi-page:1"
+        ]
+    },
+    {
+        "question": "Through which pores on the underside of a leaf does gas exchange happen?",
+        "expected": [
+            "bench:multi-page:1"
+        ]
+    },
+    {
+        "question": "What decides the nature of the roots of a quadratic equation?",
+        "expected": [
+            "bench:multi-page:2"
+        ]
+    },
+    {
+        "question": "What shape is the graph of a quadratic function?",
+        "expected": [
+            "bench:multi-page:2"
+        ]
+    },
+    {
+        "question": "In which year was the Battle of Plassey fought?",
+        "expected": [
+            "bench:notes:0"
+        ]
+    },
+    {
+        "question": "Who defected to the British at Plassey and was promised the throne?",
+        "expected": [
+            "bench:notes:0"
+        ]
+    },
+    {
+        "question": "What marks did Sabbir Ahmed get in Science?",
+        "expected": [
+            "bench:marks:0",
+            "bench:marks:1",
+            "bench:marks:2"
+        ]
+    },
+    {
+        "question": "What marks did Ayesha Khatun get in Mathematics?",
+        "expected": [
+            "bench:marks:0",
+            "bench:marks:1"
+        ]
+    },
+    {
+        "question": "When is the farewell ceremony for the outgoing Class Ten students?",
+        "expected": [
+            "bench:page:0"
+        ]
+    },
+    {
+        "question": "Where is the farewell ceremony held?",
+        "expected": [
+            "bench:page:0"
+        ]
+    },
+    {
+        "question": "How many books may a student borrow from the library at one time, and for how long?",
+        "expected": [
+            "bench:pad:0"
+        ]
+    },
+    {
+        "question": "When is the annual sports day held?",
+        "expected": [
+            "bench:pad:1"
+        ]
+    },
+    {
+        "question": "What must a student bring to the exam hall?",
+        "expected": [
+            "bench:pad:2"
+        ]
+    },
+    {
+        "question": "What is the first thing to do when a student faints?",
+        "expected": [
+            "bench:pad:3"
+        ]
+    },
+    {
+        "question": "What does the central processing unit do in a computer?",
+        "expected": [
+            "bench:pad:4"
+        ]
+    },
+    {
+        "question": "Which rivers join to form the delta of Bangladesh?",
+        "expected": [
+            "bench:pad:5"
+        ]
+    },
+    {
+        "question": "What is a conjunction in grammar?",
+        "expected": [
+            "bench:pad:6"
+        ]
+    },
+    {
+        "question": "Which foods supply protein for growing children?",
+        "expected": [
+            "bench:pad:7"
+        ]
+    }
+]

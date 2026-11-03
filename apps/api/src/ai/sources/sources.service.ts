@@ -16,10 +16,10 @@ import { Prisma } from 'prisma/generated/client';
 import { UploadService } from '../../upload/upload.service';
 import { LlmService, type LlmTurn } from '../llm/llm.service';
 import { z } from 'zod';
-import { extractText } from 'unpdf';
-import { parseOffice } from 'officeparser';
 import { validateOutboundUrl } from '../../common/net.util';
-import { convertWithMarkItDown } from './markitdown.util';
+import { chunkPages, contentHashOf } from './chunk.util';
+import { extractPages, htmlToText } from './extract.util';
+import { detectFile, unsupportedFileError } from './file-types.util';
 import { RetrievalService } from './retrieval.service';
 import { NeedsOcrError, ocrAvailable, ocrPdf } from './ocr.util';
 import { stripRunningHeads } from './text-clean.util';
@@ -35,8 +35,6 @@ const SummarySchema = z.object({
 const EMPTY_ANSWER =
     'The model returned an empty answer. Please try that question again.';
 
-const CHUNK_CHARS = 1200;
-const CHUNK_OVERLAP = 150;
 /** Long documents are summarized in windows, then the notes are merged. */
 const SUMMARY_WINDOW_CHARS = 6000;
 const SUMMARY_MAX_WINDOWS = 12;
@@ -175,17 +173,25 @@ export class SourcesService implements OnModuleInit {
             // embeddings, retrieval or the summary.
             const cleaned = stripRunningHeads(pages);
 
-            // Chunk with page tags preserved.
-            const chunks = this.chunk(cleaned);
+            // Chunk with page tags preserved. The content hash makes a second
+            // pass over the same document a no-op instead of a duplicate.
+            const chunks = chunkPages(cleaned);
             await this.prisma.sourceChunk.createMany({
-                data: chunks.map((c) => ({ documentId: docId, page: c.page, content: c.text })),
+                data: chunks.map((c) => ({
+                    documentId: docId,
+                    page: c.page,
+                    content: c.text,
+                    contentHash: contentHashOf(c.text),
+                })),
+                skipDuplicates: true,
             });
 
             // Best-effort embeddings so notebook-wide retrieval can find these
-            // chunks. createMany returns no rows, so re-read them by document.
+            // chunks. createMany returns no rows, so re-read them by document;
+            // chunks whose hash already has a vector are reused, not re-embedded.
             const created = await this.prisma.sourceChunk.findMany({
                 where: { documentId: docId },
-                select: { id: true, content: true },
+                select: { id: true, content: true, documentId: true, contentHash: true },
             });
             await this.retrieval.embedChunks(created);
 
@@ -229,94 +235,46 @@ export class SourcesService implements OnModuleInit {
         }
     }
 
-    /** Extract page text from an uploaded file (throws when unreadable). */
-    private async extractPages(
-        file: { buffer: Buffer; originalname: string; mimetype: string },
-        flags: { isPdf: boolean; isImage: boolean; isOffice: boolean },
-    ): Promise<{ page: number; text: string }[]> {
-        if (flags.isPdf) {
-            // pdf.js requires a Uint8Array; it rejects Node Buffers. This is a
-            // zero-copy view over the same bytes.
-            const bytes = new Uint8Array(file.buffer.buffer, file.buffer.byteOffset, file.buffer.byteLength);
-            const doc = await extractText(bytes, { mergePages: false }).catch((err: Error) => {
-                this.logger.error(`PDF extraction failed for ${file.originalname}: ${err.message}`);
-                throw new BadRequestException(`Could not read this PDF (${err.message})`);
-            });
-            const raw = Array.isArray(doc.text) ? doc.text : [doc.text];
-            const pages = raw.map((text, i) => ({ page: i + 1, text })).filter((p) => p.text.trim());
-            if (pages.length === 0) {
-                throw new NeedsOcrError(
-                    'This PDF is a scan (no text layer), so it cannot be searched yet. ' +
-                        'Transcribe it with OCR to make it searchable.',
+    /** Transcribe one page image with the provider's vision model. */
+    private async transcribeImage(file: {
+        buffer: Buffer;
+        originalname: string;
+        mimetype: string;
+    }): Promise<string> {
+        const mime = file.mimetype === 'image/jpg' ? 'image/jpeg' : file.mimetype;
+        return this.llm
+            .complete({
+                system:
+                    'Transcribe the text in this page image exactly, preserving line breaks. ' +
+                    'Output only the text — no commentary.',
+                user: 'Transcribe this page.',
+                vision: true,
+                images: [{ mime, base64: file.buffer.toString('base64') }],
+                maxTokens: 2000,
+            })
+            .catch((err: Error) => {
+                this.logger.error(
+                    `Image transcription failed for ${file.originalname}: ${err.message}`,
                 );
-            }
-            return pages;
-        }
-
-        if (flags.isImage) {
-            // Transcribe the page with the provider's vision model.
-            const mime = file.mimetype === 'image/jpg' ? 'image/jpeg' : file.mimetype;
-            const transcript = await this.llm
-                .complete({
-                    system:
-                        'Transcribe the text in this page image exactly, preserving line breaks. ' +
-                        'Output only the text — no commentary.',
-                    user: 'Transcribe this page.',
-                    vision: true,
-                    images: [{ mime, base64: file.buffer.toString('base64') }],
-                    maxTokens: 2000,
-                })
-                .catch((err: Error) => {
-                    this.logger.error(
-                        `Image transcription failed for ${file.originalname}: ${err.message}`,
-                    );
-                    throw new BadRequestException(
-                        `Could not read this image (${err.message}). ` +
-                            'Check the provider vision model in Settings.',
-                    );
-                });
-            if (!transcript.trim()) throw new BadRequestException('No text detected in this image.');
-            return [{ page: 1, text: transcript }];
-        }
-
-        if (flags.isOffice) {
-            // Prefer MarkItDown when installed; fall back to officeparser.
-            const markdown = await convertWithMarkItDown(file.buffer, file.originalname).catch(
-                (err: Error) => {
-                    this.logger.warn(
-                        `MarkItDown failed for ${file.originalname}: ${err.message} — falling back`,
-                    );
-                    return null;
-                },
-            );
-            let text = markdown?.trim() ? markdown : '';
-            if (!text) {
-                const ast = await parseOffice(file.buffer).catch((err: Error) => {
-                    this.logger.error(
-                        `Office parsing failed for ${file.originalname}: ${err.message}`,
-                    );
-                    throw new BadRequestException(`Could not read this document (${err.message})`);
-                });
-                const out = await ast.to('text');
-                text = String(out.value ?? '');
-            }
-            if (!text.trim()) throw new BadRequestException('No extractable text in this document.');
-            return [{ page: 1, text }];
-        }
-
-        // Plain text, Markdown and CSV are already UTF-8 text.
-        return [{ page: 1, text: file.buffer.toString('utf8') }];
+                throw new BadRequestException(
+                    `Could not read this image (${err.message}). ` +
+                        'Check the provider vision model in Settings.',
+                );
+            });
     }
 
     /** Background half of an upload: extract, then the shared ingest tail. */
     private async finishUpload(
         docId: string,
         file: { buffer: Buffer; originalname: string; mimetype: string },
-        flags: { isPdf: boolean; isImage: boolean; isOffice: boolean },
+        path: 'pdf' | 'image' | 'office' | 'html' | 'text',
         fileMeta: Record<string, unknown>,
     ): Promise<void> {
         try {
-            const pages = await this.extractPages(file, flags);
+            const pages = await extractPages(file, path, {
+                transcribeImage: (upload) => this.transcribeImage(upload),
+                logger: this.logger,
+            });
             await this.finishIngest(docId, pages, file.originalname, fileMeta);
         } catch (err) {
             const message = (err as Error).message;
@@ -324,7 +282,7 @@ export class SourcesService implements OnModuleInit {
             // A scan with no text layer is transcribed automatically when the
             // OCR binaries are installed; only a host without them falls back
             // to the explicit "Transcribe with OCR" action.
-            if (err instanceof NeedsOcrError && flags.isPdf && (await ocrAvailable())) {
+            if (err instanceof NeedsOcrError && path === 'pdf' && (await ocrAvailable())) {
                 this.logger.log(`No text layer in ${file.originalname}; transcribing with OCR`);
                 await this.prisma.sourceDocument
                     .update({ where: { id: docId }, data: { status: 'PROCESSING' } })
@@ -360,36 +318,23 @@ export class SourcesService implements OnModuleInit {
     ) {
         if (!file) throw new BadRequestException('No file provided (use form field "file")');
 
-        const name = file.originalname.toLowerCase();
-        const isPdf = file.mimetype === 'application/pdf' || name.endsWith('.pdf');
-        const isImage = /^image\/(png|jpeg|webp)$/.test(file.mimetype) || /\.(png|jpe?g|webp)$/.test(name);
-        const isOffice = /\.(docx|pptx|xlsx|odt|ods|odp|rtf|epub)$/.test(name);
-        const isLegacyOffice = /\.(doc|ppt|xls)$/.test(name);
-        const isCsv = file.mimetype === 'text/csv' || name.endsWith('.csv');
-        const isText =
-            file.mimetype === 'text/plain' ||
-            file.mimetype === 'text/markdown' ||
-            file.mimetype === 'text/x-markdown' ||
-            /\.(txt|md|markdown)$/.test(name);
-        if (isLegacyOffice) {
-            throw new BadRequestException(
-                'Legacy .doc/.ppt/.xls are not supported — save them as .docx/.pptx/.xlsx first.',
-            );
-        }
-        if (!isPdf && !isImage && !isOffice && !isCsv && !isText) {
-            throw new BadRequestException(
-                'Unsupported file — upload a PDF, image (PNG/JPEG/WebP), Office/OpenDocument file, CSV, or text/Markdown.',
-            );
-        }
+        // One table decides what is accepted; the 415 body reads the same table.
+        const detected = detectFile(file);
+        if (!detected) throw unsupportedFileError(file.originalname);
 
         const teacherId = await resolveTeacherId(this.prisma, userId);
+
+        // The table's canonical MIME is what storage and the vision call see:
+        // a browser that sends application/octet-stream for a .docx must not
+        // turn a supported format into a storage rejection.
+        const upload = { ...file, mimetype: detected.mime };
 
         // Store the original file (R2 or local disk). This is the only part
         // that must finish before the request returns, so the link is valid.
         const stored = await this.upload.storeFile(
-            file.buffer,
-            file.originalname,
-            file.mimetype,
+            upload.buffer,
+            upload.originalname,
+            upload.mimetype,
             'sources',
         );
         const fileMeta = { fileUrl: stored.url, fileKey: stored.key, storage: stored.storage };
@@ -398,7 +343,7 @@ export class SourcesService implements OnModuleInit {
             data: {
                 teacherId,
                 filename: file.originalname,
-                kind: isImage ? 'IMAGE' : 'PDF',
+                kind: detected.path === 'image' ? 'IMAGE' : 'PDF',
                 classId: classId ?? null,
                 subjectId: subjectId ?? null,
                 status: 'PROCESSING',
@@ -406,7 +351,7 @@ export class SourcesService implements OnModuleInit {
             },
         });
 
-        void this.finishUpload(doc.id, file, { isPdf, isImage, isOffice }, fileMeta);
+        void this.finishUpload(doc.id, upload, detected.path, fileMeta);
         return doc;
     }
 
@@ -731,21 +676,6 @@ export class SourcesService implements OnModuleInit {
         return out;
     }
 
-    /** Chunk page-tagged text into ~1200-char windows with overlap. */
-    private chunk(pages: { page: number; text: string }[]): { page: number; text: string }[] {
-        const out: { page: number; text: string }[] = [];
-        for (const p of pages) {
-            let start = 0;
-            while (start < p.text.length) {
-                const end = Math.min(start + CHUNK_CHARS, p.text.length);
-                out.push({ page: p.page, text: p.text.slice(start, end) });
-                if (end >= p.text.length) break;
-                start = end - CHUNK_OVERLAP;
-            }
-        }
-        return out;
-    }
-
     /**
      * Summarize a document. A 200-page textbook does not fit one prompt, so
      * long text is condensed window by window first; the final JSON call then
@@ -813,22 +743,6 @@ export class SourcesService implements OnModuleInit {
     }
 
     /** JWT carries the User id; the FK references the Teacher row. Resolve it. */
-}
-
-/** Strip HTML to readable text (drops scripts/styles, tags and entities). */
-function htmlToText(html: string): string {
-    return html
-        .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-        .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .replace(/\s+/g, ' ')
-        .trim();
 }
 
 /**
