@@ -23,8 +23,8 @@ FROM oven/bun:1.4-debian AS runtime
 
 # Typst is the PDF renderer for Bengali papers. Pinned 0.15.1 static musl
 # build, verified by sha256 before it is unpacked. Both faces the renderer
-# names — Liberation Serif (Latin) and Kalpurush (Bengali) — are vendored
-# under apps/api/assets/fonts.
+# names — Liberation Serif (Latin) and Noto Sans Bengali (Bengali) — are
+# vendored under apps/api/assets/fonts.
 ARG TYPST_VERSION=0.15.1
 ARG TYPST_SHA256=a6d077d0a95eed5a2eba715b2dae06be954f624ccbf85758a03f389ded33118c
 

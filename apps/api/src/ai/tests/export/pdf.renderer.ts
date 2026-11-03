@@ -8,8 +8,13 @@
 // Fonts are vendored under `assets/fonts` and passed to Typst with
 // `--font-path`. Liberation Serif is metric-compatible with Times New Roman
 // (which cannot be redistributed) and is listed first so Latin glyphs never
-// come from Kalpurush; Kalpurush is the Bengali fallback. Typst selects per
-// glyph from the tuple, so the order is part of the contract.
+// come from a Bengali face; Bengali falls through to the bundled Noto Sans
+// Bengali UI/regular cuts. Typst selects per glyph from the tuple, so the
+// order is part of the contract.
+//
+// The DOCX names Kalpurush and embeds nothing; this PDF ships Noto instead
+// because Noto is OFL and Kalpurush's licence is not relied on for bundling.
+// That difference is deliberate.
 import { InternalServerErrorException, ServiceUnavailableException } from '@nestjs/common';
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -19,7 +24,7 @@ import { join, resolve } from 'node:path';
 import { type PaperItem, type PaperModel, type PaperSection, toBengaliDigits } from './paper.model';
 
 const COMPILE_TIMEOUT_MS = 20_000;
-const FONT_FAMILIES = '("Liberation Serif", "Kalpurush")';
+const FONT_FAMILIES = '("Liberation Serif", "Noto Sans Bengali UI", "Noto Sans Bengali")';
 
 /** The vendored font directory, unless `EXPORT_FONT_PATH` names another. */
 export function resolveFontDir(): string {
