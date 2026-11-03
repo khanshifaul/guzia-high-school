@@ -83,12 +83,12 @@ function readPdf(buffer: Buffer): { pages: number; text: string } {
     }
 }
 
-function readDocxXml(buffer: Buffer): string {
+function readDocxMember(buffer: Buffer, member: string): string {
     const dir = mkdtempSync(join(tmpdir(), 'ghs-docx-test-'));
     try {
         const file = join(dir, 'paper.docx');
         writeFileSync(file, buffer);
-        return execFileSync('unzip', ['-p', file, 'word/document.xml'], {
+        return execFileSync('unzip', ['-p', file, member], {
             encoding: 'utf8',
             maxBuffer: 20 * 1024 * 1024,
         });
@@ -107,7 +107,8 @@ describe('paper export', () => {
             expect(pages).toBeGreaterThanOrEqual(1);
             expect(pages).toBeLessThanOrEqual(2);
             expect(text).toContain('গুজিয়া দ্বিপাক্ষিক উচ্চ বিদ্যালয়');
-            expect(text).toContain('সময় ৩০ মিনিট · পূর্ণমান ৩০');
+            expect(text).toContain('সময় ৩০ মিনিট');
+            expect(text).toContain('প্রশ্নপত্রে ৩০টি বহুনির্বাচনি প্রশ্ন রয়েছে');
             for (let number = 1; number <= 30; number += 1) {
                 expect(text).toContain(`${toBengaliDigits(number)}.`);
             }
@@ -119,12 +120,21 @@ describe('paper export', () => {
     it(
         'renders the same MCQ paper as a two-column DOCX with 30 numbered items',
         async () => {
-            const xml = readDocxXml(await renderDocx(buildPaperModel(mcqFixture())));
+            const docx = await renderDocx(buildPaperModel(mcqFixture()));
+            const xml = readDocxMember(docx, 'word/document.xml');
+            const styles = readDocxMember(docx, 'word/styles.xml');
             const numbered = xml.match(/<w:t[^>]*>[০-৯]+\.<\/w:t>/g) ?? [];
+            const defaults = /<w:docDefaults>[\s\S]*?<\/w:docDefaults>/.exec(styles)?.[0] ?? '';
 
             expect(numbered).toHaveLength(30);
             expect(xml).toMatch(/<w:cols[^>]*w:num="2"/);
-            expect(xml).not.toMatch(/SutonnyMJ|Bijoy/i);
+            expect(xml).toContain('w:ascii="Times New Roman"');
+            expect(xml).toContain('w:cs="Kalpurush"');
+            expect(xml).toMatch(/<w:szCs\b/);
+            expect(defaults).toContain('w:ascii="Times New Roman"');
+            expect(defaults).toContain('w:cs="Kalpurush"');
+            expect(defaults).toMatch(/<w:szCs\b/);
+            expect(readDocxMember(docx, '*.xml')).not.toMatch(/SutonnyMJ|Bijoy|Noto Sans Bengali/i);
         },
         20_000,
     );
@@ -138,7 +148,7 @@ describe('paper export', () => {
             expect(text).toContain('বিভাগ ক');
             expect(text).toContain('বিভাগ খ');
             expect(text).toContain('বিভাগ গ');
-            expect(text).toContain('পূর্ণমান ৭০');
+            expect(text).toContain('প্রশ্নপত্রে মোট ৭০ নম্বর');
             expect(text).not.toMatch(/[‡†½¼¾ƒ]/);
         },
         20_000,

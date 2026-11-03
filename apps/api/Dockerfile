@@ -22,8 +22,8 @@ RUN bun run build
 FROM oven/bun:1.4-debian AS runtime
 
 # Typst is the PDF renderer for Bengali papers. Pinned 0.15.1 static musl
-# build, verified by sha256 before it is unpacked. fonts-liberation supplies
-# the Latin half of the renderer's font tuple; the Bengali faces are vendored
+# build, verified by sha256 before it is unpacked. Both faces the renderer
+# names — Liberation Serif (Latin) and Kalpurush (Bengali) — are vendored
 # under apps/api/assets/fonts.
 ARG TYPST_VERSION=0.15.1
 ARG TYPST_SHA256=a6d077d0a95eed5a2eba715b2dae06be954f624ccbf85758a03f389ded33118c
@@ -53,8 +53,8 @@ COPY --from=build /app/apps/api/package.json ./apps/api/package.json
 COPY --from=build /app/apps/api/tsconfig.json ./apps/api/tsconfig.json
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 COPY --from=build /app/apps/api/prisma ./apps/api/prisma
-# Bengali fonts for the Typst renderer (EXPORT_FONT_PATH defaults to this dir
-# relative to the app's cwd, /app/apps/api).
+# Vendored renderer fonts (EXPORT_FONT_PATH defaults to this dir relative to
+# the app's cwd, /app/apps/api).
 COPY --from=build /app/apps/api/assets ./apps/api/assets
 
 WORKDIR /app/apps/api
