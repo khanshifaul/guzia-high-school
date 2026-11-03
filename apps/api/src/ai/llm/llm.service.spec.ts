@@ -212,6 +212,15 @@ describe('LlmService error mapping and retry policy', () => {
 });
 
 describe('LlmService key truth', () => {
+    it('passes the decrypted key when apiKeyEnc is set and apiKeyHint is null', async () => {
+        create.mockResolvedValue(reply('ok'));
+        const service = serviceWith(providerRow({ apiKeyHint: null }));
+
+        await expect(service.complete(opts)).resolves.toBe('ok');
+        expect(OpenAIMock.mock.calls[0][0].apiKey).toBe('sk-test');
+        expect(OpenAIMock.mock.calls[0][0].apiKey).not.toBe('missing-key');
+    });
+
     it('rejects a keyless public provider before any client or network call', async () => {
         const service = serviceWith(
             providerRow({ apiKeyEnc: null, apiKeyHint: 'sk-…masked' }),

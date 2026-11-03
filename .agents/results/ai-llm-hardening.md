@@ -121,18 +121,19 @@ or base URL in the payload.
 ```
 $ bun --filter @guzia/api test
 Test Suites: 17 passed, 17 total
-Tests:       194 passed, 194 total
+Tests:       195 passed, 195 total
 Snapshots:   0 total
-Time:        12.248 s
+Time:        11.638 s
 Exited with code 0
 ```
 
-The LLM suite alone, including the new failure-class tests:
+The LLM suite alone, including the new failure-class tests and the key-selection
+pin (`apiKeyEnc` set + `apiKeyHint: null` → client receives the decrypted key):
 
 ```
 $ bun run test src/ai/llm/llm.service.spec.ts
 Test Suites: 1 passed, 1 total
-Tests:       19 passed, 19 total
+Tests:       20 passed, 20 total
 ```
 
 ```
