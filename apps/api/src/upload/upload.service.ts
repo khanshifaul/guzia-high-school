@@ -28,6 +28,8 @@ const ALLOWED_MIME = new Set([
     'text/markdown',
     'text/x-markdown',
     'text/csv',
+    'text/html',
+    'application/xhtml+xml',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/vnd.ms-excel',

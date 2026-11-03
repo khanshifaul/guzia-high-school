@@ -39,6 +39,7 @@ export type SourceChunkMinAggregateOutputType = {
   documentId: string | null
   page: number | null
   content: string | null
+  contentHash: string | null
 }
 
 export type SourceChunkMaxAggregateOutputType = {
@@ -46,6 +47,7 @@ export type SourceChunkMaxAggregateOutputType = {
   documentId: string | null
   page: number | null
   content: string | null
+  contentHash: string | null
 }
 
 export type SourceChunkCountAggregateOutputType = {
@@ -53,6 +55,7 @@ export type SourceChunkCountAggregateOutputType = {
   documentId: number
   page: number
   content: number
+  contentHash: number
   _all: number
 }
 
@@ -70,6 +73,7 @@ export type SourceChunkMinAggregateInputType = {
   documentId?: true
   page?: true
   content?: true
+  contentHash?: true
 }
 
 export type SourceChunkMaxAggregateInputType = {
@@ -77,6 +81,7 @@ export type SourceChunkMaxAggregateInputType = {
   documentId?: true
   page?: true
   content?: true
+  contentHash?: true
 }
 
 export type SourceChunkCountAggregateInputType = {
@@ -84,6 +89,7 @@ export type SourceChunkCountAggregateInputType = {
   documentId?: true
   page?: true
   content?: true
+  contentHash?: true
   _all?: true
 }
 
@@ -178,6 +184,7 @@ export type SourceChunkGroupByOutputType = {
   documentId: string
   page: number | null
   content: string
+  contentHash: string | null
   _count: SourceChunkCountAggregateOutputType | null
   _avg: SourceChunkAvgAggregateOutputType | null
   _sum: SourceChunkSumAggregateOutputType | null
@@ -208,6 +215,7 @@ export type SourceChunkWhereInput = {
   documentId?: Prisma.StringFilter<"SourceChunk"> | string
   page?: Prisma.IntNullableFilter<"SourceChunk"> | number | null
   content?: Prisma.StringFilter<"SourceChunk"> | string
+  contentHash?: Prisma.StringNullableFilter<"SourceChunk"> | string | null
   document?: Prisma.XOR<Prisma.SourceDocumentScalarRelationFilter, Prisma.SourceDocumentWhereInput>
 }
 
@@ -216,25 +224,29 @@ export type SourceChunkOrderByWithRelationInput = {
   documentId?: Prisma.SortOrder
   page?: Prisma.SortOrderInput | Prisma.SortOrder
   content?: Prisma.SortOrder
+  contentHash?: Prisma.SortOrderInput | Prisma.SortOrder
   document?: Prisma.SourceDocumentOrderByWithRelationInput
 }
 
 export type SourceChunkWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  documentId_contentHash?: Prisma.SourceChunkDocumentIdContentHashCompoundUniqueInput
   AND?: Prisma.SourceChunkWhereInput | Prisma.SourceChunkWhereInput[]
   OR?: Prisma.SourceChunkWhereInput[]
   NOT?: Prisma.SourceChunkWhereInput | Prisma.SourceChunkWhereInput[]
   documentId?: Prisma.StringFilter<"SourceChunk"> | string
   page?: Prisma.IntNullableFilter<"SourceChunk"> | number | null
   content?: Prisma.StringFilter<"SourceChunk"> | string
+  contentHash?: Prisma.StringNullableFilter<"SourceChunk"> | string | null
   document?: Prisma.XOR<Prisma.SourceDocumentScalarRelationFilter, Prisma.SourceDocumentWhereInput>
-}, "id">
+}, "id" | "documentId_contentHash">
 
 export type SourceChunkOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   documentId?: Prisma.SortOrder
   page?: Prisma.SortOrderInput | Prisma.SortOrder
   content?: Prisma.SortOrder
+  contentHash?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.SourceChunkCountOrderByAggregateInput
   _avg?: Prisma.SourceChunkAvgOrderByAggregateInput
   _max?: Prisma.SourceChunkMaxOrderByAggregateInput
@@ -250,12 +262,14 @@ export type SourceChunkScalarWhereWithAggregatesInput = {
   documentId?: Prisma.StringWithAggregatesFilter<"SourceChunk"> | string
   page?: Prisma.IntNullableWithAggregatesFilter<"SourceChunk"> | number | null
   content?: Prisma.StringWithAggregatesFilter<"SourceChunk"> | string
+  contentHash?: Prisma.StringNullableWithAggregatesFilter<"SourceChunk"> | string | null
 }
 
 export type SourceChunkCreateInput = {
   id?: string
   page?: number | null
   content: string
+  contentHash?: string | null
   document: Prisma.SourceDocumentCreateNestedOneWithoutChunksInput
 }
 
@@ -264,12 +278,14 @@ export type SourceChunkUncheckedCreateInput = {
   documentId: string
   page?: number | null
   content: string
+  contentHash?: string | null
 }
 
 export type SourceChunkUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   page?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   document?: Prisma.SourceDocumentUpdateOneRequiredWithoutChunksNestedInput
 }
 
@@ -278,6 +294,7 @@ export type SourceChunkUncheckedUpdateInput = {
   documentId?: Prisma.StringFieldUpdateOperationsInput | string
   page?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type SourceChunkCreateManyInput = {
@@ -285,12 +302,14 @@ export type SourceChunkCreateManyInput = {
   documentId: string
   page?: number | null
   content: string
+  contentHash?: string | null
 }
 
 export type SourceChunkUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   page?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type SourceChunkUncheckedUpdateManyInput = {
@@ -298,6 +317,7 @@ export type SourceChunkUncheckedUpdateManyInput = {
   documentId?: Prisma.StringFieldUpdateOperationsInput | string
   page?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type SourceChunkListRelationFilter = {
@@ -310,11 +330,17 @@ export type SourceChunkOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type SourceChunkDocumentIdContentHashCompoundUniqueInput = {
+  documentId: string
+  contentHash: string
+}
+
 export type SourceChunkCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   documentId?: Prisma.SortOrder
   page?: Prisma.SortOrder
   content?: Prisma.SortOrder
+  contentHash?: Prisma.SortOrder
 }
 
 export type SourceChunkAvgOrderByAggregateInput = {
@@ -326,6 +352,7 @@ export type SourceChunkMaxOrderByAggregateInput = {
   documentId?: Prisma.SortOrder
   page?: Prisma.SortOrder
   content?: Prisma.SortOrder
+  contentHash?: Prisma.SortOrder
 }
 
 export type SourceChunkMinOrderByAggregateInput = {
@@ -333,6 +360,7 @@ export type SourceChunkMinOrderByAggregateInput = {
   documentId?: Prisma.SortOrder
   page?: Prisma.SortOrder
   content?: Prisma.SortOrder
+  contentHash?: Prisma.SortOrder
 }
 
 export type SourceChunkSumOrderByAggregateInput = {
@@ -385,12 +413,14 @@ export type SourceChunkCreateWithoutDocumentInput = {
   id?: string
   page?: number | null
   content: string
+  contentHash?: string | null
 }
 
 export type SourceChunkUncheckedCreateWithoutDocumentInput = {
   id?: string
   page?: number | null
   content: string
+  contentHash?: string | null
 }
 
 export type SourceChunkCreateOrConnectWithoutDocumentInput = {
@@ -427,30 +457,35 @@ export type SourceChunkScalarWhereInput = {
   documentId?: Prisma.StringFilter<"SourceChunk"> | string
   page?: Prisma.IntNullableFilter<"SourceChunk"> | number | null
   content?: Prisma.StringFilter<"SourceChunk"> | string
+  contentHash?: Prisma.StringNullableFilter<"SourceChunk"> | string | null
 }
 
 export type SourceChunkCreateManyDocumentInput = {
   id?: string
   page?: number | null
   content: string
+  contentHash?: string | null
 }
 
 export type SourceChunkUpdateWithoutDocumentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   page?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type SourceChunkUncheckedUpdateWithoutDocumentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   page?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type SourceChunkUncheckedUpdateManyWithoutDocumentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   page?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   content?: Prisma.StringFieldUpdateOperationsInput | string
+  contentHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -460,6 +495,7 @@ export type SourceChunkSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   documentId?: boolean
   page?: boolean
   content?: boolean
+  contentHash?: boolean
   document?: boolean | Prisma.SourceDocumentDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["sourceChunk"]>
 
@@ -468,6 +504,7 @@ export type SourceChunkSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   documentId?: boolean
   page?: boolean
   content?: boolean
+  contentHash?: boolean
   document?: boolean | Prisma.SourceDocumentDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["sourceChunk"]>
 
@@ -476,6 +513,7 @@ export type SourceChunkSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   documentId?: boolean
   page?: boolean
   content?: boolean
+  contentHash?: boolean
   document?: boolean | Prisma.SourceDocumentDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["sourceChunk"]>
 
@@ -484,9 +522,10 @@ export type SourceChunkSelectScalar = {
   documentId?: boolean
   page?: boolean
   content?: boolean
+  contentHash?: boolean
 }
 
-export type SourceChunkOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "documentId" | "page" | "content", ExtArgs["result"]["sourceChunk"]>
+export type SourceChunkOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "documentId" | "page" | "content" | "contentHash", ExtArgs["result"]["sourceChunk"]>
 export type SourceChunkInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   document?: boolean | Prisma.SourceDocumentDefaultArgs<ExtArgs>
 }
@@ -507,6 +546,7 @@ export type $SourceChunkPayload<ExtArgs extends runtime.Types.Extensions.Interna
     documentId: string
     page: number | null
     content: string
+    contentHash: string | null
   }, ExtArgs["result"]["sourceChunk"]>
   composites: {}
 }
@@ -935,6 +975,7 @@ export interface SourceChunkFieldRefs {
   readonly documentId: Prisma.FieldRef<"SourceChunk", 'String'>
   readonly page: Prisma.FieldRef<"SourceChunk", 'Int'>
   readonly content: Prisma.FieldRef<"SourceChunk", 'String'>
+  readonly contentHash: Prisma.FieldRef<"SourceChunk", 'String'>
 }
     
 

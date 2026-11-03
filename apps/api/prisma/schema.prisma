@@ -548,12 +548,22 @@ model SourceDocument {
 }
 
 model SourceChunk {
-  id         String @id @default(cuid())
-  documentId String
-  document   SourceDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  page       Int?
-  content    String
-  embedding  Unsupported("vector(384)")?
+  id          String @id @default(cuid())
+  documentId  String
+  document    SourceDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  page        Int?
+  content     String
+  // sha256 of the normalized content. Nullable for rows created before the
+  // column existed; a unique (documentId, contentHash) makes re-ingest
+  // idempotent and lets an existing vector be reused instead of recomputed.
+  contentHash String?
+  embedding   Unsupported("vector(384)")?
+  // GENERATED ALWAYS AS (to_tsvector('simple', content)) STORED + GIN index;
+  // created by migration 20261103120000_rag_throughput. Prisma cannot model a
+  // generated column, so it is opaque here and written only by Postgres.
+  searchVector Unsupported("tsvector")?
+
+  @@unique([documentId, contentHash])
 }
 
 model SiteSetting {

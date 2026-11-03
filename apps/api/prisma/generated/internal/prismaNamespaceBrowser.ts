@@ -532,7 +532,8 @@ export const SourceChunkScalarFieldEnum = {
   id: 'id',
   documentId: 'documentId',
   page: 'page',
-  content: 'content'
+  content: 'content',
+  contentHash: 'contentHash'
 } as const
 
 export type SourceChunkScalarFieldEnum = (typeof SourceChunkScalarFieldEnum)[keyof typeof SourceChunkScalarFieldEnum]
