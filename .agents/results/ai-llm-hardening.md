@@ -151,7 +151,8 @@ No e2e suite, database, provider row or production endpoint was used.
 
 ## Commit
 
-<PENDING>
+Code commit: `ebdaf89` (`feat(ai): harden LLM provider resolution, errors and
+health`). This result file is a follow-up commit on the same branch.
 
 ## Blockers
 
