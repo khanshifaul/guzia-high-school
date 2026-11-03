@@ -5,11 +5,14 @@
 // page shape). The creative body stays single-column.
 //
 // Fonts are explicit on every run: Latin text in Times New Roman and Bengali
-// (complex script) in Kalpurush. Bengali is a complex script, so `cs` is the
-// face Word applies; a run with only `ascii` set renders Bengali in the default
-// complex-script font. Both `w:sz` and `w:szCs` are written on every run, and
-// the same mapping is the document default so Word does not fall back to a
-// legacy face for any run the renderer does not touch.
+// in Kalpurush on both the complex-script (`cs`) and East Asian (`eastAsia`)
+// slots. Word picks `cs` for complex scripts, but the archive's files carry
+// all four `rFonts` attributes, so the DOCX names Kalpurush in every slot that
+// can select a Bengali face. Bengali renders by font *name* on the reader's
+// machine — no font file ships with the DOCX. Both `w:sz` and `w:szCs` are
+// written on every run, and the same four attributes are the document default
+// so Word does not fall back to a legacy face for any run the renderer does
+// not touch.
 import {
     AlignmentType,
     BorderStyle,
@@ -36,6 +39,7 @@ const BODY_FONT: IFontAttributesProperties = {
     ascii: 'Times New Roman',
     hAnsi: 'Times New Roman',
     cs: 'Kalpurush',
+    eastAsia: 'Kalpurush',
 };
 
 const OPTION_LABELS = ['ক', 'খ', 'গ', 'ঘ'] as const;

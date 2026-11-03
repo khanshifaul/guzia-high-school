@@ -130,9 +130,11 @@ describe('paper export', () => {
             expect(xml).toMatch(/<w:cols[^>]*w:num="2"/);
             expect(xml).toContain('w:ascii="Times New Roman"');
             expect(xml).toContain('w:cs="Kalpurush"');
+            expect(xml).toContain('w:eastAsia="Kalpurush"');
             expect(xml).toMatch(/<w:szCs\b/);
             expect(defaults).toContain('w:ascii="Times New Roman"');
             expect(defaults).toContain('w:cs="Kalpurush"');
+            expect(defaults).toContain('w:eastAsia="Kalpurush"');
             expect(defaults).toMatch(/<w:szCs\b/);
             expect(readDocxMember(docx, '*.xml')).not.toMatch(/SutonnyMJ|Bijoy|Noto Sans Bengali/i);
         },
