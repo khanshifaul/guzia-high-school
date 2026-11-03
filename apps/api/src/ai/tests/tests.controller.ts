@@ -1,6 +1,16 @@
 // src/ai/tests/tests.controller.ts — teacher test-paper endpoints plus the
 // student-facing online-test routes (spec 10 Feature B).
-import { Body, Controller, Delete, Get, NotFoundException, Param, Post } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    NotFoundException,
+    Param,
+    Post,
+    Query,
+    StreamableFile,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { User } from '../../common/decorators/user.decorator';
@@ -30,6 +40,22 @@ export class TestsController {
     @ApiOperation({ summary: 'Generate an editable test paper (AI)' })
     generate(@Body() dto: GeneratePaperDto, @User() user: { id: string }) {
         return this.service.generate(dto, user.id);
+    }
+
+    @Roles('TEACHER')
+    @Get(':id/export')
+    @ApiOperation({ summary: 'Export a paper as DOCX or PDF (Bengali Unicode)' })
+    async export(
+        @Param('id') id: string,
+        @Query('format') format: string | undefined,
+        @User() user: { id: string },
+    ) {
+        const file = await this.service.exportPaper(id, user.id, format);
+        return new StreamableFile(file.buffer, {
+            type: file.contentType,
+            disposition: file.disposition,
+            length: file.buffer.length,
+        });
     }
 
     @Roles('TEACHER')

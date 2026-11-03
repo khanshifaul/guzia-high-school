@@ -21,10 +21,25 @@ RUN bun run build
 
 FROM oven/bun:1.4-debian AS runtime
 
+# Typst is the PDF renderer for Bengali papers. Pinned 0.15.1 static musl
+# build, verified by sha256 before it is unpacked. fonts-liberation supplies
+# the Latin half of the renderer's font tuple; the Bengali faces are vendored
+# under apps/api/assets/fonts.
+ARG TYPST_VERSION=0.15.1
+ARG TYPST_SHA256=a6d077d0a95eed5a2eba715b2dae06be954f624ccbf85758a03f389ded33118c
+
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
-    poppler-utils tesseract-ocr tesseract-ocr-eng ca-certificates \
+    poppler-utils tesseract-ocr tesseract-ocr-eng ca-certificates fonts-liberation curl xz-utils \
+  && curl -fsSL -o /tmp/typst.tar.xz \
+    "https://github.com/typst/typst/releases/download/v${TYPST_VERSION}/typst-x86_64-unknown-linux-musl.tar.xz" \
+  && echo "${TYPST_SHA256}  /tmp/typst.tar.xz" | sha256sum -c - \
+  && tar -xJf /tmp/typst.tar.xz -C /usr/local/bin --strip-components=1 \
+    typst-x86_64-unknown-linux-musl/typst \
+  && rm /tmp/typst.tar.xz \
   && rm -rf /var/lib/apt/lists/*
+
+ENV TYPST_BIN=/usr/local/bin/typst
 
 WORKDIR /app
 COPY --from=build /app/package.json ./package.json
@@ -38,6 +53,9 @@ COPY --from=build /app/apps/api/package.json ./apps/api/package.json
 COPY --from=build /app/apps/api/tsconfig.json ./apps/api/tsconfig.json
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 COPY --from=build /app/apps/api/prisma ./apps/api/prisma
+# Bengali fonts for the Typst renderer (EXPORT_FONT_PATH defaults to this dir
+# relative to the app's cwd, /app/apps/api).
+COPY --from=build /app/apps/api/assets ./apps/api/assets
 
 WORKDIR /app/apps/api
 ENV NODE_ENV=production

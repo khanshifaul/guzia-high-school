@@ -15,6 +15,15 @@ import { LlmService } from '../llm/llm.service';
 import { z } from 'zod';
 import { autoScore, totalScore } from './grading.util';
 import { GradeAnswerDto, SaveAnswerDto } from './dto';
+import { buildPaperModel } from './export/paper.model';
+import { renderDocx } from './export/docx.renderer';
+import { renderPdf } from './export/pdf.renderer';
+import {
+    EXPORT_CONTENT_TYPES,
+    contentDisposition,
+    exportFilename,
+    parseExportFormat,
+} from './export/export-file.util';
 
 /**
  * The question fields a student may see. `answer` and `explanation` are the
@@ -223,6 +232,61 @@ export class TestsService {
         if (!paper || paper.teacherId !== teacherId) throw new NotFoundException('Paper not found');
         await this.prisma.questionPaper.delete({ where: { id } });
         return { deleted: true };
+    }
+
+    /**
+     * Renders a paper for download. `format` defaults to PDF; ownership is the
+     * same 404 as every other teacher-scoped read, so another teacher's paper
+     * cannot be exported even with the id.
+     */
+    async exportPaper(id: string, userId: string, formatValue: string | undefined) {
+        const format = parseExportFormat(formatValue);
+        const teacherId = await resolveTeacherId(this.prisma, userId);
+        const paper = await this.prisma.questionPaper.findUnique({
+            where: { id },
+            include: {
+                questions: { orderBy: { order: 'asc' } },
+                class: true,
+                subject: true,
+            },
+        });
+        if (!paper || paper.teacherId !== teacherId) {
+            throw new NotFoundException('Paper not found');
+        }
+
+        // Read-only: an export must not create the settings row.
+        const settings = await this.prisma.siteSetting.findUnique({
+            where: { id: 'singleton' },
+            select: { schoolName: true, schoolNameBn: true },
+        });
+
+        const model = buildPaperModel({
+            title: paper.title,
+            durationMinutes: paper.durationMinutes,
+            totalMarks: paper.totalMarks,
+            className: paper.class.name,
+            subjectName: paper.subject.name,
+            schoolName: settings?.schoolName,
+            schoolNameBn: settings?.schoolNameBn,
+            questions: paper.questions,
+        });
+
+        const buffer = format === 'docx' ? await renderDocx(model) : await renderPdf(model);
+        const filename = exportFilename(
+            {
+                subjectName: paper.subject.name,
+                className: paper.class.name,
+                title: paper.title,
+            },
+            format,
+        );
+
+        return {
+            buffer,
+            filename,
+            contentType: EXPORT_CONTENT_TYPES[format],
+            disposition: contentDisposition(filename),
+        };
     }
 
     // ---------------------------------------------------------------------
