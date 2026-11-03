@@ -1,13 +1,26 @@
-// src/ai/ai.controller.ts — at-risk endpoints (admin-only).
+// src/ai/ai.controller.ts — at-risk endpoints + provider health (admin-only).
 import { Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../common/decorators/roles.decorator';
 import { AtRiskService } from './at-risk.service';
+import { LlmService } from './llm/llm.service';
 
 @ApiTags('AI')
 @Controller('ai')
 export class AiController {
-    constructor(private readonly atRisk: AtRiskService) {}
+    constructor(
+        private readonly atRisk: AtRiskService,
+        private readonly llm: LlmService,
+    ) {}
+
+    @Roles('ADMIN')
+    @Get('health')
+    @ApiOperation({
+        summary: 'LLM provider health: resolved source, key presence, last call',
+    })
+    health() {
+        return this.llm.health();
+    }
 
     @Roles('ADMIN')
     @Post('at-risk/recompute')

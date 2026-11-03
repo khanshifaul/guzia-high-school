@@ -12,8 +12,14 @@ export const validationSchema = Joi.object({
   AI_CONFIG_SECRET: Joi.string().min(16).required(),
   PORT: Joi.number().default(4000),
 
-  // AI provider boot-seed defaults (runtime truth = AiProviderConfig row).
-  AI_PROVIDER: Joi.string().valid('deepseek', 'mock').default('mock'),
+  // AI provider env fallback (runtime truth = AiProviderConfig row).
+  // AI_PROVIDER has no default: an unset value means "no env provider", so a
+  // missing configuration surfaces as a 503 instead of a silent mock.
+  AI_PROVIDER: optionalStr().valid('mock', 'deepseek', 'custom'),
+  AI_BASE_URL: optionalStr().uri(),
+  AI_MODEL: optionalStr(),
+  AI_API_KEY: optionalStr(),
+  AI_ALLOW_KEYLESS_PROVIDER: Joi.boolean().default(false),
   DEEPSEEK_API_KEY: optionalStr(),
   DEEPSEEK_BASE_URL: Joi.string()
     .uri()

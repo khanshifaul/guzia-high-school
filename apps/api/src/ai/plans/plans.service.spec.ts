@@ -1,8 +1,14 @@
 // src/ai/plans/plans.service.spec.ts — protects the plan editing rules:
 // a teacher may only touch their own plan, a single week is replaced in
 // isolation, and the week dates skip Fridays (BD weekend).
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+    BadRequestException,
+    NotFoundException,
+    UnprocessableEntityException,
+} from '@nestjs/common';
+import type { ZodType } from 'zod';
 import { PlansService, type PlanWeek } from './plans.service';
+import { parseJsonObject } from '../llm/json.util';
 
 const TEACHER_USER_ID = 'teacher-user-1';
 const TEACHER_ID = 'teacher-1';
@@ -62,6 +68,17 @@ function serviceWith(state: FakeState): PlansService {
 
     const llm = {
         complete: async () => state.llmReply,
+        completeJson: async (_opts: unknown, schema: ZodType<unknown>) => {
+            try {
+                return schema.parse(parseJsonObject(state.llmReply));
+            } catch {
+                // Mirrors LlmService: shape/JSON failures leave the LLM layer
+                // as a typed 422, not a caller-side BadRequest.
+                throw new UnprocessableEntityException(
+                    'AI reply did not match the expected JSON contract',
+                );
+            }
+        },
     };
 
     return new PlansService(prisma as never, llm as never);
@@ -191,7 +208,7 @@ describe('regenerateWeek', () => {
         const state = baseState({ llmReply: 'not json at all' });
         const service = serviceWith(state);
         await expect(service.regenerateWeek(PLAN_ID, 1, TEACHER_USER_ID)).rejects.toThrow(
-            BadRequestException,
+            UnprocessableEntityException,
         );
     });
 
@@ -199,7 +216,7 @@ describe('regenerateWeek', () => {
         const state = baseState({ llmReply: JSON.stringify({ topics: ['Only topics'] }) });
         const service = serviceWith(state);
         await expect(service.regenerateWeek(PLAN_ID, 1, TEACHER_USER_ID)).rejects.toThrow(
-            BadRequestException,
+            UnprocessableEntityException,
         );
     });
 });

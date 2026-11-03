@@ -2,12 +2,11 @@
 // Generates flashcards or a mind map from a teacher's sources (RAG chunks or a
 // single source document), validates the LLM JSON with Zod, and stores the
 // result so the teacher can reopen it later.
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../../database/database.service';
 import { Prisma } from 'prisma/generated/client';
 import { LlmService } from '../llm/llm.service';
 import { RetrievalService } from '../sources/retrieval.service';
-import { parseJsonObject } from '../llm/json.util';
 import { z } from 'zod';
 import type { GenerateMaterialDto } from './dto/generate-material.dto';
 
@@ -63,8 +62,6 @@ const MATERIAL_SELECT = {
 
 @Injectable()
 export class MaterialsService {
-    private readonly logger = new Logger(MaterialsService.name);
-
     constructor(
         private readonly prisma: DatabaseService,
         private readonly llm: LlmService,
@@ -112,15 +109,18 @@ export class MaterialsService {
         // Flashcards need more room: the model tends to over-produce, and a
         // truncated reply is invalid JSON.
         const maxTokens = dto.kind === 'FLASHCARDS' ? 4000 : 2000;
-        const raw = await this.llm.complete({
+        const opts = {
             system,
             user,
             json: true,
             maxTokens,
-            mockFixture: dto.kind === 'FLASHCARDS' ? 'flashcards' : 'mindmap',
+            mockFixture: dto.kind === 'FLASHCARDS' ? ('flashcards' as const) : ('mindmap' as const),
             mockCounts: { cards: count },
-        });
-        const content = this.parseContent(dto.kind, raw, count);
+        };
+        const content: FlashcardContent | MindmapContent =
+            dto.kind === 'MINDMAP'
+                ? await this.llm.completeJson(opts, MindmapSchema)
+                : { cards: (await this.llm.completeJson(opts, FlashcardSetSchema)).cards.slice(0, count) };
         const label = dto.kind === 'FLASHCARDS' ? 'Flashcards' : 'Mind Map';
         const base = source?.filename ?? [className, subjectName].filter(Boolean).join(' ');
         const title = base ? `${base} — ${label}` : label;
@@ -273,39 +273,6 @@ export class MaterialsService {
         return { system, user };
     }
 
-    private parseContent(
-        kind: GenerateMaterialDto['kind'],
-        raw: string,
-        count: number,
-    ): FlashcardContent | MindmapContent {
-        let json: unknown;
-        try {
-            json = parseJsonObject(raw);
-        } catch {
-            this.logger.warn(`Material JSON parse failed (${kind}): ${raw.slice(0, 500)}`);
-            throw new BadRequestException('AI returned invalid JSON; try again');
-        }
-
-        if (kind === 'MINDMAP') {
-            const result = MindmapSchema.safeParse(json);
-            if (!result.success) {
-                this.logger.warn(
-                    `Mind map shape mismatch: ${JSON.stringify(result.error.issues).slice(0, 400)}`,
-                );
-                throw new BadRequestException('AI mind map JSON did not match the expected shape');
-            }
-            return result.data;
-        }
-
-        const result = FlashcardSetSchema.safeParse(json);
-        if (!result.success) {
-            this.logger.warn(
-                `Flashcards shape mismatch: ${JSON.stringify(result.error.issues).slice(0, 400)}`,
-            );
-            throw new BadRequestException('AI flashcards JSON did not match the expected shape');
-        }
-        return { cards: result.data.cards.slice(0, count) };
-    }
 }
 
 /** Join text parts up to the prompt cap, cutting mid-part if needed. */
