@@ -157,3 +157,70 @@ The three seat panes and their scrollback. Not the queue, results, memory,
 this file, the schedule, the installed binary or the listener. The guzia
 ponder timer is stopped; `pijunctionbd` and `zylosync` are separate offices
 and were not touched.
+
+---
+
+## 2026-11-04, morning — day close (work dated 2026-11-03)
+
+Every number below was read during this close: `git`, `gh`, the test runner,
+`herdr`, systemd. Result files were treated as claims, not evidence.
+
+### Landed — verified
+
+- `origin/main` = `3499505`, local `main` = `3499505`, 0 unpushed commits,
+  working tree clean.
+- Five PRs merged on 2026-11-03, all `MERGED` per `gh`:
+  - #36 `30a530e` — LLM provider hardening: key truth from `apiKeyEnc`, typed
+    503s, 30 s/90 s timeouts, bounded retries, truncation detection, structured
+    call log, `GET /api/ai/health`, env-only provider.
+  - #37 `77a9700` — question-paper export to Unicode DOCX and PDF (Typst).
+  - #38 `945beb1` — RAG: generated `tsvector` + GIN on the keyword arm,
+    idempotent re-ingest, wider source coverage.
+  - #39 `d123c03`, #40 `3499505` — export fonts: DOCX `w:ascii`/`w:hAnsi`
+    Times New Roman, `w:cs` Kalpurush, `w:sz` + `w:szCs`; PDF Liberation Serif
+    + Kalpurush.
+- Tests re-run at close on `main`: **240 passed, 25 suites, exit 0**.
+  (`bun --filter @guzia/api test`.)
+
+### In flight
+
+Nothing. No worker, no worktree, no `*.run`, 0 commits in the last 2 h.
+
+### Not verified
+
+- Live behaviour of #36–#40: the Render service has not redeployed, so the
+  export route and the new provider error mapping are not proven in production.
+- PDF/DOCX artifact sizes and page counts come from the task result file; the
+  files were not re-rendered at close. The font elements in the renderer and
+  their test assertions were read directly in the tree.
+
+### Not started — now filed
+
+- `db-migration-replay-repair` (`.agents/queue/`, `gate: human`) — migrations
+  do not replay: `20261026193825_add_hero_slider` alters `HeroSlide` before
+  `20261027140000_add_hero_slider` creates it, so `prisma migrate dev` cannot
+  build a shadow database and a fresh `migrate deploy` fails. Needs a founder
+  decision because it rewrites applied migration history.
+
+### Errors made this day — unhedged
+
+1. I repeated "215 tests pass" from a result file without re-running. At close
+   the suite failed 2 of 25: `docx` was in `package.json` but not in the local
+   `node_modules`, so two suites could not compile. `bun install
+   --frozen-lockfile` fixed it; the real count is 240.
+2. I reported the live API as "not answering" after two probes when it was a
+   Render free-tier cold start; the third call, a login, returned 200 in 1.9 s.
+3. I sent the DOCX font correction after the worker had started building, which
+   cost a second PR (#39 then #40).
+
+### Single next action
+
+The founder deploys the API (Render) so #36–#40 are actually running; the
+domain `WEB_ORIGIN` and the DeepSeek key travel in the same dashboard visit.
+For agents, the next move is the founder's ruling on the migration repair.
+
+### What dies with the session
+
+The Zolly and foreman panes and their scrollback. Not the queue, results,
+memory, this file, the schedule, `main` or the installed binary. The guzia
+ponder timer is stopped for the night.
